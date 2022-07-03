@@ -1,0 +1,78 @@
+CXX = g++
+DEBUG = 0
+OSTYPE = $(shell uname -s)
+RM = rm -f
+
+CXXFLAGS = $(shell sdl-config --cflags) -Wall
+LDFLAGS = $(shell sdl-config --libs) -lGL -lGLU -lpng -lz -lopenal -ljpeg 
+
+ifeq ($(DEBUG), 1)
+CXXFLAGS += -g
+else
+CXXFLAGS += -O2
+endif
+
+ifeq ($(OSTYPE), AmigaOS)
+#CXXFLAGS +=
+LDFLAGS += -lpthread
+endif
+
+#ifeq ($(OSTYPE), AROS)
+#CXXFLAGS +=
+#LDFLAGS +=
+#endif
+
+#ifeq ($(OSTYPE), MorphOS)
+#CXXFLAGS +=
+#LDFLAGS +=
+#endif
+
+.PHONY: all clean
+
+all: openmrac
+
+OPENMRAC_OBJS = \
+	3dm.o \
+	cam.o \
+	car2d.o \
+	collider.o \
+	controls.o \
+	cstring1.o \
+	datkey.o \
+	fopendir.o \
+	gameaux.o \
+	gamemenu.o \
+	gamemng.o \
+	gamemng_frame.o \
+	gamemng_load.o \
+	gbuff_in.o \
+	ghost.o \
+	glext1.o \
+	glhelpers1.o \
+	gltext.o \
+	gridlayout.o \
+	gui.o \
+	guifont.o \
+	load_texture.o \
+	main.o \
+	matmng.o \
+	menu.o \
+	mtrxinv.o \
+	octopus.o \
+	particles.o \
+	pict2.o \
+	pict2_jpeg.o \
+	pict2_png.o \
+	rand1.o \
+	rbsolver.o \
+	settings_dat.o \
+	settingsdialog.o \
+	skysph.o \
+	soundmng.o \
+	triboxint.o
+
+openmrac: $(OPENMRAC_OBJS)
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+clean:
+	$(RM) $(OPENMRAC_OBJS)
