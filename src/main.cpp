@@ -32,7 +32,7 @@
 #include "skysph.h"
 
 #define NO_CAMERA
-#undef NO_CAMERA
+//#undef NO_CAMERA
 
 //#define TESTING_SLOWDOWN 1
 
