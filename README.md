@@ -1,5 +1,7 @@
 # OpenMRac
 
+[![OpenMRac youtube video](media/openmrac-yt.jpg)](https://youtu.be/r3hLTo5Nu1g)
+
 OpenMRac is a split-screen racing game. It is a tweaked source release of [MultiRacer](https://www.franticware.com/multiracer).
 
 Programming was done by Vojtěch Salajka.  
