@@ -10,7 +10,11 @@
 
 void user_error_fn(png_structp png_ptr, png_const_charp /*err_str*/)
 {
+#ifdef __MORPHOS__
+	longjmp(png_ptr->jmpbuf59, 1);		
+#else
     longjmp(png_jmpbuf(png_ptr), 1);
+#endif
 }
 
 void user_warning_fn(png_structp, png_const_charp)
@@ -98,7 +102,11 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
     }
 
     /* Error handling - REQUIRED by user error handler */
+#ifdef __MORPHOS__
+	if ( setjmp59(png_ptr->jmpbuf59))
+#else
     if (setjmp(png_jmpbuf(png_ptr)))
+#endif
     {
         uncreate();
         /* Free all of the memory associated with the png_ptr and info_ptr */
