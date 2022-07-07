@@ -23,8 +23,8 @@ endif
 #endif
 
 #ifeq ($(OSTYPE), MorphOS)
-#CXXFLAGS +=
-#LDFLAGS +=
+CXXFLAGS += -I/usr/local/include -D__MORPHOS_SHAREDLIBS
+LDFLAGS = $(shell sdl-config --libs) -lGL -lGLU -lpng_shared -lz_shared -lopenal -ljpeg_shared
 #endif
 
 .PHONY: all clean
@@ -56,7 +56,7 @@ OPENMRAC_OBJS = \
 	load_texture.o \
 	main.o \
 	matmng.o \
-	menu.o \
+	mainmenu.o \
 	mtrxinv.o \
 	octopus.o \
 	particles.o \
