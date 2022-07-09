@@ -1,5 +1,5 @@
-CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC -std=c++17
-LFLAGS = -lSDL -lGL -lopenal -ljpeg -lpng -s
+CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC
+LFLAGS = -lSDL -lGL -lopenal -ljpeg -lpng -lm -s
 CXX    = g++
 LINK   = g++
 TARGET = openmrac
@@ -17,7 +17,7 @@ clean:
 	$(CXX) -c $(CFLAGS) $<
 
 $(TARGET): $(OBJS)
-	$(LINK) -o $(TARGET) $(LFLAGS) $(OBJS)
+	$(LINK) -o $(TARGET) $(OBJS) $(LFLAGS)
 
 install: $(TARGET)
 	sudo rm -f /usr/bin/openmrac
