@@ -66,7 +66,7 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
     for (auto& p : *sourceMap)
     {
         MA_Source& src = p.second;
-        if (src.playing && src.gain > 0.f)
+        if (src.playing)
         {
             if (src.buffer != 0)
             {
