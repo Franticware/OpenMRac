@@ -14,6 +14,9 @@
 #include <OpenGL/gl.h>
 #endif
 
+#ifdef USE_MINIAL
+#include "minial.h"
+#else
 #ifndef __MACOSX__
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -21,6 +24,7 @@
 #else
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
+#endif
 #endif
 
 #include "gltext.h"

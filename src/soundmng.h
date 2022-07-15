@@ -2,10 +2,15 @@
 #define HLIDAC_SOUNDMNG_H
 
 #include <cstring>
+
+#ifdef USE_MINIAL
+#include "minial.h"
+#else
 #ifndef __MACOSX__
 #include <AL/al.h>
 #else
 #include <OpenAL/al.h>
+#endif
 #endif
 
 #include <SDL/SDL_endian.h>
