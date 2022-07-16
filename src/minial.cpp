@@ -1,4 +1,7 @@
-/* Naive implementation of a subset of OpenAL used by OpenMRac, featuring low sound quality and no optimization.
+/* Copyright (c) 2022, Vojtěch Salajka. All rights reserved. Use of this source code is governed by a BSD-style license that can be found in the LICENSE file. */
+
+/*
+ * Naive implementation of a subset of OpenAL used by OpenMRac, featuring low sound quality and no optimization.
  * This should serve as a starting point on platforms where usable OpenAL implementation is not available.
  * To use this, add -DUSE_MINIAL to CFLAGS and remove -lopenal from LFLAGS.
  */
@@ -14,6 +17,7 @@
 
 #define MA_FREQ 22050
 #define MA_SAMPLES 1024
+#define MA_LINEAR 1 // sample filtering: 0 - none, 1 - linear
 
 struct ALCdevice
 {
@@ -88,7 +92,26 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
                             }
                         }
                         if (!src.playing) break;
+#if MA_LINEAR
+                        uint32_t ipos0 = src.pos;
+                        uint32_t ipos1 = ipos0 + 1;
+                        Sint16 smp0 = buff.samples[ipos0];
+                        Sint16 smp1 = 0;
+                        if (ipos1 >= buff.samples.size())
+                        {
+                            if (src.looping)
+                            {
+                                smp1 = buff.samples[0];
+                            }
+                        }
+                        else
+                        {
+                            smp1 = buff.samples[ipos1];
+                        }
+                        (*floatBuff)[i] += (float(smp0) + (float(smp1) - float(smp0)) * (src.pos - ipos0)) * src.gain;
+#else
                         (*floatBuff)[i] += buff.samples[src.pos] * src.gain;
+#endif
                         src.pos += src.pitch;
                     }
                 }
@@ -229,7 +252,7 @@ void alListenerfv(ALenum param, const ALfloat *values)
 
 void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq)
 {
-    if (buffer == 0 || format != AL_FORMAT_MONO16 || freq != MA_FREQ) return;
+    if (buffer == 0 || format != AL_FORMAT_MONO16 || freq != MA_FREQ) return; // only 22050 Hz, 16-bit mono audio is currently supported
     SDL_LockAudio();
     MA_Buffer& buff = (*bufferMap)[buffer];
     buff.samples.resize(size >> 1);
