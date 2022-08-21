@@ -24,9 +24,14 @@ clean:
 $(TARGET): $(OBJS)
 	$(LINK) -o $(TARGET) $(OBJS) $(LFLAGS)
 
-install: $(TARGET)
-	sudo rm -f /usr/bin/openmrac
+install: $(TARGET) uninstall
 	sudo cp openmrac /usr/bin/openmrac
+	sudo cp openmrac.ico /usr/share/pixmaps/openmrac.ico
+	sudo cp openmrac.desktop /usr/share/applications/openmrac.desktop
+	sudo update-desktop-database || true
 
 uninstall:
 	sudo rm -f /usr/bin/openmrac
+	sudo rm -f /usr/share/pixmaps/openmrac.ico
+	sudo rm -f /usr/share/applications/openmrac.desktop
+	sudo update-desktop-database || true

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Categories=Application;Game;
+Exec=openmrac
+Icon=/usr/share/pixmaps/openmrac.ico
+Name=OpenMRac
+Terminal=false
+Type=Application
