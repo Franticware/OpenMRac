@@ -49,16 +49,24 @@ cd ../../..
 sudo dpkg -i openmrac-deb/OpenMRac/src/debian/openmrac.deb
 ```
 
+Notes:
+
+* For simplicity, the resulting package contains both binary and data files. Packagers for Linux distributions will probably want to create a separate package for game data. See existing [AUR packages](https://aur.archlinux.org/packages?O=0&K=openmrac) for inspiration.
+
+* RFP for Debian can be found here: https://wiki.debian.org/Games/Suggested#OpenMRac
+
 ### Other (openSUSE, Fedora, ...)
 
 ```
 git clone https://github.com/Franticware/OpenMRac-data.git
 cd OpenMRac-data
 make install
+cd ..
 
 git clone https://github.com/Franticware/OpenMRac.git
 cd OpenMRac/src
 make -f Makefile.linux install
+cd ../..
 ```
 
 ## Mac OS X
