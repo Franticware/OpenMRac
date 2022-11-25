@@ -32,13 +32,13 @@ Install **openmrac** package from AUR
 ### Debian-based (Debian, Raspberry Pi OS, Ubuntu, MX Linux, Mint, ...)
 
 * Install **sox**
-* Install development packages for OpenGL, OpenAL, SDL 1.2, jpeg, png
+* Install development packages for OpenGL, OpenAL, SDL 2, jpeg, png
 * Run the following to generate **openmrac.deb** package:
 
 ```
 mkdir openmrac-deb
 cd openmrac-deb
-git clone https://github.com/Franticware/OpenMRac.git
+git clone -b sdl2 https://github.com/Franticware/OpenMRac.git
 git clone https://github.com/Franticware/OpenMRac-data.git
 cd OpenMRac/src
 make -f Makefile.linux deb
@@ -65,7 +65,7 @@ cd OpenMRac-data
 make install
 cd ..
 
-git clone https://github.com/Franticware/OpenMRac.git
+git clone -b sdl2 https://github.com/Franticware/OpenMRac.git
 cd OpenMRac/src
 make -f Makefile.linux install
 cd ../..
