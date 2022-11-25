@@ -21,7 +21,7 @@
 
 struct ALCdevice
 {
-    ALuint dummy;
+    SDL_AudioDeviceID id;
 };
 
 struct ALCcontext
@@ -133,17 +133,45 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
 
 ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
 {
-    (void)device;
-    (void)extname;
-    return 1;
+    if (device == 0)
+    {
+        if (strcmp(extname, "ALC_ENUMERATE_ALL_EXT") == 0)
+        {
+            return 1;
+        }
+        if (strcmp(extname, "ALC_ENUMERATION_EXT") == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
 {
-    (void)device;
-    (void)param;
-    static const ALCchar* ret = "\0\0";
-    return ret;
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    if (device == 0 && (param == ALC_ALL_DEVICES_SPECIFIER || param == ALC_DEVICE_SPECIFIER))
+    {
+        static std::vector<char> deviceList;
+        deviceList.clear();
+        const int count = SDL_GetNumAudioDevices(0);
+        for (int i = 0; i != count; ++i)
+        {
+            const char* device = SDL_GetAudioDeviceName(i, 0);
+            if (device)
+            {
+                for (size_t j = 0; j != strlen(device); ++j)
+                {
+                    deviceList.push_back(device[j]);
+                }
+                deviceList.push_back(0);
+            }
+        }
+        deviceList.push_back(0);
+        deviceList.push_back(0);
+        return deviceList.data();
+    }
+    return 0;
 }
 
 ALCdevice* alcOpenDevice(const ALCchar *devicename)
@@ -153,7 +181,6 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     bufferMap = new std::map<ALuint, MA_Buffer>;
     floatBuff = new std::vector<float>;
     floatBuff->resize(MA_SAMPLES);
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
     SDL_AudioSpec as;
     as.freq = MA_FREQ;
     as.format = AUDIO_S16;
@@ -161,9 +188,18 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     as.samples = MA_SAMPLES;
     as.callback = ma_callback;
     as.userdata = /*nullptr*/0;
-    SDL_OpenAudio(&as, /*nullptr*/0);
-    SDL_PauseAudio(0);
-    return &alcDevice;
+    SDL_AudioSpec obtained;
+    SDL_AudioDeviceID id = SDL_OpenAudioDevice(devicename, 0, &as, &obtained, 0);
+    if (id > 0)
+    {
+        alcDevice.id = id;
+        SDL_PauseAudioDevice(alcDevice.id, 0);
+        return &alcDevice;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 ALCcontext* alcCreateContext(ALCdevice *device, const ALCint *attrlist)
@@ -188,7 +224,7 @@ void alcDestroyContext(ALCcontext *context)
 ALCboolean alcCloseDevice(ALCdevice *device)
 {
     (void)device;
-    SDL_CloseAudio();
+    SDL_CloseAudioDevice(device->id);
     delete sourceMap;
     delete bufferMap;
     delete floatBuff;
@@ -202,7 +238,7 @@ static ALuint bufferCounter = 1;
 
 template<class T> void generateStuff(ALsizei n, ALuint* stuff, std::map<ALuint, T>& m, ALuint& counter)
 {
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     for (ALsizei i = 0; i != n; ++i)
     {
         T stuffObj;
@@ -210,7 +246,7 @@ template<class T> void generateStuff(ALsizei n, ALuint* stuff, std::map<ALuint, 
         m[counter] = stuffObj;
         ++counter;
     }
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alGenSources(ALsizei n, ALuint *sources)
@@ -225,12 +261,12 @@ void alGenBuffers(ALsizei n, ALuint *buffers)
 
 template<class T> void deleteStuff(ALsizei n, const ALuint* stuff, std::map<ALuint, T>& m)
 {
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     for (ALsizei i = 0; i != n; ++i)
     {
         m.erase(stuff[i]);
     }
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alDeleteSources(ALsizei n, const ALuint *sources)
@@ -253,17 +289,17 @@ void alListenerfv(ALenum param, const ALfloat *values)
 void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq)
 {
     if (buffer == 0 || format != AL_FORMAT_MONO16 || freq != MA_FREQ) return; // only 22050 Hz, 16-bit mono audio is currently supported
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     MA_Buffer& buff = (*bufferMap)[buffer];
     buff.samples.resize(size >> 1);
     std::copy((Sint16*)data, ((Sint16*)data) + buff.samples.size(), buff.samples.begin());
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alSourcef(ALuint source, ALenum param, ALfloat value)
 {
     if (source == 0) return;
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     MA_Source& src = (*sourceMap)[source];
     switch (param)
     {
@@ -281,7 +317,7 @@ void alSourcef(ALuint source, ALenum param, ALfloat value)
         src.pos = value;
         break;
     }
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alSourcefv(ALuint source, ALenum param, const ALfloat *values)
@@ -295,7 +331,7 @@ void alSourcefv(ALuint source, ALenum param, const ALfloat *values)
 void alSourcei(ALuint source, ALenum param, ALint value)
 {
     if (source == 0) return;
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     MA_Source& src = (*sourceMap)[source];
     switch (param)
     {
@@ -306,34 +342,34 @@ void alSourcei(ALuint source, ALenum param, ALint value)
         src.buffer = value;
         break;
     }
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alSourcePlay(ALuint source)
 {
     if (source == 0) return;
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     MA_Source& src = (*sourceMap)[source];
     src.playing = true;
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alSourceStop(ALuint source)
 {
     if (source == 0) return;
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     MA_Source& src = (*sourceMap)[source];
     src.playing = false;
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alSourceRewind(ALuint source)
 {
     if (source == 0) return;
-    SDL_LockAudio();
+    SDL_LockAudioDevice(alcDevice.id);
     MA_Source& src = (*sourceMap)[source];
     src.pos = 0;
-    SDL_UnlockAudio();
+    SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 #endif // USE_MINIAL

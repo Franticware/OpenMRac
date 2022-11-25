@@ -63,7 +63,13 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
 
     m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(0), m_layout.getCellY(0), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(0, 1), "Video"));
     m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellX(0), m_layout.getCellY(2), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(2, 9+4)));
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(0), m_layout.getCellY(12+4), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(12+4, 1), "Audio"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(0), m_layout.getCellY(12+4), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(12+4, 1),
+                          #ifdef USE_MINIAL
+                              "Audio (SDL)"
+                          #else
+                              "Audio (OpenAL)"
+                          #endif
+                              ));
     m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellX(0), m_layout.getCellY(14+4), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(14+4, 5)));
 
     std::vector<std::string> resolutions;

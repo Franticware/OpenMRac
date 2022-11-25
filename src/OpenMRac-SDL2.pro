@@ -5,9 +5,9 @@ CONFIG -= qt
 
 QMAKE_CXXFLAGS += -DDIR_OPENMRAC_DAT=/usr/share/openmrac/
 
-#QMAKE_CXXFLAGS += -DUSE_MINIAL
+QMAKE_CXXFLAGS += -DUSE_MINIAL
 
-LIBS += -lopenal
+#LIBS += -lopenal
 
 LIBS += \
         -lSDL2 -lGL -ljpeg -lpng
