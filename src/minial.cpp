@@ -15,9 +15,13 @@
 #include <cmath>
 #include <SDL2/SDL.h>
 
+#define MA_FILTER_NONE 0
+#define MA_FILTER_LINEAR 1 // recommended
+#define MA_FILTER_HIGH_QUALITY 2
+
+#define MA_FILTER MA_FILTER_LINEAR
 #define MA_FREQ 22050
 #define MA_SAMPLES 256
-#define MA_LINEAR 1 // sample filtering: 0 - none, 1 - linear
 
 struct ALCdevice
 {
@@ -50,7 +54,8 @@ struct MA_Source
 
 struct MA_Buffer
 {
-    std::vector<Sint16> samples;
+    std::vector<float> samples;
+    float pitch = 1.f;
 };
 
 static ALCdevice alcDevice;
@@ -58,15 +63,14 @@ static ALCcontext alcContext;
 
 static std::map<ALuint, MA_Source>* sourceMap = /*nullptr*/0;
 static std::map<ALuint, MA_Buffer>* bufferMap = /*nullptr*/0;
-static std::vector<float>* floatBuff = /*nullptr*/0;
+static ALsizei maObtainedFreq = MA_FREQ;
 
 static void ma_callback(void *userdata, Uint8 *stream, int len)
 {
     (void)userdata;
-    Sint16* stream16 = (Sint16*)stream;
-    int len16 = len >> 1;
-    floatBuff->resize(len16);
-    std::fill(floatBuff->begin(), floatBuff->end(), 0.f);
+    int count = len >> 2;
+    float* floatBuff = (float*)stream;
+    std::fill(floatBuff, floatBuff + count, 0.f);
     for (auto& p : *sourceMap)
     {
         MA_Source& src = p.second;
@@ -77,7 +81,8 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
                 MA_Buffer& buff = (*bufferMap)[src.buffer];
                 if (!buff.samples.empty())
                 {
-                    for (int i = 0; i != len16; ++i)
+                    const float pitch = src.pitch * buff.pitch;
+                    for (int i = 0; i != count; ++i)
                     {
                         while (src.pos >= buff.samples.size())
                         {
@@ -92,11 +97,14 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
                             }
                         }
                         if (!src.playing) break;
-#if MA_LINEAR
+#if MA_FILTER == MA_FILTER_NONE
+                        floatBuff[i] += buff.samples[src.pos] * src.gain;
+#endif
+#if MA_FILTER == MA_FILTER_LINEAR
                         uint32_t ipos0 = src.pos;
                         uint32_t ipos1 = ipos0 + 1;
-                        Sint16 smp0 = buff.samples[ipos0];
-                        Sint16 smp1 = 0;
+                        float smp0 = buff.samples[ipos0];
+                        float smp1 = 0;
                         if (ipos1 >= buff.samples.size())
                         {
                             if (src.looping)
@@ -108,24 +116,16 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
                         {
                             smp1 = buff.samples[ipos1];
                         }
-                        (*floatBuff)[i] += (float(smp0) + (float(smp1) - float(smp0)) * (src.pos - ipos0)) * src.gain;
-#else
-                        (*floatBuff)[i] += buff.samples[src.pos] * src.gain;
+                        floatBuff[i] += (smp0 + (smp1 - smp0) * (src.pos - ipos0)) * src.gain;
 #endif
-                        src.pos += src.pitch;
+#if MA_FILTER == MA_FILTER_HIGH_QUALITY
+#error "Hight quality audio filter is currently not implemented"
+#endif
+                        src.pos += pitch;
                     }
                 }
             }
         }
-    }
-
-    for (int i = 0; i < len16; ++i)
-    {
-        int32_t temp = std::floor((*floatBuff)[i] + 0.5f);
-        if (temp > 32767) temp = 32767;
-        else if (temp < -32768) temp = -32768;
-        stream16[i] = temp;
-        //stream16[i] = (rand() % 256) - 128; // white noise
     }
 }
 
@@ -179,19 +179,18 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     (void)devicename;
     sourceMap = new std::map<ALuint, MA_Source>;
     bufferMap = new std::map<ALuint, MA_Buffer>;
-    floatBuff = new std::vector<float>;
-    floatBuff->resize(MA_SAMPLES);
     SDL_AudioSpec as;
     as.freq = MA_FREQ;
-    as.format = AUDIO_S16;
+    as.format = AUDIO_F32SYS;
     as.channels = 1;
     as.samples = MA_SAMPLES;
     as.callback = ma_callback;
     as.userdata = /*nullptr*/0;
     SDL_AudioSpec obtained;
-    SDL_AudioDeviceID id = SDL_OpenAudioDevice(devicename, 0, &as, &obtained, 0);
+    SDL_AudioDeviceID id = SDL_OpenAudioDevice(devicename, 0, &as, &obtained, SDL_AUDIO_ALLOW_SAMPLES_CHANGE | SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
     if (id > 0)
     {
+        maObtainedFreq = obtained.freq;
         alcDevice.id = id;
         SDL_PauseAudioDevice(alcDevice.id, 0);
         return &alcDevice;
@@ -227,7 +226,6 @@ ALCboolean alcCloseDevice(ALCdevice *device)
     SDL_CloseAudioDevice(device->id);
     delete sourceMap;
     delete bufferMap;
-    delete floatBuff;
     return 1;
 }
 
@@ -283,16 +281,21 @@ void alListenerfv(ALenum param, const ALfloat *values)
 {
     (void)param;
     (void)values;
+    // listener parameters have no effect
     return;
 }
 
 void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq)
 {
-    if (buffer == 0 || format != AL_FORMAT_MONO16 || freq != MA_FREQ) return; // only 22050 Hz, 16-bit mono audio is currently supported
+    if (buffer == 0 || format != AL_FORMAT_MONO16) return; // only 16-bit mono audio is currently supported
     SDL_LockAudioDevice(alcDevice.id);
     MA_Buffer& buff = (*bufferMap)[buffer];
+    buff.pitch = float(freq)/float(maObtainedFreq);
     buff.samples.resize(size >> 1);
-    std::copy((Sint16*)data, ((Sint16*)data) + buff.samples.size(), buff.samples.begin());
+    for (size_t i = 0; i != buff.samples.size(); ++i)
+    {
+        buff.samples[i] = ((Sint16*)data)[i] / 32768.f; // convert sample from s16 to float
+    }
     SDL_UnlockAudioDevice(alcDevice.id);
 }
 
