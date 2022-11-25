@@ -2,7 +2,7 @@
 
 #include "datkey.h"
 
-#include <SDL/SDL_endian.h>
+#include <SDL2/SDL_endian.h>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>

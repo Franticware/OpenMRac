@@ -6,7 +6,7 @@
 #include "rand1.h"
 #include "appdefs.h"
 
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 void my_exit(int ret, bool callExit);
 
@@ -325,7 +325,7 @@ void MainMenu::menu()
 {
     if (p_bactive) // už je aktivní
         return;
-    SDL_EnableKeyRepeat(500, 30);
+    //SDL_EnableKeyRepeat(500, 30);
     p_bactive = true;
 
     p_state = STATE_RACE;
@@ -406,7 +406,7 @@ void MainMenu::game()
 {
     if (!p_bactive) // už je aktivní
         return;
-    SDL_EnableKeyRepeat(0, 0);
+    //SDL_EnableKeyRepeat(0, 0);
     p_bactive = false;
 
     // všechny textury smazat
@@ -636,9 +636,9 @@ void MainMenu::render() // vykreslení menu
     glPopMatrix(); checkGL();
 }
 
-inline bool ignoreKey(SDLKey k)
+inline bool ignoreKey(SDL_Keycode k)
 {
-    return k == SDLK_PRINT || k == SDLK_NUMLOCK;
+    return k == SDLK_PRINTSCREEN || k == SDLK_NUMLOCKCLEAR;
 }
 
 void MainMenu::exitEnterMode()
@@ -660,7 +660,7 @@ void MainMenu::event(const SDL_Event& e)
     {
         case SDL_KEYDOWN: // check for keypresses
         {
-            SDLKey sym = e.key.keysym.sym;
+            SDL_Keycode sym = e.key.keysym.sym;
             if (p_state == STATE_CONTROLS_TEST_KEYBOARD_SCREEN)
             {
                 if (!ignoreKey(e.key.keysym.sym))
@@ -671,7 +671,7 @@ void MainMenu::event(const SDL_Event& e)
                 if (sym == SDLK_ESCAPE)
                 {
                     p_state = STATE_CONTROLS_TEST_KEYBOARD;
-                    SDL_EnableKeyRepeat(500, 30);
+                    //SDL_EnableKeyRepeat(500, 30);
                 }
             }
             else if (p_state == STATE_CONTROLS_TEST_KEYBOARD)
@@ -790,10 +790,10 @@ void MainMenu::event(const SDL_Event& e)
             else if (p_state == STATE_CONTROLS_TEST_KEYBOARD && (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER))
             {
                 p_state = STATE_CONTROLS_TEST_KEYBOARD_SCREEN;
-                SDL_EnableKeyRepeat(0, 0);
+                //SDL_EnableKeyRepeat(0, 0);
                 p_testKeysCount = 0;
-                p_testKeysLastKeyDown = SDLK_LAST;
-                p_testKeysLastKeyUp = SDLK_LAST;
+                p_testKeysLastKeyDown = -1; //SDLK_LAST;
+                p_testKeysLastKeyUp = -1; //SDLK_LAST;
             }
             break;
         }
@@ -866,7 +866,7 @@ void MainMenu::event(const SDL_Event& e)
                     int i = p_state - STATE_CONTROLS_P1_UP;
 
 
-                    if (e.button.button != SDL_BUTTON_WHEELDOWN && e.button.button != SDL_BUTTON_WHEELUP)
+                    //if (e.button.button != SDL_BUTTON_WHEELDOWN && e.button.button != SDL_BUTTON_WHEELUP)
                     {
                         p_settings->controls[i].type = Control::E_MBUTTON;
                         p_settings->controls[i].i = e.button.button;
@@ -1163,7 +1163,7 @@ void MainMenu::afterEvent()
         char buff[256] = {0};
         snprintf(buff, 255, "Detected %d pressed keys.", p_testKeysCount);
         p_text_test_keyboard_status.puts(0, buff);
-        if (p_testKeysLastKeyDown != SDLK_LAST)
+        if (p_testKeysLastKeyDown != /*SDLK_LAST*/-1)
         {
             snprintf(buff, 255, "  %s", SDL_GetKeyName(p_testKeysLastKeyDown));
             p_text_test_keyboard_status.puts(3, buff);
@@ -1172,7 +1172,7 @@ void MainMenu::afterEvent()
         {
             p_text_test_keyboard_status.puts(3, "");
         }
-        if (p_testKeysLastKeyUp != SDLK_LAST)
+        if (p_testKeysLastKeyUp != /*SDLK_LAST*/-1)
         {
             snprintf(buff, 255, "  %s", SDL_GetKeyName(p_testKeysLastKeyUp));
             p_text_test_keyboard_status.puts(5, buff);

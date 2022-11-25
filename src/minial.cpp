@@ -13,10 +13,10 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 #define MA_FREQ 22050
-#define MA_SAMPLES 1024
+#define MA_SAMPLES 256
 #define MA_LINEAR 1 // sample filtering: 0 - none, 1 - linear
 
 struct ALCdevice

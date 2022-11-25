@@ -36,6 +36,8 @@ enum Gamemenu_states {
     GMSTATE_O_SOUNDVOL, GMSTATE_O_VIEWDIST,
 };
 
+extern SDL_Window* gameWindow;
+
 struct Gamemap {
     Gamemap() : light_ah(0), light_av(0), pict_tex(0) { filename[0] = 0; filename_tex[0] = 0; name[0] = 0; }
 	//Gamemap(const Gamemap& gamemap) { memcpy(this, &gamemap, sizeof(Gamemap)); }

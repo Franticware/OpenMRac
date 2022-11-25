@@ -1,9 +1,9 @@
 CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC
-LFLAGS = -lSDL -lGL -lopenal -ljpeg -lpng -lm -s
+LFLAGS = -lSDL2 -lGL -lopenal -ljpeg -lpng -lm -s
 
 # Uncomment the following two lines to use MiniAL instead of OpenAL:
 #CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -DUSE_MINIAL -fno-exceptions -fPIC
-#LFLAGS = -lSDL -lGL -ljpeg -lpng -lm -s
+#LFLAGS = -lSDL2 -lGL -ljpeg -lpng -lm -s
 
 CXX    = g++
 LINK   = g++

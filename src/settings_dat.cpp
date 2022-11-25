@@ -10,10 +10,10 @@
 
     // name,     default, min, max, comment
 const Sett_entry_base entry_base[] = {
-    {"fullscreen", 0, 0, 1, "0 - windowed, 1 - fullscreen"},
-    {"screen_x", 800, 0, UINT_MAX, "screen resolution"},
-    {"screen_y", 600, 0, UINT_MAX, ""},
-    {"vsync", 0, 0, 1, "0 - vsync off, 1 - vsync on"},
+    {"fullscreen", /*0*/1, 0, 1, "0 - windowed, 1 - fullscreen"},
+    {"screen_x", /*800*/0, 0, UINT_MAX, "screen resolution"},
+    {"screen_y", /*600*/0, 0, UINT_MAX, ""},
+    {"vsync", 1, 0, 1, "0 - vsync off, 1 - vsync on"},
     {"antialiasing", 0, 0, 2, "0 - off, 1 - 2x, 2 - 4x"},
     {"texture_filter", 1, 0,
 #ifdef DISABLE_ANISOTROPY
@@ -452,7 +452,7 @@ void Settings::getControlName(char* buff, unsigned n, unsigned i, bool joystickN
 {
     if (controls[i].type == Control::E_KEYBOARD)
     {
-        snprintf(buff, n, "%s", SDL_GetKeyName(static_cast<SDLKey>(controls[i].i)));
+        snprintf(buff, n, "%s", SDL_GetKeyName(static_cast<SDL_Keycode>(controls[i].i)));
     }
     else if (controls[i].type == Control::E_MBUTTON)
     {

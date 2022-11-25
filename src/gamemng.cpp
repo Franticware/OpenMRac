@@ -13,9 +13,11 @@
 #include <algorithm>
 #include <cstdio>
 
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 #include "soundmng.h"
+
+SDL_Window* gameWindow = 0;
 
 int ge_bpass1 = 1;
 
@@ -1240,9 +1242,9 @@ void Gamemng::restart()
     }
 
     glClear (GL_COLOR_BUFFER_BIT); checkGL();
-    SDL_GL_SwapBuffers();
+    SDL_GL_SwapWindow(gameWindow);
     glClear (GL_COLOR_BUFFER_BIT); checkGL();
-    SDL_GL_SwapBuffers();
+    SDL_GL_SwapWindow(gameWindow);
     glClear (GL_COLOR_BUFFER_BIT); checkGL();
 
 }

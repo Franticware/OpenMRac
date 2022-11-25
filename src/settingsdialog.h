@@ -66,9 +66,9 @@ public:
 
     virtual void onButton(int itemIndex);
 
-    virtual void onKeyDown(SDLKey k);
+    virtual void onKeyDown(SDL_Keycode k);
 
-    virtual void onKeyUp(SDLKey k);
+    virtual void onKeyUp(SDL_Keycode k);
 
     int getSelectedScreenMode() const;
     bool getVsyncChecked() const;

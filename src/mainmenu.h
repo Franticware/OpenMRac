@@ -5,7 +5,7 @@
 #include "gltext.h"
 #include "settings_dat.h"
 
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 enum MainMenu_states {
     STATE_RACE = 0, STATE_CONTROLS, STATE_OPTIONS, STATE_BEST_LAPS, STATE_QUIT, STATE_Q,
@@ -106,8 +106,8 @@ public:
     int p_track_sel;
 
     int p_testKeysCount;
-    SDLKey p_testKeysLastKeyDown;
-    SDLKey p_testKeysLastKeyUp;
+    SDL_Keycode p_testKeysLastKeyDown;
+    SDL_Keycode p_testKeysLastKeyUp;
 
     bool p_enterMode;
 

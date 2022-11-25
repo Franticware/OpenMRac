@@ -4,6 +4,8 @@
 
 OpenMRac is a split-screen racing game. It is a tweaked source release of [MultiRacer](https://www.franticware.com/multiracer).
 
+Branch sdl2 contains port from SDL 1.2 to SDL 2. It was tested only in Linux. Additional changes are required for OSX and possibly other plaforms.
+
 Programming was done by Vojtěch Salajka.  
 Porting to big endian architectures for Amiga-like OSes was done by [Szilárd Biró](https://github.com/BSzili).
 

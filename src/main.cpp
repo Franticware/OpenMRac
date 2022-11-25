@@ -6,8 +6,8 @@
 #include <vector>
 #include <set>
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_endian.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_endian.h>
 #ifndef __MACOSX__
 #include <GL/gl.h>
 #else
@@ -88,21 +88,20 @@ std::vector<ALuint> global_al_buffers;
 
 int g_mipmaps_available = 0;
 
-/* This is our SDL surface */
-SDL_Surface* surface = 0;
-
 int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int height/*, unsigned int depth = 0*/);
 
 std::vector<JoystickDevice>* g_joystickDevices = 0;
 
+SDL_GLContext maincontext; // Our opengl context handle
 
 void my_exit(int ret, bool callExit)
 {
     for (unsigned int i = 0; i < g_joystickDevices->size(); ++i)
     {
-        if (SDL_JoystickOpened(i))
-            (*g_joystickDevices)[i].close();
+        /*if (SDL_JoystickOpened(i))
+            (*g_joystickDevices)[i].close();*/
     }
+    SDL_GL_DeleteContext(maincontext);
     SDL_Quit();
     
 #ifndef __MACOSX__
@@ -144,7 +143,7 @@ void saveTgaScreenshot()
     char filename[256] = {0};
     snprintf(filename, 255, "openmrac-scr%.3d.tga", screenshotNumber);
     //FILE* fout = fopen(filename, "wb");
-    FILE* fout = fopenDir(filename, "wb");
+    FILE* fout = fopenDir(filename, "wb", OPENMRAC_ORG, OPENMRAC_APP);
     //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (fout != NULL) {
         unsigned char tgaheader[] = {    
@@ -179,25 +178,6 @@ void initScreenModesVector(std::vector<ScreenMode>& screenModesVector, ScreenMod
 {
     std::set<ScreenMode> screenModesSet;
 
-    SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN | SDL_HWSURFACE);
-
-    if (modes != (SDL_Rect **)0 && modes != (SDL_Rect **)-1)
-    {
-        for (unsigned i = 0; modes[i]; ++i)
-        {
-            screenModesSet.insert(ScreenMode(modes[i]->w, modes[i]->h, 0));
-            screenModesSet.insert(ScreenMode(modes[i]->w, modes[i]->h, 1));
-        }
-    }
-
-    if (currentScreenMode.fullscreen == 1)
-    {
-        if (!screenModesSet.count(currentScreenMode))
-        {
-            currentScreenMode = defaultScreenMode;
-        }
-    }
-
     screenModesSet.insert(currentScreenMode);
     screenModesSet.insert(defaultScreenMode);
 
@@ -221,6 +201,8 @@ void initScreenModesVector(std::vector<ScreenMode>& screenModesVector, ScreenMod
     screenModesSet.insert(ScreenMode(1600, 1200, 0));
     screenModesSet.insert(ScreenMode(1920, 1080, 0));
     screenModesSet.insert(ScreenMode(1920, 1200, 0));
+    screenModesSet.insert(ScreenMode(2560, 1440, 0));
+    screenModesSet.insert(ScreenMode(0, 0, 1));
 
     std::copy(screenModesSet.begin(), screenModesSet.end(), std::back_inserter(screenModesVector));
 }
@@ -246,12 +228,6 @@ int my_main (int argc, char** argv)
     static std::vector<JoystickDevice> joystickDevices;
     g_joystickDevices = &joystickDevices;
     std::vector<JoystickIdentifier> joystickNotConnectedDevices;
-
-#ifndef __MORPHOS__
-    char SDL_VIDEO_CENTERED_EQUALS_CENTER[] = "SDL_VIDEO_CENTERED=center";
-    SDL_putenv(SDL_VIDEO_CENTERED_EQUALS_CENTER);
-#endif
-
 
     // initialize SDL video
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
@@ -295,7 +271,8 @@ int my_main (int argc, char** argv)
         Control(),
         };
 
-    Settings settings("settings.dat", &joystickDevices, &joystickNotConnectedDevices, controls);
+    // SDL2 key codes differ from SDL1.2 ones, so the settings file cannnot be shared
+    Settings settings("settings-sdl2.dat", &joystickDevices, &joystickNotConnectedDevices, controls);
     settings.load();
 
     if (!skipSettings)
@@ -351,7 +328,10 @@ int my_main (int argc, char** argv)
         settings.save();
     }
 
-    SDL_WM_SetCaption("", NULL);
+    if (gameWindow)
+    {
+        SDL_SetWindowTitle(gameWindow, "");
+    }
 
     getdeltaT_init();
 
@@ -379,7 +359,10 @@ int my_main (int argc, char** argv)
     bool limitFramerate = settings.get("vsync");
 #endif
 
-    SDL_WM_SetCaption("OpenMRac " OPENMRAC_VERSION, NULL);
+    if (gameWindow)
+    {
+        SDL_SetWindowTitle(gameWindow, "OpenMRac " OPENMRAC_VERSION);
+    }
         
     if (strcmp((const char*)glGetString(GL_VERSION), "1.4") >= 0) {
         g_mipmaps_available = 1;
@@ -890,7 +873,7 @@ int my_main (int argc, char** argv)
         if (menu.p_bactive)
         {
             menu.render();
-            SDL_GL_SwapBuffers();
+            SDL_GL_SwapWindow(gameWindow);
             if (f12pressed) {
                 f12pressed = false;
                 saveTgaScreenshot();
@@ -946,7 +929,7 @@ int my_main (int argc, char** argv)
 
         glEnable(GL_DEPTH_TEST); checkGL();
 
-        SDL_GL_SwapBuffers();
+        SDL_GL_SwapWindow(gameWindow);
         
         if (f12pressed) {
             f12pressed = false;
@@ -1051,48 +1034,14 @@ int main (int argc, char** argv)
 // 0 - success, 1 - error
 int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int height/*, unsigned int depth*/)
 {
-    const unsigned int depth = 0;
-    /* this holds some info about our display */
-    /* Fetch the video info */
-    const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo( );
+    // Request OpenGL context
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
-    if ( !videoInfo )
-    {
-        fprintf( stderr, "Video query failed: %s\n",
-             SDL_GetError( ) );
-        return 1;
-    }
-
-    /* Flags to pass to SDL_SetVideoMode */
-    /* the flags to pass to SDL_SetVideoMode */
-    int videoFlags = SDL_OPENGL          /* Enable OpenGL in SDL */
-                  // | SDL_GL_DOUBLEBUF /* Enable double buffering */ // toto je udelane pomoci SDL_GL_SetAttribute
-                   //| SDL_HWPALETTE       /* Store the palette in hardware */
-                   //| SDL_RESIZABLE      /* Enable window resizing */
-                   ;
-    /* This checks to see if surfaces can be stored in memory */
-    /*if (videoInfo->hw_available)
-        videoFlags |= SDL_HWSURFACE;
-    else
-        videoFlags |= SDL_SWSURFACE;*/
-
-    /* This checks if hardware blits can be done */
-    //if (videoInfo->blit_hw)
-    //    videoFlags |= SDL_HWACCEL;
-
-    if (fullscreen)
-        videoFlags |= SDL_FULLSCREEN;
-
-    /* Sets up OpenGL double buffering */
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-#if USE_VSYNC
-    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, vsync ? 1 : 0);
-#else
-    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 0);
-#endif
-
-    //g_multisampleMode
     if (g_multisampleMode)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -1100,17 +1049,31 @@ int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int h
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, samples);
     }
 
-    /* get a SDL surface */
-    surface = SDL_SetVideoMode(width, height, depth, videoFlags);
+    Uint32 flags = 0;
 
-    /* Verify there is a surface */
-    if (!surface)
+    if (fullscreen)
     {
-        fprintf( stderr,  "Video mode set failed: %s\n", SDL_GetError( ) );
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    }
+
+    gameWindow = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            fullscreen ? 0 : width, fullscreen ? 0 : height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | flags);
+
+    if (!gameWindow)
+    {
+        SDL_Quit();
         return 1;
     }
 
-    glViewport(0, 0, width, height); checkGL();
+    // Create our opengl context and attach it to our window
+    maincontext = SDL_GL_CreateContext(gameWindow);
+    // This makes our buffer swap syncronized with the monitor's vertical refresh
+    SDL_GL_SetSwapInterval(vsync ? 1 : 0);
+
+    int actualWidth, actualHeight;
+    SDL_GetWindowSize(gameWindow, &actualWidth, &actualHeight);
+
+    glViewport(0, 0, actualWidth, actualHeight); checkGL();
     return 0;
 }
 

@@ -70,14 +70,21 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     for (int i = 0; i != static_cast<int>(screenModes.size()); ++i)
     {
         char buff[1024] = {0};
-        snprintf(buff, 1023, "%dx%d %s%s", screenModes[i].width, screenModes[i].height, screenModes[i].getAspectRatioString().c_str(), (screenModes[i].fullscreen ? "Fullscreen" : "Windowed"));
+        if (!screenModes[i].fullscreen)
+        {
+            snprintf(buff, 1023, "%dx%d %s%s", screenModes[i].width, screenModes[i].height, screenModes[i].getAspectRatioString().c_str(), (screenModes[i].fullscreen ? "Fullscreen" : "Windowed"));
+        }
+        else
+        {
+            snprintf(buff, 1023, "Fullscreen");
+        }
         resolutions.push_back(buff);
     }
 
     int currentScreenModeIndex = std::find(screenModes.begin(), screenModes.end(), currentScreenMode) - screenModes.begin();
     m_defaultScreenModeIndex = std::find(screenModes.begin(), screenModes.end(), defaultScreenMode) - screenModes.begin();
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(4), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(4, 1), "Resolution"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(4), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(4, 1), "Mode"));
     m_resolutionsComboIndex = m_items.size();
     m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(4), m_layout.getCellWidth(3, 1), m_layout.getCellHeight(4, 1), resolutions, currentScreenModeIndex, 20, 7));
     m_vsyncIndex = m_items.size();
@@ -185,7 +192,7 @@ void SettingsDialog::onButton(int itemIndex)
     }
 }
 
-void SettingsDialog::onKeyDown(SDLKey k)
+void SettingsDialog::onKeyDown(SDL_Keycode k)
 {
     if (k == SDLK_KP_ENTER)
     {
@@ -207,7 +214,7 @@ void SettingsDialog::onKeyDown(SDLKey k)
     }
 }
 
-void SettingsDialog::onKeyUp(SDLKey k)
+void SettingsDialog::onKeyUp(SDL_Keycode k)
 {
     if (k == SDLK_KP_ENTER && m_enterPressed)
     {

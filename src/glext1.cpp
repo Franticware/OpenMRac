@@ -3,7 +3,7 @@
 #include "glext1.h"
 #include "cstring1.h"
 
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 /*Ext1_glActiveTexture ext1_glActiveTexture = 0;
 

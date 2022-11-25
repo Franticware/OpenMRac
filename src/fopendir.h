@@ -3,16 +3,6 @@
 
 #include <cstdio>
 
-#if defined(__cplusplus) && defined(__MACOSX__)
-extern "C" {
-#endif
-
-// pokud je org == 0 nebo app == 0, otevři soubor v Dokumentech (Windows) nebo v home (Linux, OS X)
-// jinak v "data aplikací"
-FILE* fopenDir(const char* filename, const char* mode, const char* org = 0, const char* app = 0);
-
-#if defined(__cplusplus) && defined(__MACOSX__)
-}
-#endif
+FILE* fopenDir(const char* filename, const char* mode, const char* org, const char* app);
 	
 #endif // FOPENDIR_H

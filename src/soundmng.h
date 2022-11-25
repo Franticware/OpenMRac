@@ -13,7 +13,7 @@
 #endif
 #endif
 
-#include <SDL/SDL_endian.h>
+#include <SDL2/SDL_endian.h>
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
 inline void swapArrayLE16(unsigned char* , unsigned int )

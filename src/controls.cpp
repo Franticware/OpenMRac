@@ -128,7 +128,7 @@ int AxisState::convertValue(Sint16 value) // -1, 0, 1 ... -, center, +; -2 ... u
 void JoystickDevice::open(int index)
 {
     device = SDL_JoystickOpen(index);
-    identifier.parameters.name = SDL_JoystickName(index);
+    identifier.parameters.name = SDL_JoystickName(device);
     identifier.parameters.axes = SDL_JoystickNumAxes(device);
     identifier.parameters.balls = SDL_JoystickNumBalls(device);
     identifier.parameters.hats = SDL_JoystickNumHats(device);
