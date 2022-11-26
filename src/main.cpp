@@ -611,22 +611,7 @@ int my_main (int argc, char** argv)
 
             case SDL_KEYDOWN: // check for keypresses
                 {
-                    //#if defined(__WIN32__)
-                    // pro fullscreen to nefunguje ani v linuxu samo
-                    if (event.key.keysym.sym == SDLK_F4 && (event.key.keysym.mod & (KMOD_LALT | KMOD_RALT)))
-                    {
-                        done = true;
-                        break;
-                    }
-                    //#endif
-
-                    if (event.key.keysym.sym == 
-#ifndef __MACOSX__
-                        SDLK_F12
-#else
-                        SDLK_F12
-#endif
-                        ) {
+                    if (event.key.keysym.sym == SDLK_F12) {
                         f12pressed = true;
                     }
 

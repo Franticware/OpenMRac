@@ -821,17 +821,13 @@ void GuiDialog::execute()
             break;
 
         case SDL_KEYDOWN:
-            #if defined(__WIN32__)
-            if (event.key.keysym.sym == SDLK_F4 && (event.key.keysym.mod & (KMOD_LALT | KMOD_RALT)))
-            {
-                onQuit();
-            }
-            #endif
             onKeyDown(event.key.keysym.sym);
             break;
+
         case SDL_KEYUP:
             onKeyUp(event.key.keysym.sym);
             break;
+
         case SDL_MOUSEWHEEL:
         {
             int delta = 0;

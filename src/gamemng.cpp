@@ -1012,9 +1012,6 @@ void Gamemng::render_frame()
     
         bool useSampleCoverage = g_multisampleMode;
 
-//#if defined(_MSC_VER) || (defined(__WIN32__) && defined(__MINGW32__))
-//        useSampleCoverage = false;
-//#endif
 #if defined(__MACOSX__) || defined(__amigaos4__)
         useSampleCoverage = false;
 #endif

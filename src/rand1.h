@@ -1,7 +1,6 @@
 #ifndef HLIDAC_RAND1_H
 #define HLIDAC_RAND1_H
 
-void srand1(unsigned int seed);
 void srand1();
 int rand1();
 int randn1(int size);
