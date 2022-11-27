@@ -15,9 +15,13 @@
 #include <cmath>
 #include <SDL/SDL.h>
 
+#define MA_FILTER_NONE 0
+#define MA_FILTER_LINEAR 1 // recommended
+#define MA_FILTER_HIGH_QUALITY 2
+
+#define MA_FILTER MA_FILTER_LINEAR
 #define MA_FREQ 22050
-#define MA_SAMPLES 1024
-#define MA_LINEAR 1 // sample filtering: 0 - none, 1 - linear
+#define MA_SAMPLES 256
 
 struct ALCdevice
 {
@@ -51,6 +55,7 @@ struct MA_Source
 struct MA_Buffer
 {
     std::vector<Sint16> samples;
+    float pitch = 1.f;
 };
 
 static ALCdevice alcDevice;
@@ -65,54 +70,63 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
     (void)userdata;
     Sint16* stream16 = (Sint16*)stream;
     int len16 = len >> 1;
+    if (floatBuff == 0) return;
     floatBuff->resize(len16);
     std::fill(floatBuff->begin(), floatBuff->end(), 0.f);
-    for (auto& p : *sourceMap)
+    if (sourceMap != 0)
     {
-        MA_Source& src = p.second;
-        if (src.playing)
+        for (auto& p : *sourceMap)
         {
-            if (src.buffer != 0)
+            MA_Source& src = p.second;
+            if (src.playing)
             {
-                MA_Buffer& buff = (*bufferMap)[src.buffer];
-                if (!buff.samples.empty())
+                if (src.buffer != 0)
                 {
-                    for (int i = 0; i != len16; ++i)
+                    MA_Buffer& buff = (*bufferMap)[src.buffer];
+                    if (!buff.samples.empty())
                     {
-                        while (src.pos >= buff.samples.size())
+                        const float pitch = src.pitch * buff.pitch;
+                        for (int i = 0; i != len16; ++i)
                         {
-                            if (src.looping)
+                            while (src.pos >= buff.samples.size())
                             {
-                                src.pos -= buff.samples.size();
+                                if (src.looping)
+                                {
+                                    src.pos -= buff.samples.size();
+                                }
+                                else
+                                {
+                                    src.pos = 0;
+                                    src.playing = false;
+                                }
+                            }
+                            if (!src.playing) break;
+#if MA_FILTER == MA_FILTER_NONE
+                            (*floatBuff)[i] += buff.samples[src.pos] * src.gain;
+#endif
+#if MA_FILTER == MA_FILTER_LINEAR
+                            uint32_t ipos0 = src.pos;
+                            uint32_t ipos1 = ipos0 + 1;
+                            Sint16 smp0 = buff.samples[ipos0];
+                            Sint16 smp1 = 0;
+                            if (ipos1 >= buff.samples.size())
+                            {
+                                if (src.looping)
+                                {
+                                    smp1 = buff.samples[0];
+                                }
                             }
                             else
                             {
-                                src.pos = 0;
-                                src.playing = false;
+                                smp1 = buff.samples[ipos1];
                             }
-                        }
-                        if (!src.playing) break;
-#if MA_LINEAR
-                        uint32_t ipos0 = src.pos;
-                        uint32_t ipos1 = ipos0 + 1;
-                        Sint16 smp0 = buff.samples[ipos0];
-                        Sint16 smp1 = 0;
-                        if (ipos1 >= buff.samples.size())
-                        {
-                            if (src.looping)
-                            {
-                                smp1 = buff.samples[0];
-                            }
-                        }
-                        else
-                        {
-                            smp1 = buff.samples[ipos1];
-                        }
-                        (*floatBuff)[i] += (float(smp0) + (float(smp1) - float(smp0)) * (src.pos - ipos0)) * src.gain;
-#else
-                        (*floatBuff)[i] += buff.samples[src.pos] * src.gain;
+                            (*floatBuff)[i] += (float(smp0) + (float(smp1) - float(smp0)) * (src.pos - ipos0)) * src.gain;
 #endif
-                        src.pos += src.pitch;
+#if MA_FILTER == MA_FILTER_HIGH_QUALITY
+#error "Hight quality audio filter is currently not implemented"
+#endif
+                            src.pos += pitch;
+                        }
                     }
                 }
             }
@@ -133,17 +147,29 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
 
 ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
 {
-    (void)device;
-    (void)extname;
-    return 1;
+    if (device == 0)
+    {
+        if (strcmp(extname, "ALC_ENUMERATE_ALL_EXT") == 0)
+        {
+            return 1;
+        }
+        if (strcmp(extname, "ALC_ENUMERATION_EXT") == 0)
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
 {
-    (void)device;
-    (void)param;
-    static const ALCchar* ret = "\0\0";
-    return ret;
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    if (device == 0 && (param == ALC_ALL_DEVICES_SPECIFIER || param == ALC_DEVICE_SPECIFIER))
+    {
+        static const ALCchar* ret = "\0\0";
+        return ret;
+    }
+    return 0;
 }
 
 ALCdevice* alcOpenDevice(const ALCchar *devicename)
@@ -153,7 +179,6 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     bufferMap = new std::map<ALuint, MA_Buffer>;
     floatBuff = new std::vector<float>;
     floatBuff->resize(MA_SAMPLES);
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
     SDL_AudioSpec as;
     as.freq = MA_FREQ;
     as.format = AUDIO_S16;
@@ -190,8 +215,11 @@ ALCboolean alcCloseDevice(ALCdevice *device)
     (void)device;
     SDL_CloseAudio();
     delete sourceMap;
+    sourceMap = 0;
     delete bufferMap;
+    bufferMap = 0;
     delete floatBuff;
+    floatBuff = 0;
     return 1;
 }
 
@@ -223,38 +251,42 @@ void alGenBuffers(ALsizei n, ALuint *buffers)
     generateStuff(n, buffers, *bufferMap, bufferCounter);
 }
 
-template<class T> void deleteStuff(ALsizei n, const ALuint* stuff, std::map<ALuint, T>& m)
+template<class T> void deleteStuff(ALsizei n, const ALuint* stuff, std::map<ALuint, T>* m)
 {
+    if (m == 0)
+        return;
     SDL_LockAudio();
     for (ALsizei i = 0; i != n; ++i)
     {
-        m.erase(stuff[i]);
+        m->erase(stuff[i]);
     }
     SDL_UnlockAudio();
 }
 
 void alDeleteSources(ALsizei n, const ALuint *sources)
 {
-    deleteStuff(n, sources, *sourceMap);
+    deleteStuff(n, sources, sourceMap);
 }
 
 void alDeleteBuffers(ALsizei n, const ALuint *buffers)
 {
-    deleteStuff(n, buffers, *bufferMap);
+    deleteStuff(n, buffers, bufferMap);
 }
 
 void alListenerfv(ALenum param, const ALfloat *values)
 {
     (void)param;
     (void)values;
+    // listener parameters have no effect
     return;
 }
 
 void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq)
 {
-    if (buffer == 0 || format != AL_FORMAT_MONO16 || freq != MA_FREQ) return; // only 22050 Hz, 16-bit mono audio is currently supported
+    if (buffer == 0 || bufferMap == 0 || format != AL_FORMAT_MONO16) return; // only 16-bit mono audio is currently supported
     SDL_LockAudio();
     MA_Buffer& buff = (*bufferMap)[buffer];
+    buff.pitch = float(freq)/float(MA_FREQ);
     buff.samples.resize(size >> 1);
     std::copy((Sint16*)data, ((Sint16*)data) + buff.samples.size(), buff.samples.begin());
     SDL_UnlockAudio();
@@ -262,7 +294,7 @@ void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size
 
 void alSourcef(ALuint source, ALenum param, ALfloat value)
 {
-    if (source == 0) return;
+    if (source == 0 || sourceMap == 0) return;
     SDL_LockAudio();
     MA_Source& src = (*sourceMap)[source];
     switch (param)
@@ -294,7 +326,7 @@ void alSourcefv(ALuint source, ALenum param, const ALfloat *values)
 
 void alSourcei(ALuint source, ALenum param, ALint value)
 {
-    if (source == 0) return;
+    if (source == 0 || sourceMap == 0) return;
     SDL_LockAudio();
     MA_Source& src = (*sourceMap)[source];
     switch (param)
@@ -311,7 +343,7 @@ void alSourcei(ALuint source, ALenum param, ALint value)
 
 void alSourcePlay(ALuint source)
 {
-    if (source == 0) return;
+    if (source == 0 || sourceMap == 0) return;
     SDL_LockAudio();
     MA_Source& src = (*sourceMap)[source];
     src.playing = true;
@@ -320,7 +352,7 @@ void alSourcePlay(ALuint source)
 
 void alSourceStop(ALuint source)
 {
-    if (source == 0) return;
+    if (source == 0 || sourceMap == 0) return;
     SDL_LockAudio();
     MA_Source& src = (*sourceMap)[source];
     src.playing = false;
@@ -329,7 +361,7 @@ void alSourceStop(ALuint source)
 
 void alSourceRewind(ALuint source)
 {
-    if (source == 0) return;
+    if (source == 0 || sourceMap == 0) return;
     SDL_LockAudio();
     MA_Source& src = (*sourceMap)[source];
     src.pos = 0;
