@@ -3,6 +3,8 @@ CONFIG += console c++17
 CONFIG -= app_bundle
 CONFIG -= qt
 
+TARGET = openmrac
+
 QMAKE_CXXFLAGS += -DDIR_OPENMRAC_DAT=/usr/share/openmrac/
 
 QMAKE_CXXFLAGS += -DUSE_MINIAL

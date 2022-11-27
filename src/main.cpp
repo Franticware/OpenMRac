@@ -88,7 +88,7 @@ std::vector<ALuint> global_al_buffers;
 
 int g_mipmaps_available = 0;
 
-int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int height/*, unsigned int depth = 0*/);
+int EnableOpenGL(bool fullscreen, bool vsync, int width, int height);
 
 std::vector<JoystickDevice>* g_joystickDevices = 0;
 
@@ -203,7 +203,13 @@ void initScreenModesVector(std::vector<ScreenMode>& screenModesVector, ScreenMod
     screenModesSet.insert(ScreenMode(1920, 1200, 0));
     screenModesSet.insert(ScreenMode(2560, 1440, 0));
     screenModesSet.insert(ScreenMode(0, 0, 1));
-
+    {
+        SDL_DisplayMode dm;
+        if (SDL_GetDesktopDisplayMode(0, &dm) == 0)
+        {
+            screenModesSet.insert(ScreenMode(dm.w, dm.h, 0));
+        }
+    }
     std::copy(screenModesSet.begin(), screenModesSet.end(), std::back_inserter(screenModesVector));
 }
 
@@ -858,72 +864,72 @@ int my_main (int argc, char** argv)
         if (menu.p_bactive)
         {
             menu.render();
+        }
+        else
+        {
+            // smazání depth bufferu každý snímek a color bufferu každý 100. snímek
+            static unsigned int frame_clr_cnt = 0;
+            if (frame_clr_cnt >= 100 || g_freecam)
+            {
+                glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); checkGL();
+                frame_clr_cnt = 0;
+            } else {
+                glClear (GL_DEPTH_BUFFER_BIT); checkGL();
+                ++frame_clr_cnt;
+            }
+
+#ifndef NO_CAMERA
+            float speed = b_kamera_fast ? 1.f : 0.1f;
+            float rotSpeed = b_kamera_fast ? 1.f : 0.4f;
+            if (kamera_bkeys[0]) kamera.turn_l(cameraDeltaT*rotSpeed);
+            if (kamera_bkeys[1]) kamera.turn_r(cameraDeltaT*rotSpeed);
+            if (kamera_bkeys[2]) kamera.turn_d(cameraDeltaT*rotSpeed);
+            if (kamera_bkeys[3]) kamera.turn_u(cameraDeltaT*rotSpeed);
+
+            if (kamera_bkeys[4]) kamera.move_f(cameraDeltaT*speed);
+            if (kamera_bkeys[5]) kamera.move_b(cameraDeltaT*speed);
+            if (kamera_bkeys[6]) kamera.move_l(cameraDeltaT*speed);
+            if (kamera_bkeys[7]) kamera.move_r(cameraDeltaT*speed);
+
+            if (kamera_bkeys[8]) kamera.move_u(cameraDeltaT*speed);
+            if (kamera_bkeys[9]) kamera.move_d(cameraDeltaT*speed);
+#endif
+
+            glEnable(GL_DEPTH_TEST); checkGL();
+            glDisable(GL_LIGHTING); checkGL();
+            glDepthFunc(GL_LESS); checkGL();
+
+            glColor4f(1.f, 1.f, 1.f, 1.f); checkGL();
+            glEnable(GL_TEXTURE_2D); checkGL();
+            gamemng.input(player_bkeys);
+            float deltaTclamped = std::min(deltaT, 1.f);
+
+            // transformace a vykreslení scény
+            glPushMatrix(); checkGL();
+#ifndef NO_CAMERA
+                if (g_freecam) kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
+#endif
+                gamemng.frame(deltaTclamped); // ořezání času na maximálně 1 sekundu
+            glPopMatrix(); checkGL();
+
+            glEnable(GL_DEPTH_TEST); checkGL();
+        }
+
+        {
             SDL_GL_SwapWindow(gameWindow);
+
             if (f12pressed) {
                 f12pressed = false;
                 saveTgaScreenshot();
             }
-            SDL_Delay(10);
-            continue;
         }
 
-        // smazání depth bufferu každý snímek a color bufferu každý 100. snímek
-        static unsigned int frame_clr_cnt = 0;
-        if (frame_clr_cnt >= 100 || g_freecam)
+        if (menu.p_bactive)
         {
-            glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); checkGL();
-            frame_clr_cnt = 0;
-        } else {
-            glClear (GL_DEPTH_BUFFER_BIT); checkGL();
-            ++frame_clr_cnt;
+            SDL_Delay(10);
         }
-
-#ifndef NO_CAMERA
-        float speed = b_kamera_fast ? 1.f : 0.1f;
-        float rotSpeed = b_kamera_fast ? 1.f : 0.4f;
-        if (kamera_bkeys[0]) kamera.turn_l(cameraDeltaT*rotSpeed);
-        if (kamera_bkeys[1]) kamera.turn_r(cameraDeltaT*rotSpeed);
-        if (kamera_bkeys[2]) kamera.turn_d(cameraDeltaT*rotSpeed);
-        if (kamera_bkeys[3]) kamera.turn_u(cameraDeltaT*rotSpeed);
-
-        if (kamera_bkeys[4]) kamera.move_f(cameraDeltaT*speed);
-        if (kamera_bkeys[5]) kamera.move_b(cameraDeltaT*speed);
-        if (kamera_bkeys[6]) kamera.move_l(cameraDeltaT*speed);
-        if (kamera_bkeys[7]) kamera.move_r(cameraDeltaT*speed);
-
-        if (kamera_bkeys[8]) kamera.move_u(cameraDeltaT*speed);
-        if (kamera_bkeys[9]) kamera.move_d(cameraDeltaT*speed);
-#endif
-
-        glEnable(GL_DEPTH_TEST); checkGL();
-        glDisable(GL_LIGHTING); checkGL();
-        glDepthFunc(GL_LESS); checkGL();
-
-        glColor4f(1.f, 1.f, 1.f, 1.f); checkGL();
-        glEnable(GL_TEXTURE_2D); checkGL();
-        gamemng.input(player_bkeys);
-        float deltaTclamped = std::min(deltaT, 1.f);
-
-        // transformace a vykreslení scény
-        glPushMatrix(); checkGL();
-#ifndef NO_CAMERA
-            if (g_freecam) kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
-#endif
-            gamemng.frame(deltaTclamped); // ořezání času na maximálně 1 sekundu
-        glPopMatrix(); checkGL();
-
-        glEnable(GL_DEPTH_TEST); checkGL();
-
-        SDL_GL_SwapWindow(gameWindow);
-        
-        if (f12pressed) {
-            f12pressed = false;
-            saveTgaScreenshot();
-        }
-
-
 #if !USE_VSYNC
-        if (limitFramerate)
+        else if (limitFramerate)
         {
             const Uint32 minFrameTime = 8;
             Uint32 endFrameTime = SDL_GetTicks();
@@ -1017,7 +1023,7 @@ int main (int argc, char** argv)
 }
 
 // 0 - success, 1 - error
-int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int height/*, unsigned int depth*/)
+int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
 {
     // Request OpenGL context
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
@@ -1040,6 +1046,17 @@ int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int h
     {
         flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
+
+    /*{
+        SDL_DisplayMode dm;
+        if (SDL_GetDesktopDisplayMode(0, &dm) == 0)
+        {
+            if (!fullscreen && dm.w == width && dm.h == height)
+            {
+                flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
+            }
+        }
+    }*/
 
     gameWindow = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
             fullscreen ? 0 : width, fullscreen ? 0 : height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | flags);
