@@ -15,11 +15,14 @@
 #include <cmath>
 #include <SDL2/SDL.h>
 
-#define MA_FILTER_NONE 0
-#define MA_FILTER_LINEAR 1 // recommended
-#define MA_FILTER_HIGH_QUALITY 2
+#define MA_INTERP_NONE 0 // awful
+#define MA_INTERP_LINEAR 1 // fair
+#define MA_INTERP_CUBIC_SPLINE 2 // good
+#define MA_INTERP_HIGH_QUALITY 3 // not implemented
 
-#define MA_FILTER MA_FILTER_LINEAR
+#define MA_INTERP MA_INTERP_CUBIC_SPLINE
+//#define MA_INTERP MA_INTERP_LINEAR
+//#define MA_INTERP MA_INTERP_NONE
 #define MA_FREQ 22050
 #define MA_SAMPLES 256
 
@@ -56,6 +59,57 @@ struct MA_Buffer
 {
     std::vector<float> samples;
     float pitch = 1.f;
+    inline float getSample(int i, bool loop)
+    {
+        if (samples.empty())
+        {
+            return 0.f;
+        }
+        if (i >= 0 && i < int(samples.size()))
+        {
+            return samples[i];
+        }
+        else
+        {
+            if (loop)
+            {
+                if (i < 0)
+                {
+                    while (i < 0)
+                    {
+                        i += samples.size();
+                    }
+                    if (i >= int(samples.size()))
+                    {
+                        return 0.f;
+                    }
+                    else
+                    {
+                        return samples[i];
+                    }
+                }
+                else
+                {
+                    while (i >= int(samples.size()))
+                    {
+                        i -= int(samples.size());
+                    }
+                    if (i < 0)
+                    {
+                        return 0.f;
+                    }
+                    else
+                    {
+                        return samples[i];
+                    }
+                }
+            }
+            else
+            {
+                return 0.f;
+            }
+        }
+    }
 };
 
 static ALCdevice alcDevice;
@@ -98,30 +152,39 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
                             }
                         }
                         if (!src.playing) break;
-#if MA_FILTER == MA_FILTER_NONE
-                        floatBuff[i] += buff.samples[src.pos] * src.gain;
+#if MA_INTERP == MA_INTERP_NONE
+                        const float output = buff.getSample(std::floor(src.pos), src.looping);
 #endif
-#if MA_FILTER == MA_FILTER_LINEAR
-                        uint32_t ipos0 = src.pos;
-                        uint32_t ipos1 = ipos0 + 1;
-                        float smp0 = buff.samples[ipos0];
-                        float smp1 = 0;
-                        if (ipos1 >= buff.samples.size())
-                        {
-                            if (src.looping)
-                            {
-                                smp1 = buff.samples[0];
-                            }
-                        }
-                        else
-                        {
-                            smp1 = buff.samples[ipos1];
-                        }
-                        floatBuff[i] += (smp0 + (smp1 - smp0) * (src.pos - ipos0)) * src.gain;
+#if MA_INTERP == MA_INTERP_LINEAR
+                        int ipos0 = std::floor(src.pos);
+                        int ipos1 = ipos0 + 1;
+                        float smp0 = buff.getSample(ipos0, src.looping);
+                        float smp1 = buff.getSample(ipos1, src.looping);
+                        const float output = (smp0 + (smp1 - smp0) * (src.pos - ipos0));
 #endif
-#if MA_FILTER == MA_FILTER_HIGH_QUALITY
-#error "Hight quality audio filter is currently not implemented"
+#if MA_INTERP == MA_INTERP_CUBIC_SPLINE
+                        const int ipos_0 = std::floor(src.pos);
+                        const int ipos_n1 = ipos_0 - 1;
+                        const int ipos_1 = ipos_0 + 1;
+                        const int ipos_2 = ipos_0 + 2;
+                        const float sn1 = buff.getSample(ipos_n1, src.looping);
+                        const float s0 = buff.getSample(ipos_0, src.looping);
+                        const float s1 = buff.getSample(ipos_1, src.looping);
+                        const float s2 = buff.getSample(ipos_2, src.looping);
+
+                        const float pf = src.pos - ipos_0;
+                        const float pf2 = pf * pf;
+
+                        const float output = s0 + pf * 0.5f * (
+                                    (2.f * pf2 - 3.f * pf - 1.f) * (s0 - s1) +
+                                    (pf2 - 2.f * pf + 1.f) * (s0 - sn1) +
+                                    (pf2 - pf) * (s2 - s1)
+                                    );
 #endif
+#if MA_INTERP == MA_INTERP_HIGH_QUALITY
+                        const float output = 0.f; // High quality audio filter is currently not implemented
+#endif
+                        floatBuff[i] += output * src.gain;
                         src.pos += pitch;
                     }
                 }

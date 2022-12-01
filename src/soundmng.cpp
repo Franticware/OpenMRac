@@ -7,6 +7,7 @@
 #include <climits>
 
 int g_sound_on = 1;
+static const float maxGain = 0.9f;
 
 extern std::vector<ALuint> global_al_sources;
 extern std::vector<ALuint> global_al_buffers;
@@ -18,7 +19,7 @@ ALuint createSource(ALuint buffer)
     const ALfloat sourcePos[] = { 0.0, 0.0, 0.0 };
     const ALfloat sourceVel[] = { 0.0, 0.0, 0.0 };
     alSourcef (source, AL_PITCH,    1.0      );
-    alSourcef (source, AL_GAIN,     1.0     );
+    alSourcef (source, AL_GAIN,     1.0  * maxGain   );
     alSourcefv(source, AL_POSITION, sourcePos);
     alSourcefv(source, AL_VELOCITY, sourceVel);
     alSourcei (source, AL_LOOPING,  0);
@@ -29,7 +30,7 @@ ALuint createSource(ALuint buffer)
 
 /*void Sound_game_static::playLaprecord(float gain)
 {
-    alSourcef(p_laprecord_stream, AL_GAIN, gain*0.87);
+    alSourcef(p_laprecord_stream, AL_GAIN, gain*0.87*maxGain);
     alSourceStop(p_laprecord_stream);
     alSourcePlay(p_laprecord_stream);
 }*/
@@ -38,7 +39,7 @@ void Sound_game_static::playSoundTest(float gain)
 {
     alSourceStop(p_test_stream);
     alSourceRewind(p_test_stream);
-    alSourcef(p_test_stream, AL_GAIN, gain);
+    alSourcef(p_test_stream, AL_GAIN, gain*maxGain);
     alSourcePlay(p_test_stream);
 }
 
@@ -111,7 +112,7 @@ void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2
     if (engine_state == 0)
     {
         p_engine_on = 0;
-        alSourcef(p_engine0_stream, AL_GAIN, 0.5f**p_global_volume);
+        alSourcef(p_engine0_stream, AL_GAIN, 0.5f**p_global_volume*maxGain);
         if (!p_engine0_state) {
             alSourcePlay(p_engine0_stream);
             p_engine0_state = 1;
@@ -123,9 +124,9 @@ void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2
     } else {
         if (engine_state == 1) {
             p_engine_on = 1;
-            alSourcef(p_engine1_stream, AL_GAIN, engine1_volume0**p_global_volume);
+            alSourcef(p_engine1_stream, AL_GAIN, engine1_volume0**p_global_volume*maxGain);
         } else {
-            alSourcef(p_engine1_stream, AL_GAIN, 0.5f**p_global_volume);
+            alSourcef(p_engine1_stream, AL_GAIN, 0.5f**p_global_volume*maxGain);
         }
 
         alSourcef(p_engine1_stream, AL_PITCH, engine_pitch*p_running_pitch);
@@ -147,7 +148,7 @@ void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2
             p_skid_state = 0;
         }
     } else {
-        alSourcef(p_skid_stream, AL_GAIN, p_brake_volume**p_global_volume);
+        alSourcef(p_skid_stream, AL_GAIN, p_brake_volume**p_global_volume*maxGain);
 
         float speed = std::sqrt(velocity[0]*velocity[0] + velocity[1]*velocity[1]);
         float skidPitch = 0.8f+(speed - 6.f)/24.f*0.4f;
@@ -196,7 +197,7 @@ void Sound_car::init(ALsource stream_idle, ALsource stream_running, float runnin
     alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, 32000.0*double(player)/double(players_n));
     
     alSourcef(p_engine0_stream, AL_GAIN, 0.5**p_global_volume);
-    alSourcef(p_engine1_stream, AL_GAIN, engine1_volume0**p_global_volume);
+    alSourcef(p_engine1_stream, AL_GAIN, engine1_volume0**p_global_volume*maxGain);
 
     p_engine0_state = 0; // 0 - nehraje, 1 - hraje
     p_engine1_state = 0; // 0 - nehraje, 1 - hraje
@@ -224,7 +225,7 @@ void Sound_crash::play(float c_j) // přehraje zvuk nárazu
     
     alSourceStop(p_hit_stream[sel]);
     alSourceRewind(p_hit_stream[sel]);
-    alSourcef(p_hit_stream[sel], AL_GAIN, volume**p_global_volume);
+    alSourcef(p_hit_stream[sel], AL_GAIN, volume**p_global_volume*maxGain);
     
     float pitch_min = 0.88;
     float pitch = pitch_min+randn1(int((1.f-pitch_min)*2.f*1000.f))*0.001;
