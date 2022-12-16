@@ -66,7 +66,7 @@ const char* Settings::controlNames[16] = {
 Settings::Settings(const char* filename, std::vector<JoystickDevice>* joystickDevices, std::vector<JoystickIdentifier>* joystickNotConnectedDevices, Control* controls)
 {
     entry_size = sizeof(entry_base)/sizeof(*entry_base);
-    entry = new Sett_entry[entry_size];
+    entry.resize(entry_size);
     for (unsigned int i = 0; i != entry_size; ++i)
     {
         entry[i].defaultVal = entry[i].val = entry_base[i].val;

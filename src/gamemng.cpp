@@ -271,7 +271,7 @@ void Gamemng::set_far(int far1)
 
 void Gamemng::init_sound()
 {
-    p_sound_crash = new Sound_crash;
+    p_sound_crash = std::unique_ptr<Sound_crash>(new Sound_crash);
     p_sound_crash->init(p_sound_game_static.p_hit_stream); // nulové *p_audiodevice je ošéfované uvnitř
     p_sound_crash->p_global_volume = &p_global_volume;
 }
@@ -420,15 +420,15 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
                 p_cars.push_back(gamecar);
             }
         }
-        gbuff_in.fclose();        
-        for (unsigned int i = 0; i != p_cars.size(); ++i) {   
+        gbuff_in.fclose();
+        for (unsigned int i = 0; i != p_cars.size(); ++i) {
             gbuff_in.f_open(p_cars[i].fname_sample_engine0, "rb");
             alGenBuffers(1, &(p_cars[i].p_engine0_sample)); global_al_buffers.push_back(p_cars[i].p_engine0_sample);
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             alBufferData(p_cars[i].p_engine0_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), 22050);
             gbuff_in.fclose();
-            
+
             gbuff_in.f_open(p_cars[i].fname_sample_engine1, "rb");
             alGenBuffers(1, &(p_cars[i].p_engine1_sample)); global_al_buffers.push_back(p_cars[i].p_engine1_sample);
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
@@ -445,22 +445,21 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
             if (gbuff_in.fgets(buff, 1024))
             {
                 uncomment(buff);
-                sscanf(buff, "%d %d", &(p_cars[i].sz_names), &(p_cars[i].sz_mods));
+                unsigned int sz_mods;
+                sscanf(buff, "%d %d", &(p_cars[i].sz_names), &sz_mods);
                 if (p_cars[i].sz_names > 0)
                     --p_cars[i].sz_names;
+                p_cars[i].pict_tex.clear();
+                p_cars[i].pict_tex.resize(sz_mods);
+                p_cars[i].names.clear();
                 if (p_cars[i].sz_names > 0)
                 {
-                    p_cars[i].names = new Gamecar::Tfname[(p_cars[i].sz_names)*p_cars[i].sz_mods];
-                    for (unsigned int j = 0; j != (p_cars[i].sz_names)*p_cars[i].sz_mods; ++j)
-                        memset(p_cars[i].names[j], 0, 256);
+                    p_cars[i].names.resize((p_cars[i].sz_names)*p_cars[i].pict_tex.size());
                 }
-                else
-                    p_cars[i].names = 0;
-                p_cars[i].pict_tex = new Car_th[p_cars[i].sz_mods];
-                for (unsigned int j = 0; j != p_cars[i].sz_mods; ++j)
+                for (unsigned int j = 0; j != p_cars[i].pict_tex.size(); ++j)
                     p_cars[i].pict_tex[j].tex = 0;
                 int j = 0;
-                while (gbuff_in.fgets(buff, 1024) && j != int(p_cars[i].sz_mods))
+                while (gbuff_in.fgets(buff, 1024) && j != int(p_cars[i].pict_tex.size()))
                 {
                     uncomment(buff);
                     int start_char = 0;
@@ -478,7 +477,7 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
                         {
                             if (k >= 1)
                             {
-                                strncpy(p_cars[i].names[j*p_cars[i].sz_names+k-1], pch, 255);
+                                p_cars[i].names[j*p_cars[i].sz_names+k-1] = pch;
                             }
                             else {
                                 strncpy(p_cars[i].pict_tex[j].fname, pch, 255);
@@ -586,11 +585,11 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
     p_gamemenu.init();
 
     p_sound_game_static.init();
-    
-    p_ghostOld = new Ghost;
-    p_ghostNew = new Ghost[4];
 
-    p_particles = new Particles[4];
+    p_ghostOld = std::unique_ptr<Ghost>(new Ghost);
+    p_ghostNew.clear(); p_ghostNew.resize(4);
+
+    p_particles.resize(4);
 }
 
 void Gamemng::input(unsigned char keys[4*4])
@@ -693,7 +692,7 @@ void Gamemng::init_hud()
         p_playerhud[i].position.init(12, 1, 2.f, 0, 0, &p_glfont, font_color);
         p_playerhud[i].position.set_pos(0.f, 3.f - guiShift);
         p_playerhud[i].position.puts(0, "");
-        
+
         p_playerhud[i].newrecord.init(30, 1, 1.5f, 0, 0, &p_glfont, font_color);
         p_playerhud[i].newrecord.set_pos(0.f, 12.6f);
         p_playerhud[i].newrecord.puts(0, "New Lap Record!");
@@ -1005,11 +1004,11 @@ void Gamemng::render_frame()
         glEnable(GL_LIGHTING); checkGL();
     }
 #endif
-    
+
     // render ghost car
     if (p_isGhost && (p_ghostUpdated || p_ghostAvailable) && p_playerstate[0].lap_i_max > 0 && p_playerstate[0].lap_i_max <= p_laps) // rendering
     {
-    
+
         bool useSampleCoverage = g_multisampleMode;
 
 #if defined(__MACOSX__) || defined(__amigaos4__)
@@ -1071,19 +1070,19 @@ void Gamemng::render_frame()
             ghostX = p_ghostOld->m_frames[framei*4+0]*framej1+p_ghostOld->m_frames[framei1*4+0]*framej;
             ghostY = p_ghostOld->m_frames[framei*4+1]*framej1+p_ghostOld->m_frames[framei1*4+1]*framej;
             ghostA = p_ghostOld->m_frames[framei*4+2]*framej1+p_ghostOld->m_frames[framei1*4+2]*framej;
-            
+
             float angle_vector0 = std::cos(ghostA);
             float angle_vector1 = std::sin(ghostA);
-            
+
             float ghostdiffx = ghostX-p_ghost_x_prev[0];
             float ghostdiffy = ghostY-p_ghost_x_prev[1];
-            
+
             p_ghost_wheel_rot += angle_vector0*ghostdiffx+angle_vector1*ghostdiffy;
-            
+
             p_ghost_x_prev[0] = ghostX;
             p_ghost_x_prev[1] = ghostY;
         }
-        
+
         if (visible && (p_ghostAvailable || p_ghostUpdated)) {
             glPushMatrix(); checkGL();
             glTranslatef(ghostY, 0.f, ghostX); checkGL();
@@ -1134,7 +1133,7 @@ void Gamemng::restart()
     p_state0_5_time = 0.f;
 
     p_finished = 0;
-    
+
     for (unsigned int i = 0; i != 4; ++i)
     {
         p_newlaprecordtxttime[i] = -1;
@@ -1230,7 +1229,7 @@ void Gamemng::restart()
         p_playerstate[i].position_time = 0.f;
         p_playerstate[i].state_position = 0;
     }
-    
+
     p_ghost_time = 0.f;
 
     for (int i = 0; i != 4; ++i)

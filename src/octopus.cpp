@@ -54,21 +54,21 @@ int Octocube::render_pass1(const float modelview_matrix[16]) // základní funkc
             if (p_sub[i]) // pokud podřazená část existuje, otestuje se viditelnost
                 results[i] = p_sub[i]->render_pass1(modelview_matrix);
         }
-        if ((p_sub[0] == 0 || (results[0] == 1)) &&
-            (p_sub[1] == 0 || (results[1] == 1)) &&
-            (p_sub[2] == 0 || (results[2] == 1)) &&
-            (p_sub[3] == 0 || (results[3] == 1)) &&
-            (p_sub[4] == 0 || (results[4] == 1)) &&
-            (p_sub[5] == 0 || (results[5] == 1)) &&
-            (p_sub[6] == 0 || (results[6] == 1)) &&
-            (p_sub[7] == 0 || (results[7] == 1)))
+        if ((!p_sub[0] || (results[0] == 1)) &&
+            (!p_sub[1] || (results[1] == 1)) &&
+            (!p_sub[2] || (results[2] == 1)) &&
+            (!p_sub[3] || (results[3] == 1)) &&
+            (!p_sub[4] || (results[4] == 1)) &&
+            (!p_sub[5] || (results[5] == 1)) &&
+            (!p_sub[6] || (results[6] == 1)) &&
+            (!p_sub[7] || (results[7] == 1)))
             return 1; // pokud jsou vidět všechny existující podřazené bboxy uvnitř viewportu, může se vykreslit celý aktuální bbox vcelku (všechno, co obsahuje, je vidět)
         // pokud jsme tady, některá podřazená část není vůbec vidět
         for (unsigned int i = 0; i != 8; ++i)
         {
             if (p_sub[i] != 0 && results[i]) // všechny existující podřazené a viditelné bboxy se zařadí pro vykreslení
             {
-                p_base->p_vw[p_base->p_vw_sz] = p_sub[i];
+                p_base->p_vw[p_base->p_vw_sz] = p_sub[i].get();
                 ++p_base->p_vw_sz;
             }
         }
@@ -82,7 +82,7 @@ void Octocube::render_pass2() // vykreslení všech částí patřících octocu
     {
         if (p_mi[i].p_sz)
         {
-            glDrawElements(GL_TRIANGLES, p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_mi[i].p_i); checkGL();
+            glDrawElements(GL_TRIANGLES, p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_mi[i].p_i.data()); checkGL();
         }
     }
 }
@@ -163,9 +163,9 @@ void Octocube::subdiv()
                 unsigned int iv0 = p_mi[j].p_i[k*3];
                 unsigned int iv1 = p_mi[j].p_i[k*3+1];
                 unsigned int iv2 = p_mi[j].p_i[k*3+2];
-                float v0[3] = {p_base->p_t3dm->p_v[iv0*3], p_base->p_t3dm->p_v[iv0*3+1], p_base->p_t3dm->p_v[iv0*3+2]};
-                float v1[3] = {p_base->p_t3dm->p_v[iv1*3], p_base->p_t3dm->p_v[iv1*3+1], p_base->p_t3dm->p_v[iv1*3+2]};
-                float v2[3] = {p_base->p_t3dm->p_v[iv2*3], p_base->p_t3dm->p_v[iv2*3+1], p_base->p_t3dm->p_v[iv2*3+2]};
+                float v0[3] = {p_base->p_t3dm->p_v[iv0*8], p_base->p_t3dm->p_v[iv0*8+1], p_base->p_t3dm->p_v[iv0*8+2]};
+                float v1[3] = {p_base->p_t3dm->p_v[iv1*8], p_base->p_t3dm->p_v[iv1*8+1], p_base->p_t3dm->p_v[iv1*8+2]};
+                float v2[3] = {p_base->p_t3dm->p_v[iv2*8], p_base->p_t3dm->p_v[iv2*8+1], p_base->p_t3dm->p_v[iv2*8+2]};
                 if (triboxint(centers[i], subr, v0, v1, v2)) // pokud je uvnitř krychle
                     sz += 3;
             }
@@ -173,13 +173,13 @@ void Octocube::subdiv()
             if (sz != 0 && !bcreated)
             {
                 bcreated = true;
-                p_sub[i] = new Octocube;
-                oc_ptr = p_sub[i];
+                p_sub[i] = std::unique_ptr<Octocube>(new Octocube);
+                oc_ptr = p_sub[i].get();
                 // inicializace - dodělat
                 memcpy(oc_ptr->p_cen, centers[i], sizeof(float)*3);
                 oc_ptr->p_a_2 = sub_a_2;
                 oc_ptr->p_r = p_r*0.5f;
-                oc_ptr->p_mi = new Octocm[p_base->p_m_sz];
+                oc_ptr->p_mi.clear(); oc_ptr->p_mi.resize(p_base->p_m_sz);
                 oc_ptr->p_lev = sublev;
                 oc_ptr->p_base = p_base;
                 oc_ptr->p_face_num = 0;
@@ -187,7 +187,7 @@ void Octocube::subdiv()
             if (sz != 0)
             {
                 p_sub[i]->p_mi[j].p_sz = sz;
-                p_sub[i]->p_mi[j].p_i = new unsigned short[sz];
+                p_sub[i]->p_mi[j].p_i.resize(sz);
                 p_sub[i]->p_face_num += sz;
                 // zkopírovat příslušné indexy daného materiálu
                 for (unsigned int k = 0, l = 0; k != p_mi[j].p_sz/3; ++k)
@@ -195,9 +195,9 @@ void Octocube::subdiv()
                     unsigned int iv0 = p_mi[j].p_i[k*3];
                     unsigned int iv1 = p_mi[j].p_i[k*3+1];
                     unsigned int iv2 = p_mi[j].p_i[k*3+2];
-                    float v0[3] = {p_base->p_t3dm->p_v[iv0*3], p_base->p_t3dm->p_v[iv0*3+1], p_base->p_t3dm->p_v[iv0*3+2]};
-                    float v1[3] = {p_base->p_t3dm->p_v[iv1*3], p_base->p_t3dm->p_v[iv1*3+1], p_base->p_t3dm->p_v[iv1*3+2]};
-                    float v2[3] = {p_base->p_t3dm->p_v[iv2*3], p_base->p_t3dm->p_v[iv2*3+1], p_base->p_t3dm->p_v[iv2*3+2]};
+                    float v0[3] = {p_base->p_t3dm->p_v[iv0*8], p_base->p_t3dm->p_v[iv0*8+1], p_base->p_t3dm->p_v[iv0*8+2]};
+                    float v1[3] = {p_base->p_t3dm->p_v[iv1*8], p_base->p_t3dm->p_v[iv1*8+1], p_base->p_t3dm->p_v[iv1*8+2]};
+                    float v2[3] = {p_base->p_t3dm->p_v[iv2*8], p_base->p_t3dm->p_v[iv2*8+1], p_base->p_t3dm->p_v[iv2*8+2]};
                     if (triboxint(centers[i], subr, v0, v1, v2)) // pokud je uvnitř krychle
                     {
                         p_sub[i]->p_mi[j].p_i[l] = iv0;
@@ -216,13 +216,6 @@ void Octocube::subdiv()
             oc_ptr->subdiv();
         }
     }
-}
-
-Octocube::~Octocube()
-{
-    delete[] p_mi;
-    for (unsigned int i = 0; i != 8; ++i)
-        delete p_sub[i];
 }
 
 namespace Oct_f
@@ -259,36 +252,36 @@ void Octopus::init(const float frustum[6], const T3dm& t3dm, unsigned int min_tr
 {
     init_frustum(frustum);
 
-    p_oc = new Octocube;
+    p_oc = std::unique_ptr<Octocube>(new Octocube);
     p_t3dm = &t3dm;
-    p_m_sz = p_t3dm->p_m_sz; // (ne nezbytně) získání vlastní hodnoty počtu materiálů v modelu
+    p_m_sz = p_t3dm->p_m.size(); // (ne nezbytně) získání vlastní hodnoty počtu materiálů v modelu
 
     float xmin = 0.f, xmax = 0.f, ymin = 0.f, ymax = 0.f, zmin = 0.f, zmax = 0.f;
     bool bbnds = false; // jsou inicializovány hranice? nebo spíš obsahují hodnoty hranic už nějaké platné hodnoty?
 
-    p_oc->p_mi = new Octocm[p_m_sz]; // proměnné v poli jsou inicializovány
+    p_oc->p_mi.clear(); p_oc->p_mi.resize(p_t3dm->p_m.size()); // proměnné v poli jsou inicializovány
     p_oc->p_base = this;
-    for (unsigned int i = 0; i != p_t3dm->p_sz; ++i)
+    for (unsigned int i = 0; i != p_t3dm->p_o.size(); ++i)
     {
-        O3dm &objekt = p_t3dm->p_o[i];
+        const O3dm &objekt = p_t3dm->p_o[i];
         if (objekt.p_gi == 0) // do octopu se zařadí jen skupina číslo 0
         {
-            p_oc->p_mi[objekt.p_m].p_sz += objekt.p_sz/3*3;
-            for (unsigned int j = 0; j != objekt.p_sz/3*3; ++j)
+            p_oc->p_mi[objekt.p_m].p_sz += objekt.p_i.size()/3*3;
+            for (unsigned int j = 0; j != objekt.p_i.size()/3*3; ++j)
             {
                 if (!bbnds)
                 {
-                    xmin = xmax = p_t3dm->p_v[objekt.p_i[j]*3];
-                    ymin = ymax = p_t3dm->p_v[objekt.p_i[j]*3+1];
-                    zmin = zmax = p_t3dm->p_v[objekt.p_i[j]*3+2];
+                    xmin = xmax = p_t3dm->p_v[objekt.p_i[j]*8];
+                    ymin = ymax = p_t3dm->p_v[objekt.p_i[j]*8+1];
+                    zmin = zmax = p_t3dm->p_v[objekt.p_i[j]*8+2];
                     bbnds = true;
                 } else {
-                    xmin = std::min(xmin, p_t3dm->p_v[objekt.p_i[j]*3]);
-                    ymin = std::min(ymin, p_t3dm->p_v[objekt.p_i[j]*3+1]);
-                    zmin = std::min(zmin, p_t3dm->p_v[objekt.p_i[j]*3+2]);
-                    xmax = std::max(xmax, p_t3dm->p_v[objekt.p_i[j]*3]);
-                    ymax = std::max(ymax, p_t3dm->p_v[objekt.p_i[j]*3+1]);
-                    zmax = std::max(zmax, p_t3dm->p_v[objekt.p_i[j]*3+2]);
+                    xmin = std::min(xmin, p_t3dm->p_v[objekt.p_i[j]*8]);
+                    ymin = std::min(ymin, p_t3dm->p_v[objekt.p_i[j]*8+1]);
+                    zmin = std::min(zmin, p_t3dm->p_v[objekt.p_i[j]*8+2]);
+                    xmax = std::max(xmax, p_t3dm->p_v[objekt.p_i[j]*8]);
+                    ymax = std::max(ymax, p_t3dm->p_v[objekt.p_i[j]*8+1]);
+                    zmax = std::max(zmax, p_t3dm->p_v[objekt.p_i[j]*8+2]);
                 }
             }
         }
@@ -306,13 +299,13 @@ void Octopus::init(const float frustum[6], const T3dm& t3dm, unsigned int min_tr
     for (unsigned int i = 0; i != p_m_sz; ++i)
     {
         unsigned int l = 0;
-        p_oc->p_mi[i].p_i = new unsigned short[p_oc->p_mi[i].p_sz];
-        for (unsigned int j = 0; j != p_t3dm->p_sz; ++j)
+        p_oc->p_mi[i].p_i.resize(p_oc->p_mi[i].p_sz);
+        for (unsigned int j = 0; j != p_t3dm->p_o.size(); ++j)
         {
-            O3dm &objekt = p_t3dm->p_o[j];
+            const O3dm &objekt = p_t3dm->p_o[j];
             if (objekt.p_gi == 0 && objekt.p_m == i) // do octopu se zařazují jen objekty s group number 0
             {
-                for (unsigned int k = 0; k != objekt.p_sz/3*3; ++k)
+                for (unsigned int k = 0; k != objekt.p_i.size()/3*3; ++k)
                 {
                     p_oc->p_mi[i].p_i[l] = objekt.p_i[k];
                     ++l;
@@ -327,7 +320,7 @@ void Octopus::init(const float frustum[6], const T3dm& t3dm, unsigned int min_tr
     p_oc->subdiv(); // vytvoření podřazených bboxů
     unsigned int vw_sz = 0;
     p_oc->count_maxsub(&vw_sz);
-    p_vw = new Octocube*[vw_sz];
+    p_vw.resize(vw_sz);
 }
 
 typedef const Octocube* Octocube_ptr;
@@ -342,10 +335,10 @@ void Octopus::render_pass1(const float modelview_matrix[16]) // začátek testov
     p_vw_sz = 0;
     if (p_oc->render_pass1(modelview_matrix) == 1) // pokud je už základní bbox vidět celý, přidá se do pole jen ten, v opačném případě se do pole pro vykreslování přidají až (některé) podřazené části
     {
-        p_vw[p_vw_sz] = p_oc;
+        p_vw[p_vw_sz] = p_oc.get();
         ++p_vw_sz;
     }
-    std::sort(p_vw, p_vw+p_vw_sz, zsort_comp);
+    std::sort(p_vw.data(), p_vw.data()+p_vw_sz, zsort_comp);
 }
 
 void Octopus::render_pass1_lim(const float modelview_matrix[16], unsigned int face_limit) // začátek testování bboxů
@@ -358,10 +351,10 @@ void Octopus::render_pass1_lim(const float modelview_matrix[16], unsigned int fa
     p_vw_sz = 0;
     if (p_oc->render_pass1(modelview_matrix) == 1) // pokud je už základní bbox vidět celý, přidá se do pole jen ten, v opačném případě se do pole pro vykreslování přidají až (některé) podřazené části
     {
-        p_vw[p_vw_sz] = p_oc;
+        p_vw[p_vw_sz] = p_oc.get();
         ++p_vw_sz;
     }
-    std::sort(p_vw, p_vw+p_vw_sz, zsort_comp);
+    std::sort(p_vw.data(), p_vw.data()+p_vw_sz, zsort_comp);
     unsigned int vw_sz_pom = 0;
     unsigned int face_num = 0;
     for (unsigned int i = 0; i != p_vw_sz; ++i)
@@ -381,62 +374,14 @@ void Octopus::render_pass2() // vykreslení všech octocube v seznamu
     glEnableClientState(GL_VERTEX_ARRAY); checkGL();
     glEnableClientState(GL_NORMAL_ARRAY); checkGL();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT,0,p_t3dm->p_n); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
-
+    glVertexPointer(3,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()); checkGL();
+    glNormalPointer(GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()+3); checkGL();
+    glTexCoordPointer(2,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()+6); checkGL();
     for (unsigned int i = 0; i != p_vw_sz; ++i)
     {
         p_vw[i]->render_pass2();
     }
-
     glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
     glDisableClientState(GL_NORMAL_ARRAY); checkGL();
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-}
-
-#if 0 // unused
-void Octopus::render_level(unsigned int lev) // (pracovní, a proto komplikované) vykreslení jen určité viditelné úrovně
-{
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_NORMAL_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT,0,p_t3dm->p_n); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
-
-    p_oc->render_level_pom(lev);
-
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glDisableClientState(GL_NORMAL_ARRAY); checkGL();
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-}
-
-void Octocube::render_level_pom(unsigned int lev) // pomocná funkce k předchozí
-{
-    if (p_lev == lev)
-    {
-        float color[3] = {(rand()%3)*0.5f, (rand()%3)*0.5f, (rand()%3)*0.5f};
-        glColor3fv(color); checkGL();
-        for (unsigned int i = 0; i != p_base->p_m_sz; ++i)
-        {
-            if (p_mi[i].p_sz)
-            {
-                glDrawElements(GL_TRIANGLES, p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_mi[i].p_i); checkGL();
-            }
-        }
-    } else {
-        for (unsigned int i = 0; i != 8; ++i)
-        {
-            if (p_sub[i])
-                p_sub[i]->render_level_pom(lev);
-        }
-    }
-}
-#endif
-
-Octopus::~Octopus()
-{
-    delete p_oc; // smazání základního bboxu (v destruktoru tohoto bboxu se mažou podřazené bboxy)
-    delete[] p_vw; // smazání pole pro ukládání viditelných objektů
 }

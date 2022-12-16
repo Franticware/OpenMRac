@@ -13,8 +13,6 @@ struct Datfile {
 
 class Datdec { // tar file reader
 public:
-    Datdec() { }
-    ~Datdec() { }
     bool init(const char* fname);
     bool load(const char* fname);
     char p_fname[1024];

@@ -11,10 +11,13 @@
 #endif
 #include "glhelpers1.h"
 
+#include <cstdint>
+#include <vector>
+
 class Skysph
 {
 public:
-    Skysph() : r(0), ang(0), vert(0), texc(0), quads(0), size(0), bsun(false), tex_sky(0), tex_sun(0)
+    Skysph() : r(0), ang(0), size(0), bsun(false), tex_sky(0), tex_sun(0)
     {
         for (int i = 0; i != 4*3; ++i)
         {
@@ -25,7 +28,6 @@ public:
             sun_t[i] = 0;
         }
     }
-    ~Skysph() { delete[] vert; delete[] texc; delete[] quads; /* delete textures dodělat*//*glDeleteTextures(1, &tex_sky); checkGL(); glDeleteTextures(1, &tex_sun); checkGL();*/ }
     void init(float r_prm, float ang_prm, int h = 40, int v = 10);
     void set_sun(const Pict2& pict);
     void set_sun_(const Pict2& pict);
@@ -34,9 +36,8 @@ public:
     void render();
     float r;
     float ang;
-    float* vert;
-    float* texc;
-    unsigned short* quads;
+    std::vector<float> vert;
+    std::vector<uint16_t> tris;
     unsigned int size;
     bool bsun;
     float sun_v[4*3];

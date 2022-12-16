@@ -78,7 +78,7 @@ GLuint load_texture(const Pict2& pict, bool bmipmap)
                 unsigned int pict_w = pict.w()/2;
                 unsigned int start_y = pict_h;
                 pict_h /= 2;
-                unsigned char* data = new unsigned char[pict_w*pict_h*pict.d()];
+                std::vector<unsigned char> data(pict_w*pict_h*pict.d());
                 unsigned int miplevel = 1;
                 while (pict_w || pict_h)
                 {
@@ -86,19 +86,18 @@ GLuint load_texture(const Pict2& pict, bool bmipmap)
                     {
                         for (unsigned int y = 0; y != pict_h; ++y)
                         {
-                            memcpy(data+(x+y*pict_w)*pict.d(), pict.c_px(x, y+start_y), pict.d());
+                            memcpy(data.data()+(x+y*pict_w)*pict.d(), pict.c_px(x, y+start_y), pict.d());
                         }
                     }
 
                     glTexImage2D(GL_TEXTURE_2D, miplevel, pict.d(), std::max(pict_w, (unsigned int)1), std::max(pict_h, (unsigned int)1), 0,
-                        (pict.d() == 3) ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data); checkGL();
+                        (pict.d() == 3) ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, data.data()); checkGL();
                     g_texture_memory_usage += pict.d()*pict.w()*pict_h;
                     start_y += pict_h;
                     pict_w /= 2;
                     pict_h /= 2;
                     ++miplevel;
                 }
-                delete[] data;
             } else {
 #if USE_GENERATE_MIPMAP
                 glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE); checkGL();

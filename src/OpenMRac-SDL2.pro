@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += console c++17
+CONFIG += console c++20
 CONFIG -= app_bundle
 CONFIG -= qt
 
@@ -94,3 +94,6 @@ HEADERS += \
     skysph.h \
     soundmng.h \
     triboxint.h
+
+DISTFILES += \
+    todo.txt

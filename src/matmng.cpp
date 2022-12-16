@@ -37,25 +37,25 @@ void Rendermng::set_oc(const float frustum[6], const T3dm& t3dm)
     float bbox_y[2] = {0.f, 0.f};
     float bbox_z[2] = {0.f, 0.f};
     bool bfirst = true;
-    for (unsigned int i = 0; i != t3dm.p_sz; ++i)
+    for (unsigned int i = 0; i != t3dm.p_o.size(); ++i)
     {
-        for (unsigned int j = 0; j != t3dm.p_o[i].p_sz; ++j)
+        for (unsigned int j = 0; j != t3dm.p_o[i].p_i.size(); ++j)
         {
             if (t3dm.p_o[i].p_gi != 1)
             {
                 if (bfirst)
                 {
-                    bbox_x[0] = bbox_x[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*3+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0];
-                    bbox_y[0] = bbox_y[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*3+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1];
-                    bbox_z[0] = bbox_z[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*3+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2];
+                    bbox_x[0] = bbox_x[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*8+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0];
+                    bbox_y[0] = bbox_y[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*8+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1];
+                    bbox_z[0] = bbox_z[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*8+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2];
                     bfirst = false;
                 } else {
-                    bbox_x[0] = std::min(bbox_x[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
-                    bbox_x[1] = std::max(bbox_x[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
-                    bbox_y[0] = std::min(bbox_y[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
-                    bbox_y[1] = std::max(bbox_y[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
-                    bbox_z[0] = std::min(bbox_z[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
-                    bbox_z[1] = std::max(bbox_z[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
+                    bbox_x[0] = std::min(bbox_x[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
+                    bbox_x[1] = std::max(bbox_x[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
+                    bbox_y[0] = std::min(bbox_y[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
+                    bbox_y[1] = std::max(bbox_y[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
+                    bbox_z[0] = std::min(bbox_z[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
+                    bbox_z[1] = std::max(bbox_z[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
                 }
             }
         }
@@ -106,12 +106,12 @@ void Rendermng::render_o_pass3()
         return;
     glEnableClientState(GL_VERTEX_ARRAY); checkGL();
     glEnableClientState(GL_NORMAL_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT, 0, p_t3dm->p_n); checkGL();
+    glVertexPointer(3,GL_FLOAT,sizeof(float) * 8,p_t3dm->p_v.data()); checkGL();
+    glNormalPointer(GL_FLOAT,sizeof(float) * 8, p_t3dm->p_v.data() + 3); checkGL();
     unsigned int k = 0;
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
-        Mat& material = p_matmng->p_mat[i];
+        const Mat& material = p_matmng->p_mat[i];
 
         if (material.special == 1)
         {
@@ -124,12 +124,12 @@ void Rendermng::render_o_pass3()
 
             unsigned int l = k;
 
-            while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+            while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
             {
                 // sem přidat transformace
                 if (p_t3dm->p_o[l].p_gi != 1)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
                 }
                 ++l;
             }
@@ -155,12 +155,12 @@ void Rendermng::render_o_pass3()
             glEnable(GL_TEXTURE_GEN_S); checkGL();
             glEnable(GL_TEXTURE_GEN_T); checkGL();
             glEnable(GL_TEXTURE_GEN_R); checkGL();
-            while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
+            while (k != p_t3dm->p_o.size() && p_t3dm->p_o[k].p_m == i)
             {
                 // sem přidat transformace
                 if (p_t3dm->p_o[k].p_gi != 1)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i.data()); checkGL();
                 }
                 ++k;
             }
@@ -204,7 +204,7 @@ void Rendermng::render_o_pass3()
         }
         else
         {
-            while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
+            while (k != p_t3dm->p_o.size() && p_t3dm->p_o[k].p_m == i)
                 ++k;
         }
     }
@@ -217,13 +217,14 @@ void Rendermng::render_o_pass_s3()
     if (!isVisible())
         return;
     glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
+    glVertexPointer(3,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()); checkGL();
+    glTexCoordPointer(2,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data() + 6); checkGL();
+
     unsigned int l = 0;
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
-        Mat& material = p_matmng->p_mat[i];
+        const Mat& material = p_matmng->p_mat[i];
 
         glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
 
@@ -232,7 +233,7 @@ void Rendermng::render_o_pass_s3()
 #ifndef __MACOSX__
             glEnable(GL_POLYGON_OFFSET);
 #else
-            glEnable(GL_POLYGON_OFFSET_FILL); 
+            glEnable(GL_POLYGON_OFFSET_FILL);
 #endif
             checkGL();
             glPolygonOffset(-2.f, -2.f); checkGL();
@@ -244,12 +245,12 @@ void Rendermng::render_o_pass_s3()
             glDepthMask(GL_FALSE); checkGL();
             glColor4f(0, 0, 0, 0.7f); checkGL();
 
-            while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+            while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
             {
                 // sem přidat transformace
                 if (p_t3dm->p_o[l].p_gi != 1)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
                 }
                 ++l;
             }
@@ -259,7 +260,7 @@ void Rendermng::render_o_pass_s3()
             glEnable(GL_LIGHTING); checkGL();
             glDepthMask(GL_TRUE); checkGL();
         } else {
-            while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+            while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 ++l;
         }
 
@@ -277,19 +278,19 @@ void Rendermng::render_o_pass2()
     {
         glDisable(GL_LIGHTING); checkGL();
         glEnableClientState(GL_COLOR_ARRAY); checkGL();
-        glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor); checkGL();
+        glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor.data()); checkGL();
     } else {
         glEnable(GL_LIGHTING); checkGL();
         glEnableClientState(GL_NORMAL_ARRAY); checkGL();
     }
     glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT, 0, p_t3dm->p_n); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
+    glVertexPointer(3,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()); checkGL();
+    glNormalPointer(GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()+3); checkGL();
+    glTexCoordPointer(2,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()+6); checkGL();
     unsigned int k = 0;
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
-        Mat& material = p_matmng->p_mat[i];
+        const Mat& material = p_matmng->p_mat[i];
         glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
         if (material.balpha_test)
             setStandardAlphaTest(true);
@@ -316,13 +317,13 @@ void Rendermng::render_o_pass2()
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
                 }
             }
         } else { // vykreslování objektu bez octopusu
             if (material.special == 0)
             {
-                while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
+                while (k != p_t3dm->p_o.size() && p_t3dm->p_o[k].p_m == i)
                 {
                     // sem přidat transformace
 
@@ -333,7 +334,7 @@ void Rendermng::render_o_pass2()
                             glPushMatrix(); checkGL();
                             p_transf->mult_mwmx(p_t3dm->p_o[k].p_gi);
                         }
-                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL();
+                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i.data()); checkGL();
                         if (p_transf)
                         {
                             glPopMatrix(); checkGL();
@@ -343,9 +344,9 @@ void Rendermng::render_o_pass2()
                 }
             } else if (material.special == 1) { // if material.special == 1
                 unsigned int l = k;
-                while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
                     ++l;
                 }
                 l = k;
@@ -360,9 +361,9 @@ void Rendermng::render_o_pass2()
                 }
                 glFrontFace(GL_CW); checkGL();
                 glColor4f(0, 0, 0, 1); checkGL();
-                while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
                     ++l;
                 }
                 glFrontFace(GL_CCW); checkGL();
@@ -377,7 +378,7 @@ void Rendermng::render_o_pass2()
                 k = l;
             } else { // přeskočení jiných typů materiálů než 0 a 1
                 unsigned int l = k;
-                while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
                     ++l;
                 }
@@ -394,12 +395,12 @@ void Rendermng::render_o_pass2()
         if (material.bboth_side && p_matmng->p_bstatic_light)
         {
                 glFrontFace(GL_CW); checkGL();
-                glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor_back); checkGL();
+                glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor_back.data()); checkGL();
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
                 }
-                glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor); checkGL();
+                glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor.data()); checkGL();
                 glFrontFace(GL_CCW); checkGL();
         }
 
@@ -436,22 +437,22 @@ void Rendermng::render_o_pass_s2()
     {
         glDisable(GL_LIGHTING); checkGL();
         glEnableClientState(GL_COLOR_ARRAY); checkGL();
-        glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor); checkGL();
+        glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor.data()); checkGL();
     } else {
         glEnable(GL_LIGHTING); checkGL();
         glEnableClientState(GL_NORMAL_ARRAY); checkGL();
     }
     glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT, 0, p_t3dm->p_n); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
+    glVertexPointer(3,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()); checkGL();
+    glNormalPointer(GL_FLOAT, sizeof(float)*8, p_t3dm->p_v.data()+3); checkGL();
+    glTexCoordPointer(2,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()+6); checkGL();
 
     glEnable(GL_BLEND); checkGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
 
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
-        Mat& material = p_matmng->p_mat[i];
+        const Mat& material = p_matmng->p_mat[i];
         glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
         if (!material.blighting)
         {
@@ -471,7 +472,7 @@ void Rendermng::render_o_pass_s2()
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
                 }
             }
         }
@@ -596,14 +597,14 @@ inline float minfloat(float f1, float f2)
 void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolor, const float* lightpos)
 {
     p_t3dm = t3dm;
-    p_m_sz = p_t3dm->p_m_sz;
-    p_mat = new Mat[p_m_sz];
+    //p_m_sz = p_t3dm->p_m.size();
+    p_mat.resize(p_t3dm->p_m.size());
     char buff[256] = {0};
-    for (unsigned int i = 0; i != p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_mat.size(); ++i)
     {
-        if (*(p_t3dm->p_m[i]))
+        if (!p_t3dm->p_m[i].empty())
         {
-            strncat1(buff, p_t3dm->p_m[i], ".3mt", 256);
+            strncat1(buff, p_t3dm->p_m[i].c_str(), ".3mt", 256);
             p_mat[i].load(buff);
         } else {
             p_mat[i].load("");
@@ -612,11 +613,11 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
     if (diffcolor && ambcolor && lightpos) // je zadáno světlo pro výpočet osvětlení
     {
         p_bstatic_light = true;
-        p_vcolor = new float[p_t3dm->p_v_sz*4];
-        p_vcolor_back = new float[p_t3dm->p_v_sz*4];
-        for (unsigned int i = 0; i != p_t3dm->p_v_sz; ++i)
+        p_vcolor.clear(); p_vcolor.resize(p_t3dm->p_v.size()/2);
+        p_vcolor_back.clear(); p_vcolor_back.resize(p_t3dm->p_v.size()/2);
+        for (unsigned int i = 0; i != p_t3dm->p_v.size()/8; ++i)
         {
-            float nl = lightpos[0]*p_t3dm->p_n[i*3]+lightpos[1]*p_t3dm->p_n[i*3+1]+lightpos[2]*p_t3dm->p_n[i*3+2];
+            float nl = lightpos[0]*p_t3dm->p_v[i*8+3]+lightpos[1]*p_t3dm->p_v[i*8+4]+lightpos[2]*p_t3dm->p_v[i*8+5];
             for (unsigned int j = 0; j != 3; ++j)
             {
                 p_vcolor[i*4+j] = minfloat(maxfloat(ambcolor[j]+maxfloat(diffcolor[j]*nl, 0.f), 0.f), 1.f);
@@ -633,7 +634,7 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
         p_bstatic_light = false;
     }
     // načíst textury
-    for (unsigned int i = 0; i != p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_mat.size(); ++i)
     {
         bool bsame = false;
         for (unsigned int j = 0; j != i; ++j)
@@ -647,7 +648,7 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 break;
             }
         }
-        
+
         if (*(p_mat[i].texd_name) && !bsame)
         {
             if (*(p_mat[i].texa_name)) // 32 bit

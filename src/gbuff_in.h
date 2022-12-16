@@ -3,12 +3,13 @@
 
 #include <cstring>
 #include <cstdio>
+#include <cstdint>
 #include "datkey.h"
 
 class Gbuff_in {
 public:
     Gbuff_in() : p_bactive(false), p_bdat(false), p_bbin(false), p_buff_pos(0), p_fin(0), p_stdin_buff_ptr(0), p_stdin_buff_sz(0) { }
-    ~Gbuff_in() { delete[] p_stdin_buff_ptr; if (p_fin) ::fclose(p_fin); }
+    ~Gbuff_in() { if (p_fin) ::fclose(p_fin); }
     void init_stdin() { p_bdat = false; }
     bool init_dat(const char* fname);
     // společné fce
@@ -18,7 +19,7 @@ public:
     char* fgets(char* str, int num); // normálně char * fgets ( char * str, int num, FILE * stream )
     void rewind();
     // fce pro práci s binárním souborem
-    /*const*/ unsigned char* fbuffptr();
+    /*const*/ uint8_t* fbuffptr();
     unsigned int fbuffsz();
 private:
     bool p_bactive;
@@ -27,7 +28,7 @@ private:
     Datdec p_datdec;
     unsigned int p_buff_pos;
     FILE* p_fin;
-    unsigned char* p_stdin_buff_ptr;
+    std::vector<uint8_t> p_stdin_buff_ptr;
     unsigned int p_stdin_buff_sz;
 };
 

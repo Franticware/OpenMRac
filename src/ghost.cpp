@@ -2,6 +2,7 @@
 #include "fopendir.h"
 #include "appdefs.h"
 #include <cstdio>
+#include <algorithm>
 
 Ghost::Ghost(bool frames) {
     m_version = 104;
@@ -12,11 +13,7 @@ Ghost::Ghost(bool frames) {
     m_seconds = 0;
     m_maxnum = 1800;
     m_num = 0;
-    m_frames = frames ? new float[m_maxnum*4] : 0;
-}
-
-Ghost::~Ghost() {
-    delete[] m_frames;
+    m_frames.resize(frames ? m_maxnum*4 : 0);
 }
 
 bool Ghost::load(int track, int reverse) {
@@ -39,11 +36,11 @@ bool Ghost::load(int track, int reverse) {
     if (m_carcolor < 0 || m_carcolor >= 4) {fclose(fin); return false;}
     if (fread(&m_seconds, sizeof(float), 1, fin) != 1) {fclose(fin); return false;}
     if (m_seconds < 10.0 || m_seconds > 31536000.0) {fclose(fin); return false;}
-    if (m_frames)
+    if (!m_frames.empty())
     {
         if (fread(&m_num, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
         if (m_num < 0 || m_num > m_maxnum) {fclose(fin); return false;}
-        if (static_cast<int>(fread(m_frames, sizeof(float)*4, m_num, fin)) != m_num) {fclose(fin); return false;}
+        if (static_cast<int>(fread(m_frames.data(), sizeof(float)*4, m_num, fin)) != m_num) {fclose(fin); return false;}
     }
     fclose(fin);
     return true;
@@ -62,10 +59,10 @@ void Ghost::save() {
     fwrite(&m_car, sizeof(int), 1, fout);
     fwrite(&m_carcolor, sizeof(int), 1, fout);
     fwrite(&m_seconds, sizeof(float), 1, fout);
-    if (m_frames)
+    if (!m_frames.empty())
     {
         fwrite(&m_num, sizeof(int), 1, fout);
-        fwrite(m_frames, sizeof(float)*4, m_num, fout);
+        fwrite(m_frames.data(), sizeof(float)*4, m_num, fout);
     }
     fclose(fout);
 }
@@ -84,13 +81,13 @@ void Ghost::copyFrom(const Ghost& gnew) {
     m_carcolor = gnew.m_carcolor;
     m_seconds = gnew.m_seconds;
     m_maxnum = gnew.m_maxnum;
-    if (m_frames == 0 || gnew.m_frames == 0)
+    if (m_frames.empty() || gnew.m_frames.empty())
     {
         m_num = 0;
     }
     else
     {
-        m_num = gnew.m_num;
-        memcpy(m_frames, gnew.m_frames, m_num*sizeof(float)*4);
+        m_num = gnew.m_num;        
+        std::copy_n(gnew.m_frames.begin(), m_num * 4, m_frames.begin());
     }
 }

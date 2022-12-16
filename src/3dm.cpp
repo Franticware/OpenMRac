@@ -44,7 +44,7 @@ using namespace T3DMf;
 
 int T3dm::getgidobj(unsigned int gid) const
 {
-    for (unsigned int i = 0; i != p_sz; ++i)
+    for (unsigned int i = 0; i != p_o.size(); ++i)
     {
         if (p_o[i].p_gi == gid)
             return i;
@@ -56,24 +56,29 @@ void T3dm::scale(float aspect)
 {
     unsigned int groups_sz = 0;
     unsigned int verts_sz = 0;
-    for (unsigned int i = 0; i != p_sz; ++i)
+    for (unsigned int i = 0; i != p_o.size(); ++i)
     {
         O3dm& object = p_o[i];
         if (object.p_gi+1 > groups_sz)
             groups_sz = object.p_gi+1;
-        for (unsigned int j = 0; j != object.p_sz; ++j)
+        for (unsigned int j = 0; j != object.p_i.size(); ++j)
             if (static_cast<unsigned int>(object.p_i[j])+1 > verts_sz)
                 verts_sz = object.p_i[j]+1;
     }
     for (unsigned int i = 0; i != groups_sz*3; ++i)
         p_cen[i] *= aspect;
-    for (unsigned int i = 0; i != verts_sz*3; ++i)
-        p_v[i] *= aspect;
+    for (unsigned int i = 0; i != verts_sz; ++i)
+    {
+        for (unsigned int j = 0; j != 3; ++j)
+        {
+            p_v[i * 8 + j] *= aspect;
+        }
+    }
 }
 
 void T3dm::load(const char* fname, const char** o_names)
 {
-    uncreate(); // vymazání předchozího
+    clear(); // vymazání předchozího
     if (!gbuff_in.f_open(fname, "r"))
         return;
     unsigned int vertexnum = 0; // celkový počet objektů
@@ -86,28 +91,25 @@ void T3dm::load(const char* fname, const char** o_names)
             vertexnum += vertexnum1;
     }
     gbuff_in.rewind();
-    p_v_sz = vertexnum;
-    p_v = new float[vertexnum*3]; // alokace pole vertexů
-    p_n = new float[vertexnum*3]; // alokace pole normál
-    memsetf(p_n, 0.0f, vertexnum*3); // vynulování pole normál (vlastní spec. fce memsetf pro floaty)
-    p_t = new float[vertexnum*2]; // alokace pole texturovacích souřadnic
-    unsigned char* nf = new unsigned char[vertexnum]; // normal flag (flag společné normály)
-    memset(nf, 0, vertexnum); // počáteční vynulování všech normal flagů
+    //p_v_sz = vertexnum;
+    p_v.clear();
+    p_v.resize(vertexnum * 8, 0);
+    std::vector<unsigned char> nf(vertexnum, 0); // normal flag (flag společné normály)
     unsigned int objectnum = 0, texturenum = 0; // počet objektů, textur
     unsigned int object_i = 0; // index aktuálního objektu
     bool b_otnum = false; // načten počet objektů a textur
     bool b_eof = false; // konec souboru
-    unsigned char* mainflags = 0; // flag hlavního objektu
+    std::vector<unsigned char> mainflags; // flag hlavního objektu
 
-    unsigned int* vertnums = 0; // pole počtu bodů pro objekty (pro zpracování object names)
+    std::vector<unsigned int> vertnums; // pole počtu bodů pro objekty (pro zpracování object names)
 
     unsigned int o_names_num = 0; // počet jmen (minimálně 1)
     if (o_names) // zjištění počtu jmen
         for (o_names_num = 0; o_names[o_names_num] != 0; ++o_names_num);
     o_names_num = maxuint(o_names_num, 1);
-    p_cen = new float[o_names_num*3]; // alokace pole středů hlavních objektů
-    memsetf(p_cen, 0.0f, o_names_num*3); // vynulování
-    float* centers = 0; // středy objektů
+    p_cen.clear();
+    p_cen.resize(o_names_num*3, 0.f); // alokace pole středů hlavních objektů
+    std::vector<float> centers; // středy objektů
     unsigned int points_i0 = 0; // mezivýpočet hodnoty počtu bodů
     unsigned int points_n = 0; // proměnná pro načtení počtu bodů
     unsigned int faces_n = 0; // proměnná pro načtení počtu pložek
@@ -120,29 +122,25 @@ void T3dm::load(const char* fname, const char** o_names)
         if (sscanf(buff, "3dm %u %u", &objectnum, &texturenum) == 2) // načtení počtu objektů a textur
         {
             b_otnum = true; // je už načtený počet objektů a textur?
-            p_o = new O3dm[objectnum]; // alokace objektů
-            p_sz = objectnum; // přiřazení počtu objektů
-            p_m_sz = texturenum+1;
-            centers = new float[objectnum*3]; // alokace pole pro středy jednotlivých objektů
-            vertnums = new unsigned int[objectnum]; // alokace pole počtů vertexů v objektech pro zpracování names
+            p_o.resize(objectnum); // alokace objektů
+            centers.resize(objectnum*3); // alokace pole pro středy jednotlivých objektů
+            vertnums.resize(objectnum); // alokace pole počtů vertexů v objektech pro zpracování names
 
-            mainflags = new unsigned char[objectnum]; // alokace pole flagů hlavních objektů
-            memset(mainflags, 0, objectnum); // počáteční nulování flagů
+            mainflags.resize(objectnum, 0); // alokace pole flagů hlavních objektů
 
-            p_m = new Matname[p_m_sz];
-            p_m[0][0] = '\0';
+            p_m.clear();
+            p_m.resize(texturenum+1);
 
             for (unsigned int i = 0; i != texturenum; ++i) // načtení názvů textur
             {
                 if (!gbuff_in.fgets(buff, 1024)) { b_eof = true; break; }
                 // textury se zahazují (dodělat)
-                memcpy(p_m[i+1], buff, 255);
-                p_m[i+1][255] = '\0';
-                for (int j = strlen(p_m[i+1]); j != 0; --j)
+                p_m[i+1] = buff;
+                for (size_t j = p_m[i+1].size(); j != 0; --j)
                 {
                     if (!isSpace(p_m[i+1][j-1]))
                         break;
-                    p_m[i+1][j-1] = '\0';
+                    p_m[i+1].resize(j-1);
                 }
             }
         }
@@ -212,36 +210,35 @@ void T3dm::load(const char* fname, const char** o_names)
                     gbuff_in.fgets(buff, 1024);
                     if (*buff == ' ') // řádek začíná mezerou, je na něm jen UV, vertex a normála je společná s předchozím
                     {
-                        p_v[i*3  ] = point_prev[0];
-                        p_v[i*3+1] = point_prev[1];
-                        p_v[i*3+2] = point_prev[2];
-                        if (sscanf(buff, " %f %f", &(p_t[i*2]), &(p_t[i*2+1])) != 2)
+                        p_v[i*8  ] = point_prev[0];
+                        p_v[i*8+1] = point_prev[1];
+                        p_v[i*8+2] = point_prev[2];
+                        if (sscanf(buff, " %f %f", &(p_v[i*8+6]), &(p_v[i*8+7])) != 2)
                         {
                         }
                         nf[i] = 1;
                     } else { // řádek obsahuje vertex a UV
                         if (sscanf(buff, "%f %f %f %f %f",
-                            &(p_v[i*3]), &(p_v[i*3+1]), &(p_v[i*3+2]),
-                            &(p_t[i*2]), &(p_t[i*2+1])) != 5)
+                            &(p_v[i*8]), &(p_v[i*8+1]), &(p_v[i*8+2]),
+                            &(p_v[i*8+6]), &(p_v[i*8+7])) != 5)
                         {
                         }
-                        point_prev[0] = p_v[i*3  ];
-                        point_prev[1] = p_v[i*3+1];
-                        point_prev[2] = p_v[i*3+2];
+                        point_prev[0] = p_v[i*8  ];
+                        point_prev[1] = p_v[i*8+1];
+                        point_prev[2] = p_v[i*8+2];
                     }
                     if (!mainflags[object_i]) // posunutí vedlejšího objektu na střed
                     {
-                        p_v[i*3  ] += centers[object_i*3+0];
-                        p_v[i*3+1] += centers[object_i*3+1];
-                        p_v[i*3+2] += centers[object_i*3+2];
+                        p_v[i*8  ] += centers[object_i*3+0];
+                        p_v[i*8+1] += centers[object_i*3+1];
+                        p_v[i*8+2] += centers[object_i*3+2];
                     }
                 }
                 gbuff_in.fgets(buff, 1024); // načtení počtu pložek
                 if (sscanf(buff, "f %u", &faces_n) != 1)
                 {
                 }
-                p_o[object_i].p_sz = faces_n*3; // počet indexů bodů
-                p_o[object_i].p_i = new unsigned short[faces_n*3]; // alokace pole indexů
+                p_o[object_i].p_i.resize(faces_n*3); // alokace pole indexů
                 for (unsigned int i = 0; i != faces_n; ++i) // načtení indexů vertexů plošek
                 {
                     gbuff_in.fgets(buff, 1024);
@@ -261,16 +258,16 @@ void T3dm::load(const char* fname, const char** o_names)
 
                 for (unsigned int i = 0; i != faces_n; ++i)
                 {
-                    unsigned short* &p_i = p_o[object_i].p_i;
+                    uint16_t* p_i = p_o[object_i].p_i.data();
                     float normal[3];
                     float v0[3] = {
-                        p_v[p_i[i*3+1]*3  ]-p_v[p_i[i*3]*3  ],
-                        p_v[p_i[i*3+1]*3+1]-p_v[p_i[i*3]*3+1],
-                        p_v[p_i[i*3+1]*3+2]-p_v[p_i[i*3]*3+2]};
+                        p_v[p_i[i*3+1]*8  ]-p_v[p_i[i*3]*8  ],
+                        p_v[p_i[i*3+1]*8+1]-p_v[p_i[i*3]*8+1],
+                        p_v[p_i[i*3+1]*8+2]-p_v[p_i[i*3]*8+2]};
                     float v1[3] = {
-                        p_v[p_i[i*3+2]*3  ]-p_v[p_i[i*3]*3  ],
-                        p_v[p_i[i*3+2]*3+1]-p_v[p_i[i*3]*3+1],
-                        p_v[p_i[i*3+2]*3+2]-p_v[p_i[i*3]*3+2]};
+                        p_v[p_i[i*3+2]*8  ]-p_v[p_i[i*3]*8  ],
+                        p_v[p_i[i*3+2]*8+1]-p_v[p_i[i*3]*8+1],
+                        p_v[p_i[i*3+2]*8+2]-p_v[p_i[i*3]*8+2]};
                     crossprod(normal, v0, v1); // výpočet normály plošky (nenormalizované, velikost podle obsahu plošky)
 
                     for (unsigned int c = 0; c != 3; ++c) // zopakování pro každý index vertexu plo?ky
@@ -280,9 +277,9 @@ void T3dm::load(const char* fname, const char** o_names)
                             --j;
 
                         do { // přičtení normály všem společným vrcholům (počet vrcholů = 0...n)
-                            p_n[j*3  ] += normal[0];
-                            p_n[j*3+1] += normal[1];
-                            p_n[j*3+2] += normal[2];
+                            p_v[j*8+3] += normal[0];
+                            p_v[j*8+4] += normal[1];
+                            p_v[j*8+5] += normal[2];
                             ++j;
                         } while (j != vertexnum && nf[j] == 1);
                     }
@@ -318,9 +315,9 @@ void T3dm::load(const char* fname, const char** o_names)
         {
             for (unsigned int j = vertnum_prev; j != vertnums[i]; ++j)
             {
-                p_v[j*3  ] -= p_cen[p_o[i].p_gi*3  ];
-                p_v[j*3+1] -= p_cen[p_o[i].p_gi*3+1];
-                p_v[j*3+2] -= p_cen[p_o[i].p_gi*3+2];
+                p_v[j*8  ] -= p_cen[p_o[i].p_gi*3  ];
+                p_v[j*8+1] -= p_cen[p_o[i].p_gi*3+1];
+                p_v[j*8+2] -= p_cen[p_o[i].p_gi*3+2];
             }
         }
         vertnum_prev = vertnums[i];
@@ -328,12 +325,6 @@ void T3dm::load(const char* fname, const char** o_names)
 
     for (unsigned int i = 0; i != vertexnum; ++i) // normalizace normál
     {
-        normalize(p_n + i * 3);
+        normalize(p_v.data() + i * 8 + 3);
     }
-
-    // smazání pracovních polí
-    delete[] nf;
-    delete[] centers;
-    delete[] vertnums;
-    delete[] mainflags;
 }

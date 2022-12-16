@@ -89,7 +89,6 @@ void Sound_game_static::load(unsigned int i, ALbuffer engine0_sample, ALbuffer e
         alSourcei(p_engine1_stream[i], AL_BUFFER, engine1_sample);
 }
 
-
 void Sound_car::stop()
 {
     alSourceStop(p_engine0_stream);

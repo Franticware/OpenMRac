@@ -24,6 +24,9 @@ void Skysph::set_light_pos()
 
 void Skysph::init(float r_prm, float ang_prm, int h, int v) // úhel ve stupních
 {
+    vert.clear();
+    tris.clear();
+
     float ah = ang_prm/180.f*M_PI;
     float av = M_PI*0.25f;
     light_pos[0] = sinf(ah)*cosf(av);
@@ -32,55 +35,56 @@ void Skysph::init(float r_prm, float ang_prm, int h, int v) // úhel ve stupníc
     light_pos[3] = 0.f;
     r = r_prm;
     ang = ang_prm;
-    vert = new float[(v*(h+1)+1)*3];
-    texc = new float[(v*(h+1)+1)*2];
-    quads = new unsigned short[v*h*4];
     size = v*(h)*4;
-    for (int x = 0; x != h+1; ++x)
+    for (int y = 0; y != v; ++y)
     {
-        for (int y = 0; y != v; ++y)
+        for (int x = 0; x != h+1; ++x)
         {
             float uhel_h = ang/180.f*M_PI+M_PI*2.f/float(h)*float(x)+M_PI;
             float uhel_v = (-M_PI/2.f)/10.f+(M_PI/2.f)*1.1/float(v)*float(y);
-            vert[(x+y*(h+1))*3  ] = sinf(uhel_h)*cosf(uhel_v)*r;
-            vert[(x+y*(h+1))*3+1] = sinf(uhel_v)*r;
-            vert[(x+y*(h+1))*3+2] = cosf(uhel_h)*cosf(uhel_v)*r;
-            texc[(x+y*(h+1))*2  ] = /*uhel_h/M_PI/2.f*/float(x)/float(h);
-            texc[(x+y*(h+1))*2+1] = float(uhel_v/M_PI*2.f*2.f); //std::max(std::min(float(uhel_v/M_PI*2.f*2.f), /*1.f*/255.f/256.f), 1.f/256.f);
+            vert.push_back(sinf(uhel_h)*cosf(uhel_v)*r);
+            vert.push_back(sinf(uhel_v)*r);
+            vert.push_back(cosf(uhel_h)*cosf(uhel_v)*r);
+            vert.push_back(float(x)/float(h));
+            vert.push_back(float(uhel_v/M_PI*2.f*2.f));
             int y1 = y+1;
             int x1 = (x+1);//%h;
             if (x != h)
             {
                 if (y1 == v)
                 {
-                    quads[(x+y*(h))*4+3] = x+y*(h+1);
-                    quads[(x+y*(h))*4+2] = x1+y*(h+1);
-                    quads[(x+y*(h))*4+1] = v*(h+1);
-                    quads[(x+y*(h))*4  ] = v*(h+1);
+                    tris.push_back(v*(h+1));
+                    tris.push_back(x1+y*(h+1));
+                    tris.push_back(x+y*(h+1));
                 } else {
-                    quads[(x+y*(h))*4+3] = x+y*(h+1);
-                    quads[(x+y*(h))*4+2] = x1+y*(h+1);
-                    quads[(x+y*(h))*4+1] = x1+y1*(h+1);
-                    quads[(x+y*(h))*4  ] = x+y1*(h+1);
+                    tris.push_back(x+y1*(h+1));
+                    tris.push_back(x1+y1*(h+1));
+                    tris.push_back(x1+y*(h+1));
+
+                    tris.push_back(x+y1*(h+1));
+                    tris.push_back(x1+y*(h+1));
+                    tris.push_back(x+y*(h+1));
                 }
             }
         }
     }
-    vert[(v*(h+1))*3  ] = 0.f;
-    vert[(v*(h+1))*3+1] = r;
-    vert[(v*(h+1))*3+2] = 0.f;
-    texc[(v*(h+1))*2  ] = 0.5f;
-    texc[(v*(h+1))*2+1] = 1.f;
+    vert.push_back(0.f);
+    vert.push_back(r);
+    vert.push_back(0.f);
+    vert.push_back(0.5f);
+    vert.push_back(1.f);
 }
 
 void Skysph::render()
 {
     glEnableClientState(GL_VERTEX_ARRAY); checkGL();
     glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3, GL_FLOAT, 0, vert); checkGL();
-    glTexCoordPointer(2, GL_FLOAT, 0, texc); checkGL();
+
+    glVertexPointer(3, GL_FLOAT, sizeof(float) * 5, vert.data()); checkGL();
+    glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 5, vert.data() + 3); checkGL();
     glBindTexture(GL_TEXTURE_2D, tex_sky); checkGL();
-    glDrawElements(GL_QUADS, size, GL_UNSIGNED_SHORT, quads); checkGL();
+    glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_SHORT, tris.data()); checkGL();
+
     if (bsun)
     {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();

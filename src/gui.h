@@ -31,8 +31,6 @@ struct GuiFont
 
 struct GuiData
 {
-    GuiData();
-    ~GuiData();
     void initData();
 
     std::vector<Uint32> m_whiteFontPixels;
@@ -133,7 +131,6 @@ class GuiDialog
 {
 public:
     GuiDialog();
-    ~GuiDialog();
 
     void init(int width, int height, const char* caption);
 

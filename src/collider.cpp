@@ -55,7 +55,7 @@ void Collider::init(float gs, float r, const T3dm* t3dm, RBSolver** rbos)
     if (p_sz[1] == 0)
         p_sz[1] = 1;
 
-    p_colg = new ColliderGrid[p_sz[0]*p_sz[1]];
+    p_colg.resize(p_sz[0]*p_sz[1]);
 
     unsigned int pos[2];
     for (pos[0] = 0; pos[0] != p_sz[0]; ++pos[0])
@@ -465,12 +465,12 @@ void Collider::test()
 }
 
 void Collider::create_grid(const unsigned int pos[2],
-        const BBox** &ilines, const BBox** &ipoints, unsigned int &lines_sz, unsigned int &points_sz, bool pass2)
+        std::vector<const BBox*> &ilines, std::vector<const BBox*> &ipoints, unsigned int &lines_sz, unsigned int &points_sz, bool pass2)
 {
     if (pass2)
     {
-        ilines  = new const BBox*[lines_sz];
-        ipoints = new const BBox*[points_sz];
+        ilines.resize(lines_sz);
+        ipoints.resize(points_sz);
     }
     unsigned int lsz = 0;
     unsigned int psz = 0;
@@ -480,7 +480,7 @@ void Collider::create_grid(const unsigned int pos[2],
         {
             if (pass2)
             {
-                ilines[lsz] = p_bbox+i;
+                ilines[lsz] = p_bbox.data()+i;
             }
             ++lsz;
         }
@@ -488,7 +488,7 @@ void Collider::create_grid(const unsigned int pos[2],
         {
             if (pass2)
             {
-                ipoints[psz] = p_bbox+i;
+                ipoints[psz] = p_bbox.data()+i;
             }
             ++psz;
         }

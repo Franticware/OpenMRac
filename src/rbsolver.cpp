@@ -90,143 +90,143 @@ struct BBox_ln {
 
 // přidat podporu ibound - DONE
 // zpřehlednit kód, m_o a m_o2 předělat z referencí na ukazatele!
-void bbox_create(BBox* &bbox, unsigned int& size, float* center, const T3dm* t3dm)
+void bbox_create(std::vector<BBox> &bbox, unsigned int& size, float* center, const T3dm* t3dm)
 {
     int i_tst = t3dm->getgidobj(1);
-    if (t3dm->p_sz == 0 || i_tst == -1)
+    if (t3dm->p_o.size() == 0 || i_tst == -1)
     {
-        bbox = 0;
+        bbox.clear();
         size = 0;
         return;
     }
     const O3dm& m_o = t3dm->p_o[i_tst];
-    if (m_o.p_sz == 0)
+    if (m_o.p_i.size() == 0)
     {
-        bbox = 0;
+        bbox.clear();
         size = 0;
         return;
     }
-    unsigned int ln_sz = m_o.p_sz/3*3;
+    unsigned int ln_sz = m_o.p_i.size()/3*3;
     unsigned int ln_sz2 = 0;
 
     int i_tst2 = t3dm->getgidobj(3); // ibound
     bool bobj2 = true;
-    if (t3dm->p_sz == 0 || i_tst2 == -1)
+    if (t3dm->p_o.size() == 0 || i_tst2 == -1)
     {
         bobj2 = false;
     }
     const O3dm& m_o2 = t3dm->p_o[bobj2?i_tst2:i_tst]; // i_tst je tam proto, aby tam něco bylo
-    if (m_o2.p_sz == 0)
+    if (m_o2.p_i.size() == 0)
     {
         bobj2 = false;
     }
     if (bobj2)
-        ln_sz2 = m_o2.p_sz/3*3;
-
-    BBox_ln* b_ln = new BBox_ln[ln_sz+ln_sz2];
-    for (unsigned int i = 0; i != ln_sz; ++i)
+        ln_sz2 = m_o2.p_i.size()/3*3;
     {
-        b_ln[i].b_ln = 1;
-        // indexy jednotlivých linek
-        b_ln[i].i0 = m_o.p_i[i];
-        if (i%3 == 2)
-            b_ln[i].i1 = m_o.p_i[i-2];
-        else
-            b_ln[i].i1 = m_o.p_i[i+1];
-    }
-    for (unsigned int i = 0; i != ln_sz2; ++i)
-    {
-        b_ln[i+ln_sz].b_ln = 1;
-        // indexy jednotlivých linek
-        b_ln[i+ln_sz].i1 = m_o2.p_i[i];
-        if (i%3 == 2)
-            b_ln[i+ln_sz].i0 = m_o2.p_i[i-2];
-        else
-            b_ln[i+ln_sz].i0 = m_o2.p_i[i+1];
-    }
-    ln_sz += ln_sz2;
-
-    for (unsigned int i = 0; i != ln_sz; ++i)
-    {
-        float f_i0[2] = {t3dm->p_v[3*b_ln[i].i0+2], t3dm->p_v[3*b_ln[i].i0]};
-        float f_i1[2] = {t3dm->p_v[3*b_ln[i].i1+2], t3dm->p_v[3*b_ln[i].i1]};
-        for (unsigned int j = 0; j != ln_sz; ++j)
+        std::vector<BBox_ln> b_ln(ln_sz+ln_sz2);
+        for (unsigned int i = 0; i != ln_sz; ++i)
         {
-            float f_i0_2[2] = {t3dm->p_v[3*b_ln[j].i0+2], t3dm->p_v[3*b_ln[j].i0]};
-            float f_i1_2[2] = {t3dm->p_v[3*b_ln[j].i1+2], t3dm->p_v[3*b_ln[j].i1]};
-
-            if (equals(f_i0, f_i0_2) && b_ln[i].i0 > b_ln[j].i0)
-                b_ln[i].i0 = b_ln[j].i0;
-            if (equals(f_i0, f_i1_2) && b_ln[i].i0 > b_ln[j].i1)
-                b_ln[i].i0 = b_ln[j].i1;
-            if (equals(f_i1, f_i0_2) && b_ln[i].i1 > b_ln[j].i0)
-                b_ln[i].i1 = b_ln[j].i0;
-            if (equals(f_i1, f_i1_2) && b_ln[i].i1 > b_ln[j].i1)
-                b_ln[i].i1 = b_ln[j].i1;
+            b_ln[i].b_ln = 1;
+            // indexy jednotlivých linek
+            b_ln[i].i0 = m_o.p_i[i];
+            if (i%3 == 2)
+                b_ln[i].i1 = m_o.p_i[i-2];
+            else
+                b_ln[i].i1 = m_o.p_i[i+1];
         }
-    }
-    for (unsigned int i = 0; i != ln_sz; ++i) { // vyhození neokrajových linek
-        for (unsigned int j = 0; j != ln_sz; ++j) {
-            if (b_ln[i].i0 == b_ln[j].i1 && b_ln[i].i1 == b_ln[j].i0) // linka je tam dvakrát
+        for (unsigned int i = 0; i != ln_sz2; ++i)
+        {
+            b_ln[i+ln_sz].b_ln = 1;
+            // indexy jednotlivých linek
+            b_ln[i+ln_sz].i1 = m_o2.p_i[i];
+            if (i%3 == 2)
+                b_ln[i+ln_sz].i0 = m_o2.p_i[i-2];
+            else
+                b_ln[i+ln_sz].i0 = m_o2.p_i[i+1];
+        }
+        ln_sz += ln_sz2;
+
+        for (unsigned int i = 0; i != ln_sz; ++i)
+        {
+            float f_i0[2] = {t3dm->p_v[8*b_ln[i].i0+2], t3dm->p_v[8*b_ln[i].i0]};
+            float f_i1[2] = {t3dm->p_v[8*b_ln[i].i1+2], t3dm->p_v[8*b_ln[i].i1]};
+            for (unsigned int j = 0; j != ln_sz; ++j)
             {
-                b_ln[i].b_ln = 0;
-                break;
+                float f_i0_2[2] = {t3dm->p_v[8*b_ln[j].i0+2], t3dm->p_v[8*b_ln[j].i0]};
+                float f_i1_2[2] = {t3dm->p_v[8*b_ln[j].i1+2], t3dm->p_v[8*b_ln[j].i1]};
+
+                if (equals(f_i0, f_i0_2) && b_ln[i].i0 > b_ln[j].i0)
+                    b_ln[i].i0 = b_ln[j].i0;
+                if (equals(f_i0, f_i1_2) && b_ln[i].i0 > b_ln[j].i1)
+                    b_ln[i].i0 = b_ln[j].i1;
+                if (equals(f_i1, f_i0_2) && b_ln[i].i1 > b_ln[j].i0)
+                    b_ln[i].i1 = b_ln[j].i0;
+                if (equals(f_i1, f_i1_2) && b_ln[i].i1 > b_ln[j].i1)
+                    b_ln[i].i1 = b_ln[j].i1;
             }
         }
-    }
-    size = 0;
-    for (unsigned int i = 0; i != ln_sz; ++i) // zjištění počtu nevyhozených linek
-    {
-        if (b_ln[i].b_ln)
-        {
-            ++size;
-        }
-    }
-    bbox = new BBox[size];
-
-    center[0] = t3dm->p_cen[5];
-    center[1] = t3dm->p_cen[3];
-
-    for (unsigned int i = 0, j = 0; i != ln_sz; ++i) // zjištění souřadnic okrajových linek
-    {
-        if (b_ln[i].b_ln)
-        {
-            bbox[j].x[0] = t3dm->p_v[3*b_ln[i].i0+2];
-            bbox[j].x[1] = t3dm->p_v[3*b_ln[i].i0  ];
-
-            ladd(bbox[j].x, center); // přepočet do absolutních souřadnic podle středu objektu
-
-            bbox[j].v [0]  = 0.f;
-            bbox[j].v [1]  = 1.f;
-            bbox[j].v1[0]  = 0.f;
-            bbox[j].v1[1]  = 1.f;
-            bbox[j].n1[0]  = 1.f;
-            bbox[j].n1[1]  = 0.f;
-            bbox[j].bnconv = 0;
-
-            bbox[j].next = 0;//bbox;
-            for (unsigned int k = 0, l = 0; k != ln_sz; ++k)
-            {
-                if (b_ln[k].b_ln)
+        for (unsigned int i = 0; i != ln_sz; ++i) { // vyhození neokrajových linek
+            for (unsigned int j = 0; j != ln_sz; ++j) {
+                if (b_ln[i].i0 == b_ln[j].i1 && b_ln[i].i1 == b_ln[j].i0) // linka je tam dvakrát
                 {
-                    if (b_ln[i].i1 == b_ln[k].i0)
-                    {
-                        bbox[j].next = bbox+l;
-                        break;
-                    }
-                    ++l;
+                    b_ln[i].b_ln = 0;
+                    break;
                 }
             }
-            ++j;
+        }
+        size = 0;
+        for (unsigned int i = 0; i != ln_sz; ++i) // zjištění počtu nevyhozených linek
+        {
+            if (b_ln[i].b_ln)
+            {
+                ++size;
+            }
+        }
+        bbox.resize(size);
+
+        center[0] = t3dm->p_cen[5];
+        center[1] = t3dm->p_cen[3];
+
+        for (unsigned int i = 0, j = 0; i != ln_sz; ++i) // zjištění souřadnic okrajových linek
+        {
+            if (b_ln[i].b_ln)
+            {
+                bbox[j].x[0] = t3dm->p_v[8*b_ln[i].i0+2];
+                bbox[j].x[1] = t3dm->p_v[8*b_ln[i].i0  ];
+
+                ladd(bbox[j].x, center); // přepočet do absolutních souřadnic podle středu objektu
+
+                bbox[j].v [0]  = 0.f;
+                bbox[j].v [1]  = 1.f;
+                bbox[j].v1[0]  = 0.f;
+                bbox[j].v1[1]  = 1.f;
+                bbox[j].n1[0]  = 1.f;
+                bbox[j].n1[1]  = 0.f;
+                bbox[j].bnconv = 0;
+
+                bbox[j].next = 0;//bbox;
+                for (unsigned int k = 0, l = 0; k != ln_sz; ++k)
+                {
+                    if (b_ln[k].b_ln)
+                    {
+                        if (b_ln[i].i1 == b_ln[k].i0)
+                        {
+                            bbox[j].next = bbox.data()+l;
+                            break;
+                        }
+                        ++l;
+                    }
+                }
+                ++j;
+            }
         }
     }
-    delete[] b_ln;
 
     for (unsigned int i = 0; i != size; ++i) // zjištění, zda navazují (ukazatelem) všechny linky
     {
         if (bbox[i].next == 0)
         {
-            bbox[i].next = bbox;
+            bbox[i].next = bbox.data();
         }
     }
 
@@ -264,10 +264,10 @@ void RBSolver::init(const float* x, float ax, const float* v, float av, float m,
     p_aF = 0.f;
     float center[2];
     bbox_create(p_bbox, p_bbox_sz, center, t3dm);
-    p_bbox_rot = new BBox[p_bbox_sz];
+    p_bbox_rot.resize(p_bbox_sz);
     for (unsigned int i = 0; i != p_bbox_sz; ++i)
     {
-        p_bbox_rot[i].next = p_bbox_rot+(p_bbox[i].next-p_bbox);
+        p_bbox_rot[i].next = p_bbox_rot.data()+(p_bbox[i].next-p_bbox.data()); // nic moc kód
     }
     p_bcolprev = true;
 }

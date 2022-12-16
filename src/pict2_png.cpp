@@ -63,7 +63,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
     std::vector<unsigned char> pxVector;
     unsigned char* px = 0;
 
-    uncreate();
+    clear();
 
     if (bfile)
     {
@@ -108,7 +108,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
     if (setjmp(png_jmpbuf(png_ptr)))
 #endif
     {
-        uncreate();
+        clear();
         /* Free all of the memory associated with the png_ptr and info_ptr */
         png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
         if (bfile)
@@ -180,7 +180,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
             if (channels == 1)
             {
                 for (int i = 0; i != p_h; ++i)
-                    rows[i] = p_px+(p_h-i-1)*p_w*p_d;
+                    rows[i] = p_px.data()+(p_h-i-1)*p_w*p_d;
                 png_read_image(png_ptr, rows);
             } else {
                 pxVector.resize(p_w*p_h*channels);
@@ -219,7 +219,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
             rowsVector.resize(p_h, 0);
             rows = &(rowsVector[0]);
             for (int i = 0; i != p_h; ++i)
-                rows[i] = p_px+(p_h-i-1)*p_w*channels;
+                rows[i] = p_px.data()+(p_h-i-1)*p_w*channels;
             png_read_image(png_ptr, rows);
             if (png_get_channels(png_ptr, info_ptr) == 1)
             {
@@ -264,7 +264,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
             rowsVector.resize(p_h, 0);
             rows = &(rowsVector[0]);
             for (int i = 0; i != p_h; ++i)
-                rows[i] = p_px+(p_h-i-1)*p_w*channels;
+                rows[i] = p_px.data()+(p_h-i-1)*p_w*channels;
             png_read_image(png_ptr, rows);
             if (png_get_channels(png_ptr, info_ptr) == 1)
             {
@@ -297,7 +297,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
 
     if (empty())
     {
-        uncreate();
+        clear();
         return 0;
     }
 

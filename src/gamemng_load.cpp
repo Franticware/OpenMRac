@@ -62,7 +62,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         gbuff_in.fclose();
         p_skycmtex = load_texture_cube_map(pict_cm);
 #else
-        Pict2 pict_sph;                
+        Pict2 pict_sph;
         const char* skysph_files[4] = {"sky0s.jpg", "sky1s.jpg", "sky2s.jpg", "sky3s.jpg"};
         gbuff_in.f_open(skysph_files[sky_sel], "rb");
         pict_sph.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
@@ -72,10 +72,10 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     }
 
     // loading map...
-    p_map_model     = new T3dm;      // model mapy -> p_map_matmng, p_map_oct, p_map_rendermng, startpos, p_collider, seznam pohyblivých objektů
-    p_map_matmng    = new Matmng;    // správce textur a statického osvětlení -> p_map_rendermng
-    p_map_oct       = new Octopus;   //  -> p_map_rendermng
-    p_map_rendermng = new Rendermng; //
+    p_map_model     = std::unique_ptr<T3dm>(new T3dm);      // model mapy -> p_map_matmng, p_map_oct, p_map_rendermng, startpos, p_collider, seznam pohyblivých objektů
+    p_map_matmng    = std::unique_ptr<Matmng>(new Matmng);    // správce textur a statického osvětlení -> p_map_rendermng
+    p_map_oct       = std::unique_ptr<Octopus>(new Octopus);   //  -> p_map_rendermng
+    p_map_rendermng = std::unique_ptr<Rendermng>(new Rendermng); //
     p_map_rendermng->p_skycmtex = p_skycmtex;
     static const char* model_o_names[] = {"", "bound", "mapobject", "ibound", 0};
     p_map_model->load(gamemap.filename, model_o_names);
@@ -103,7 +103,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     p_light_position[2] = cosf(gamemap.light_ah*0.0174532925199433f)*cosf(gamemap.light_av*0.0174532925199433f);
 
     // načte všechny materiály pro daný 3D model a vytvoří případně statické osvětlení (je jeho majitelem)
-    p_map_matmng->load(p_map_model, light_ambient, light_diffuse, p_light_position);
+    p_map_matmng->load(p_map_model.get(), light_ambient, light_diffuse, p_light_position);
 
     float frustum[6] = {-p_frust[0], p_frust[0], -p_frust[1], p_frust[1], p_frust[2], p_frust[3]};
     // pokud jsou dva hráči, obraz je extrémně širokoúhlý
@@ -113,15 +113,15 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         frustum[1] *= 2.f;
     }
     p_map_oct->init(frustum, *p_map_model, map_octopus_min_tris, 50);
-    p_map_rendermng->init(p_map_model, p_map_matmng, p_map_oct);
+    p_map_rendermng->init(p_map_model.get(), p_map_matmng.get(), p_map_oct.get());
     // end loading map
 
     // získání souřadnic objektů na mapě
     int i_tst = p_map_model->getgidobj(2);
-    if (p_map_model->p_sz != 0 && i_tst != -1) // vytvoření seznamu objektů na mapě
+    if (p_map_model->p_o.size() != 0 && i_tst != -1) // vytvoření seznamu objektů na mapě
     {
         const O3dm& m_o = p_map_model->p_o[i_tst];
-        for (unsigned int i = 0; i != m_o.p_sz; ++i)
+        for (unsigned int i = 0; i != m_o.p_i.size(); ++i)
         {
             bool bfound = false;
             // projdou se všechny objekty v objektové mapě, aby se bod nevkládal 2x
@@ -129,9 +129,9 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
             {
                 if (it->vert_i == m_o.p_i[i] ||
                     ( // pokud je to jiný bod ve stejném místě
-                    p_map_model->p_v[it->vert_i*3+0] == p_map_model->p_v[m_o.p_i[i]*3+0]&&
-                    p_map_model->p_v[it->vert_i*3+1] == p_map_model->p_v[m_o.p_i[i]*3+1]&&
-                    p_map_model->p_v[it->vert_i*3+2] == p_map_model->p_v[m_o.p_i[i]*3+2]
+                    p_map_model->p_v[it->vert_i*8+0] == p_map_model->p_v[m_o.p_i[i]*8+0]&&
+                    p_map_model->p_v[it->vert_i*8+1] == p_map_model->p_v[m_o.p_i[i]*8+1]&&
+                    p_map_model->p_v[it->vert_i*8+2] == p_map_model->p_v[m_o.p_i[i]*8+2]
                     )) // pokud už pole obsahuje bod s indexem, je nalezen
                 {
                     bfound = true;
@@ -142,16 +142,16 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
             {
                 Mapobj mapobj;
                 mapobj.vert_i = m_o.p_i[i];
-                mapobj.ang = p_map_model->p_cen[m_o.p_gi*3+1]+p_map_model->p_v[m_o.p_i[i]*3+1]*M_PI;
+                mapobj.ang = p_map_model->p_cen[m_o.p_gi*3+1]+p_map_model->p_v[m_o.p_i[i]*8+1]*M_PI;
                 mapobj.ang /= 10.f;
-                mapobj.pos[0] = p_map_model->p_cen[m_o.p_gi*3+0]+p_map_model->p_v[m_o.p_i[i]*3+2];
-                mapobj.pos[1] = p_map_model->p_cen[m_o.p_gi*3+2]+p_map_model->p_v[m_o.p_i[i]*3+0];
+                mapobj.pos[0] = p_map_model->p_cen[m_o.p_gi*3+0]+p_map_model->p_v[m_o.p_i[i]*8+2];
+                mapobj.pos[1] = p_map_model->p_cen[m_o.p_gi*3+2]+p_map_model->p_v[m_o.p_i[i]*8+0];
                 const int texo_w = 8;
                 const int texo_h = 8;
                 int texo_x = 0;
                 int texo_y = 0;
-                texo_x = (int)floor(p_map_model->p_t[m_o.p_i[i]*2+0]*float(texo_w));
-                texo_y = (int)floor(p_map_model->p_t[m_o.p_i[i]*2+1]*float(texo_h));
+                texo_x = (int)floor(p_map_model->p_v[m_o.p_i[i]*8+6]*float(texo_w));
+                texo_y = (int)floor(p_map_model->p_v[m_o.p_i[i]*8+7]*float(texo_h));
                 int o_id = texo_x+texo_y*texo_w;
                 --o_id;
                 if (o_id < 0 || o_id >= int(p_objs.size()))
@@ -199,7 +199,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         it->rendermng->set_oc(frustum, *(p_objs[it->id].t3dm));
     }
 
-    p_sound_car = new Sound_car[p_players];
+    p_sound_car.resize(p_players);
 
     for (unsigned int i = 0; i != p_players; ++i)
     {
@@ -211,16 +211,15 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         if (cars_tex_sel[i] != 0)
         {
             int cars_tex_sel_pom = cars_tex_sel[i];
-            if (int(p_cars[cars_sel[i]].sz_mods) <= cars_tex_sel_pom)
-                cars_tex_sel_pom = p_cars[cars_sel[i]].sz_mods-1;
-            for (unsigned int j = 0; j != p_carmodel[i]->p_m_sz; ++j)
+            if (int(p_cars[cars_sel[i]].pict_tex.size()) <= cars_tex_sel_pom)
+                cars_tex_sel_pom = p_cars[cars_sel[i]].pict_tex.size()-1;
+            for (unsigned int j = 0; j != p_carmodel[i]->p_m.size(); ++j)
             {
                 for (unsigned int k = 0; k != p_cars[cars_sel[i]].sz_names; ++k)
                 {
-                    if (strcmp(p_cars[cars_sel[i]].names[k], p_carmodel[i]->p_m[j]) == 0)
+                    if (strcmp(p_cars[cars_sel[i]].names[k].c_str(), p_carmodel[i]->p_m[j].c_str()) == 0)
                     {
-                        p_carmodel[i]->p_m[j][255] = 0;
-                        strncpy(p_carmodel[i]->p_m[j], p_cars[cars_sel[i]].names[cars_tex_sel_pom*p_cars[cars_sel[i]].sz_names+k], 255);
+                        p_carmodel[i]->p_m[j] = p_cars[cars_sel[i]].names[cars_tex_sel_pom*p_cars[cars_sel[i]].sz_names+k];
                     }
                 }
             }
@@ -272,7 +271,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
 
         p_car2dp[i].init(1.24, 0.58, -1.14, 0.58, p_car2do+i);
     }
-    
+
     p_isGhost = p_players == 1;
     p_ghostAvailable = 0;
     if (/*p_isGhost*/true)
@@ -302,17 +301,15 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         for (int i = 0; i != 2; ++i) {
             p_ghostmodel[i].load(p_cars[ghostcari[i]].filename, ghost_o_names);
             if (ghostcarcolori[i] != 0) {
-                if (int(p_cars[ghostcari[i]].sz_mods) <= ghostcarcolori[i])
-                    ghostcarcolori[i] = p_cars[ghostcari[i]].sz_mods-1;
-                for (unsigned int j = 0; j != p_ghostmodel[i].p_m_sz; ++j)
+                if (int(p_cars[ghostcari[i]].pict_tex.size()) <= ghostcarcolori[i])
+                    ghostcarcolori[i] = p_cars[ghostcari[i]].pict_tex.size()-1;
+                for (unsigned int j = 0; j != p_ghostmodel[i].p_m.size(); ++j)
                 {
                     for (unsigned int k = 0; k != p_cars[ghostcari[i]].sz_names; ++k)
                     {
-                        if (strcmp(p_cars[ghostcari[i]].names[k], p_ghostmodel[i].p_m[j]) == 0)
+                        if (p_cars[ghostcari[i]].names[k] == p_ghostmodel[i].p_m[j])
                         {
-                            p_ghostmodel[i].p_m[j][255] = 0;
-                            strncpy(p_ghostmodel[i].p_m[j], 
-                                p_cars[ghostcari[i]].names[ghostcarcolori[i]*p_cars[ghostcari[i]].sz_names+k], 255);
+                            p_ghostmodel[i].p_m[j] = p_cars[ghostcari[i]].names[ghostcarcolori[i]*p_cars[ghostcari[i]].sz_names+k];
                         }
                     }
                 }
@@ -334,9 +331,9 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         p_rbos[i] = p_car2do+i;
     for (unsigned int i = 0; i != p_mapobjs.size(); ++i)
         p_rbos[i+p_players] = p_mapobjs[i].rbo;
-    p_collider->init(8, 3, p_map_model, p_rbos);
+    p_collider->init(8, 3, p_map_model.get(), p_rbos);
     p_collider->p_players = p_players;
-    p_collider->p_sound_crash = p_sound_crash;
+    p_collider->p_sound_crash = p_sound_crash.get();
 
     glPushMatrix(); checkGL();
     glLoadIdentity(); checkGL();
@@ -369,10 +366,10 @@ void Gamemng::unload()
     p_skysph.tex_sky = 0;
     // v destruktoru zrušit texturu slunce
 
-    delete p_map_model; p_map_model = 0;
-    delete p_map_matmng; p_map_matmng = 0;
-    delete p_map_oct; p_map_oct = 0;
-    delete p_map_rendermng; p_map_rendermng = 0;
+    delete p_map_model.release();
+    delete p_map_matmng.release();
+    delete p_map_oct.release();
+    delete p_map_rendermng.release();
     // smazat p_mapobjs
 
     for (unsigned int i = 0; i != p_objs.size(); ++i)
@@ -394,7 +391,7 @@ void Gamemng::unload()
         delete p_carmatmng[i]; p_carmatmng[i] = 0;
         p_sound_car[i].stop();
     }
-    
+
     delete[] p_ghostmodel; p_ghostmodel = 0;
     delete[] p_ghostmatmng; p_ghostmatmng = 0;
     delete[] p_ghostrendermng; p_ghostrendermng = 0;
@@ -404,7 +401,7 @@ void Gamemng::unload()
     delete[] p_car2dp; p_car2dp = 0;
     delete[] p_cartransf; p_cartransf = 0;
     delete[] p_carrendermng; p_carrendermng = 0;
-    delete[] p_sound_car; p_sound_car = 0;
+    p_sound_car.clear();
 
     delete p_collider; p_collider = 0;
     delete[] p_rbos; p_rbos = 0;

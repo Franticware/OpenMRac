@@ -355,7 +355,7 @@ void MainMenu::menu()
     {
         if (p_cars_sel[i] >= int(p_gamemng->p_cars.size())) p_cars_sel[i] = int(p_gamemng->p_cars.size())-1;
         if (p_cars_sel[i] < 0) p_cars_sel[i] = 0;
-        if (p_cars_tex_sel[i] >= int(p_gamemng->p_cars[p_cars_sel[i]].sz_mods)) p_cars_tex_sel[i] = int(p_gamemng->p_cars[p_cars_sel[i]].sz_mods)-1;
+        if (p_cars_tex_sel[i] >= int(p_gamemng->p_cars[p_cars_sel[i]].pict_tex.size())) p_cars_tex_sel[i] = int(p_gamemng->p_cars[p_cars_sel[i]].pict_tex.size())-1;
         if (p_cars_tex_sel[i] < 0) p_cars_tex_sel[i] = 0;
     }
     p_track_sel = p_settings->get("last_track");
@@ -379,7 +379,7 @@ void MainMenu::menu()
     //
     for (unsigned int i = 0; i != p_gamemng->p_cars.size(); ++i)
     {
-        for (unsigned int j = 0; j != p_gamemng->p_cars[i].sz_mods; ++j)
+        for (unsigned int j = 0; j != p_gamemng->p_cars[i].pict_tex.size(); ++j)
         {
             Pict2 pict_th;
             gbuff_in.f_open(p_gamemng->p_cars[i].pict_tex[j].fname, "rb");
@@ -415,7 +415,7 @@ void MainMenu::game()
     p_logo_textura = 0;
 
     for (unsigned int i = 0; i != p_gamemng->p_cars.size(); ++i)
-        for (unsigned int j = 0; j != p_gamemng->p_cars[i].sz_mods; ++j)
+        for (unsigned int j = 0; j != p_gamemng->p_cars[i].pict_tex.size(); ++j)
         {
             glDeleteTextures(1, &(p_gamemng->p_cars[i].pict_tex[j].tex)); checkGL();
             p_gamemng->p_cars[i].pict_tex[j].tex = 0;
@@ -1054,14 +1054,14 @@ bool MainMenu::keydown(unsigned int sym)
             --p_cars_tex_sel[p_car_i];
             if (p_cars_tex_sel[p_car_i] < 0)
             {
-                p_cars_tex_sel[p_car_i] = int(p_gamemng->p_cars[p_cars_sel[p_car_i]].sz_mods)-1;
+                p_cars_tex_sel[p_car_i] = int(p_gamemng->p_cars[p_cars_sel[p_car_i]].pict_tex.size())-1;
             }
         }
         else if (sym == SDLK_RIGHT)
         {
             //
             ++p_cars_tex_sel[p_car_i];
-            if (p_cars_tex_sel[p_car_i] >= int(p_gamemng->p_cars[p_cars_sel[p_car_i]].sz_mods))
+            if (p_cars_tex_sel[p_car_i] >= int(p_gamemng->p_cars[p_cars_sel[p_car_i]].pict_tex.size()))
             {
                 p_cars_tex_sel[p_car_i] = 0;
             }

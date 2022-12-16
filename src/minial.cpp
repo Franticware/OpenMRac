@@ -115,8 +115,8 @@ struct MA_Buffer
 static ALCdevice alcDevice;
 static ALCcontext alcContext;
 
-static std::map<ALuint, MA_Source>* sourceMap = /*nullptr*/0;
-static std::map<ALuint, MA_Buffer>* bufferMap = /*nullptr*/0;
+static std::map<ALuint, MA_Source> sourceMap;
+static std::map<ALuint, MA_Buffer> bufferMap;
 static ALsizei maObtainedFreq = MA_FREQ;
 
 static void ma_callback(void *userdata, Uint8 *stream, int len)
@@ -125,15 +125,15 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
     int count = len >> 2;
     float* floatBuff = (float*)stream;
     std::fill(floatBuff, floatBuff + count, 0.f);
-    if (sourceMap == 0) return;
-    for (auto& p : *sourceMap)
+    if (sourceMap.empty()) return;
+    for (auto& p : sourceMap)
     {
         MA_Source& src = p.second;
         if (src.playing)
         {
             if (src.buffer != 0)
             {
-                MA_Buffer& buff = (*bufferMap)[src.buffer];
+                MA_Buffer& buff = (bufferMap)[src.buffer];
                 if (!buff.samples.empty())
                 {
                     const float pitch = src.pitch * buff.pitch;
@@ -241,8 +241,8 @@ const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
 ALCdevice* alcOpenDevice(const ALCchar *devicename)
 {
     (void)devicename;
-    sourceMap = new std::map<ALuint, MA_Source>;
-    bufferMap = new std::map<ALuint, MA_Buffer>;
+    sourceMap.clear();
+    bufferMap.clear();
     SDL_AudioSpec as;
     as.freq = MA_FREQ;
     as.format = AUDIO_F32SYS;
@@ -288,10 +288,8 @@ ALCboolean alcCloseDevice(ALCdevice *device)
 {
     (void)device;
     SDL_CloseAudioDevice(device->id);
-    delete sourceMap;
-    sourceMap = 0;
-    delete bufferMap;
-    bufferMap = 0;
+    sourceMap.clear();
+    bufferMap.clear();
     return 1;
 }
 
@@ -315,22 +313,22 @@ template<class T> void generateStuff(ALsizei n, ALuint* stuff, std::map<ALuint, 
 
 void alGenSources(ALsizei n, ALuint *sources)
 {
-    generateStuff(n, sources, *sourceMap, sourceCounter);
+    generateStuff(n, sources, sourceMap, sourceCounter);
 }
 
 void alGenBuffers(ALsizei n, ALuint *buffers)
 {
-    generateStuff(n, buffers, *bufferMap, bufferCounter);
+    generateStuff(n, buffers, bufferMap, bufferCounter);
 }
 
-template<class T> void deleteStuff(ALsizei n, const ALuint* stuff, std::map<ALuint, T>* m)
+template<class T> void deleteStuff(ALsizei n, const ALuint* stuff, std::map<ALuint, T> m)
 {
-    if (m == 0)
+    if (m.empty())
         return;
     SDL_LockAudioDevice(alcDevice.id);
     for (ALsizei i = 0; i != n; ++i)
     {
-        m->erase(stuff[i]);
+        m.erase(stuff[i]);
     }
     SDL_UnlockAudioDevice(alcDevice.id);
 }
@@ -355,9 +353,9 @@ void alListenerfv(ALenum param, const ALfloat *values)
 
 void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq)
 {
-    if (buffer == 0 || bufferMap == 0 || format != AL_FORMAT_MONO16) return; // only 16-bit mono audio is currently supported
+    if (buffer == 0 || bufferMap.empty() || format != AL_FORMAT_MONO16) return; // only 16-bit mono audio is currently supported
     SDL_LockAudioDevice(alcDevice.id);
-    MA_Buffer& buff = (*bufferMap)[buffer];
+    MA_Buffer& buff = (bufferMap)[buffer];
     buff.pitch = float(freq)/float(maObtainedFreq);
     buff.samples.resize(size >> 1);
     for (size_t i = 0; i != buff.samples.size(); ++i)
@@ -369,9 +367,9 @@ void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size
 
 void alSourcef(ALuint source, ALenum param, ALfloat value)
 {
-    if (source == 0 || sourceMap == 0) return;
+    if (source == 0 || sourceMap.empty()) return;
     SDL_LockAudioDevice(alcDevice.id);
-    MA_Source& src = (*sourceMap)[source];
+    MA_Source& src = (sourceMap)[source];
     switch (param)
     {
     case AL_PITCH:
@@ -401,9 +399,9 @@ void alSourcefv(ALuint source, ALenum param, const ALfloat *values)
 
 void alSourcei(ALuint source, ALenum param, ALint value)
 {
-    if (source == 0 || sourceMap == 0) return;
+    if (source == 0 || sourceMap.empty()) return;
     SDL_LockAudioDevice(alcDevice.id);
-    MA_Source& src = (*sourceMap)[source];
+    MA_Source& src = (sourceMap)[source];
     switch (param)
     {
     case AL_LOOPING:
@@ -418,27 +416,27 @@ void alSourcei(ALuint source, ALenum param, ALint value)
 
 void alSourcePlay(ALuint source)
 {
-    if (source == 0 || sourceMap == 0) return;
+    if (source == 0 || sourceMap.empty()) return;
     SDL_LockAudioDevice(alcDevice.id);
-    MA_Source& src = (*sourceMap)[source];
+    MA_Source& src = (sourceMap)[source];
     src.playing = true;
     SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alSourceStop(ALuint source)
 {
-    if (source == 0 || sourceMap == 0) return;
+    if (source == 0 || sourceMap.empty()) return;
     SDL_LockAudioDevice(alcDevice.id);
-    MA_Source& src = (*sourceMap)[source];
+    MA_Source& src = (sourceMap)[source];
     src.playing = false;
     SDL_UnlockAudioDevice(alcDevice.id);
 }
 
 void alSourceRewind(ALuint source)
 {
-    if (source == 0 || sourceMap == 0) return;
+    if (source == 0 || sourceMap.empty()) return;
     SDL_LockAudioDevice(alcDevice.id);
-    MA_Source& src = (*sourceMap)[source];
+    MA_Source& src = (sourceMap)[source];
     src.pos = 0;
     SDL_UnlockAudioDevice(alcDevice.id);
 }

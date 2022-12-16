@@ -61,19 +61,6 @@ public:
         p_hit_sample[0] = 0;
         p_hit_sample[1] = 0;
     }
-    ~Sound_game_static() {
-        for (int i = 0; i != 4; ++i)
-        {
-            p_skid_stream[i] = 0;
-            p_engine0_stream[i] = 0;
-            p_engine1_stream[i] = 0;
-        }
-        for (int i = 0; i != 10; ++i)
-            p_hit_stream[i] = 0;
-        p_skid_sample = 0;
-        p_hit_sample[0] = 0;
-        p_hit_sample[1] = 0;
-    }
 
     void init();
     void load(unsigned int i, ALbuffer p_engine0_sample, ALbuffer p_engine1_sample);
@@ -100,8 +87,6 @@ class Sound_car {
 public:
     Sound_car() : p_skid_stream(0), p_engine0_stream(0), p_engine1_stream(0), p_engine0_state(0), p_engine1_state(0), p_skid_state(0), p_time(0),
         p_T(0), p_running_pitch(0), p_pan(0), p_player(0), p_brake_volume(0), p_engine_on(0), p_global_volume(0) { }
-    ~Sound_car() {
-    }
     void init(ALsource stream_idle, ALsource stream_running, float running_pitch, ALsource stream_skid, int player, int players_n);
     void frame(float deltaT, int engine_state/*0 - nultý, 1 - první, 2 - první potichu*/, float engine_pitch, const float velocity[2]);
     void stop();
@@ -124,8 +109,6 @@ public:
 class Sound_crash {
 public:
     Sound_crash() { p_sz_samples = 2; p_width = 5; p_global_volume = 0; p_hit_stream = 0; p_fronta_pos[0] = 0; p_fronta_pos[1] = 0; }
-    ~Sound_crash() {
-    }
     void init(ALsource* stream_hit); // load zvuků
     void play(float c_j); // přehraje zvuk nárazu
     int p_sz_samples;

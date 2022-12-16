@@ -104,14 +104,6 @@ int GUI_FillRect(GUI_Surface& dst, const SDL_Rect* rect, Uint32 color)
 
 /// GuiData ///
 
-GuiData::GuiData()
-{
-}
-
-GuiData::~GuiData()
-{
-}
-
 void GuiData::initData()
 {
     m_whiteFontPixels.resize(GuiFont::WIDTH * GuiFont::HEIGHT);
@@ -234,10 +226,6 @@ GuiDialog::GuiDialog()
     m_lastMouseX = 0;
     m_lastMouseY = 0;
 
-}
-
-GuiDialog::~GuiDialog()
-{
 }
 
 void GuiDialog::init(int width, int height, const char* caption)

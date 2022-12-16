@@ -92,7 +92,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
     //bool breturnval = true;
     int ret = 1;
 
-    uncreate();
+    clear();
 
     /* In this example we want to open the input file before doing anything else,
      * so that the setjmp() error recovery below can assume the file is open.
@@ -120,7 +120,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
 
     if (setjmp(jerr.setjmp_buffer))
     {
-        uncreate();
+        clear();
         jpeg_destroy_decompress(&cinfo);
         /*if (buncreate)
             uncreate();*/
@@ -199,7 +199,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
              */
             jpeg_read_scanlines(&cinfo, buffer, 1); // toto nejspíš přičítá k cinfo.output_scanline jedničku
             memcpy(
-                p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
+                p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride,
                 *buffer, row_stride);
         }
     }
@@ -226,7 +226,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
             ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
         while (cinfo.output_scanline < cinfo.output_height) {
             jpeg_read_scanlines(&cinfo, buffer, 1);
-            memcpy(p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
+            memcpy(p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride,
                 *buffer, row_stride);
         }
 
@@ -246,7 +246,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
         while (cinfo.output_scanline < cinfo.output_height) {
             jpeg_read_scanlines(&cinfo, buffer, 1);
             memcpy(
-                p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
+                p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride,
                 *buffer, row_stride);
         }
 
@@ -267,7 +267,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
         while (cinfo.output_scanline < cinfo.output_height) {
             jpeg_read_scanlines(&cinfo, buffer, 1);
             memcpy(
-                p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
+                p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride,
                 *buffer, row_stride);
         }
 
@@ -283,7 +283,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
     }
     else
     {
-        uncreate();
+        clear();
         jpeg_destroy_decompress(&cinfo);
         if (bfile)
             fclose(fin);
@@ -311,7 +311,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
 
     if (empty())
     {
-        uncreate();
+        clear();
         return 0;
     }
 

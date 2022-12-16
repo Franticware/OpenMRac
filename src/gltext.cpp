@@ -37,8 +37,8 @@ void Gltext::render(GLuint texture)
 
     for (unsigned int i = 0; i != p_h; ++i)
     {
-        glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
+        glVertexPointer(3, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data()); checkGL();
+        glTexCoordPointer(2, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data() + 3); checkGL();
         glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
     }
 
@@ -68,8 +68,8 @@ void Gltext::render_c(GLuint texture)
     for (unsigned int i = 0; i != p_h; ++i)
     {
         glColor4fv(p_lines[i].color_b); checkGL();
-        glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
+        glVertexPointer(3, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data()); checkGL();
+        glTexCoordPointer(2, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data() + 3); checkGL();
         glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
     }
 
@@ -101,8 +101,8 @@ void Gltext::renderscale(float scale, GLuint texture)
 
     for (unsigned int i = 0; i != p_h; ++i)
     {
-        glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
+        glVertexPointer(3, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data()); checkGL();
+        glTexCoordPointer(2, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data() + 3); checkGL();
         glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
     }
 
@@ -159,22 +159,22 @@ void Gltext::puts(unsigned int i/*číslo řádku*/, const char* text)
         {
             // x-ová souřadnice textu, ostatní byly nastaveny při inicializaci
             char_right = char_left + (p_font->p_charmap[p_font->get_char_i(text[j])].vertw)*p_fontsize;
-            p_lines[i].vert[(j*4+0)*3+0] = line_left+char_left;
-            p_lines[i].vert[(j*4+1)*3+0] = line_left+char_right;
-            p_lines[i].vert[(j*4+2)*3+0] = line_left+char_right;
-            p_lines[i].vert[(j*4+3)*3+0] = line_left+char_left;
+            p_lines[i].vert[(j*4+0)*5+0] = line_left+char_left;
+            p_lines[i].vert[(j*4+1)*5+0] = line_left+char_right;
+            p_lines[i].vert[(j*4+2)*5+0] = line_left+char_right;
+            p_lines[i].vert[(j*4+3)*5+0] = line_left+char_left;
             char_left = char_right + p_font->p_dist*p_fontsize;
 
             // texturové souřadnice
-            p_lines[i].texc[(j*4+0)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
-            p_lines[i].texc[(j*4+1)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
-            p_lines[i].texc[(j*4+2)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
-            p_lines[i].texc[(j*4+3)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
+            p_lines[i].vert[(j*4+0)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
+            p_lines[i].vert[(j*4+1)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
+            p_lines[i].vert[(j*4+2)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
+            p_lines[i].vert[(j*4+3)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
 
-            p_lines[i].texc[(j*4+0)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
-            p_lines[i].texc[(j*4+1)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
-            p_lines[i].texc[(j*4+2)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
-            p_lines[i].texc[(j*4+3)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
+            p_lines[i].vert[(j*4+0)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
+            p_lines[i].vert[(j*4+1)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
+            p_lines[i].vert[(j*4+2)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
+            p_lines[i].vert[(j*4+3)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
         }
         // přechod na další řádek
         if (text[utextsz] == '\n')
@@ -194,7 +194,7 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
 {
     p_h = h;
     p_w = w;
-    p_lines = new Gltline[p_h];
+    p_lines.resize(p_h);
     p_fontsize = fontsize;
     p_cen_x = cen_x;
     p_cen_y = cen_y;
@@ -205,8 +205,8 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
     {
         memcpy(p_lines[i].color_b, color_b, sizeof(float)*4);
         p_lines[i].size = 0; // max p_w*4
-        p_lines[i].vert = new float[p_w*4*3];
-        p_lines[i].texc = new float[p_w*4*2];
+        p_lines[i].vert.clear();
+        p_lines[i].vert.resize(p_w*4*5);
     }
     float text_h = float(p_h)*p_fontsize;
     float text_top = 0.f;
@@ -226,22 +226,22 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
         for (unsigned int j = 0; j != p_w; ++j)
         {
             // z-ové souřadnice textu jsou napevno -10
-            p_lines[i].vert[(j*4+0)*3+2] = -10.f;
-            p_lines[i].vert[(j*4+1)*3+2] = -10.f;
-            p_lines[i].vert[(j*4+2)*3+2] = -10.f;
-            p_lines[i].vert[(j*4+3)*3+2] = -10.f;
+            p_lines[i].vert[(j*4+0)*5+2] = -10.f;
+            p_lines[i].vert[(j*4+1)*5+2] = -10.f;
+            p_lines[i].vert[(j*4+2)*5+2] = -10.f;
+            p_lines[i].vert[(j*4+3)*5+2] = -10.f;
 
             // x-ové souřadnice se inicializují na 0
-            p_lines[i].vert[(j*4+0)*3+0] = 0.f;
-            p_lines[i].vert[(j*4+1)*3+0] = 0.f;
-            p_lines[i].vert[(j*4+2)*3+0] = 0.f;
-            p_lines[i].vert[(j*4+3)*3+0] = 0.f;
+            p_lines[i].vert[(j*4+0)*5+0] = 0.f;
+            p_lines[i].vert[(j*4+1)*5+0] = 0.f;
+            p_lines[i].vert[(j*4+2)*5+0] = 0.f;
+            p_lines[i].vert[(j*4+3)*5+0] = 0.f;
 
             // souřadnice se odečítají, protože pozice se počítá odspodu
-            p_lines[i].vert[(j*4+0)*3+1] = text_top-(float(i)+1.f)*p_fontsize;
-            p_lines[i].vert[(j*4+1)*3+1] = text_top-(float(i)+1.f)*p_fontsize;
-            p_lines[i].vert[(j*4+2)*3+1] = text_top-(float(i))*p_fontsize;
-            p_lines[i].vert[(j*4+3)*3+1] = text_top-(float(i))*p_fontsize;
+            p_lines[i].vert[(j*4+0)*5+1] = text_top-(float(i)+1.f)*p_fontsize;
+            p_lines[i].vert[(j*4+1)*5+1] = text_top-(float(i)+1.f)*p_fontsize;
+            p_lines[i].vert[(j*4+2)*5+1] = text_top-(float(i))*p_fontsize;
+            p_lines[i].vert[(j*4+3)*5+1] = text_top-(float(i))*p_fontsize;
         }
     }
 }
