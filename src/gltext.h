@@ -12,6 +12,8 @@
 
 #include <vector>
 
+#include "glm1.h"
+
 struct Glfchar {
     float vertw;
     float texc[4]; // l, r, b, t
@@ -56,6 +58,8 @@ public:
     void renderscale_(float scale);
     void renderscale(float scale, GLuint texture);
 
+    glm::mat4 mtrx;
+
     const Glfont* p_font; // odkaz na font
     std::vector<Gltline> p_lines; // řádky
     unsigned int p_h; // počet řádků
@@ -63,7 +67,6 @@ public:
     int p_cen_x;
     int p_cen_y;
     float p_fontsize; // výška znaků
-    float p_pos[2];
 
     float p_color_bkgrect[4];
     bool p_b_bkgrect;

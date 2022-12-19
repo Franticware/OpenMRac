@@ -269,7 +269,7 @@ void Rendermng::render_o_pass_s3()
     glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
 }
 
-void Rendermng::render_o_pass2()
+void Rendermng::render_o_pass2(const glm::mat4& m)
 {
     if (!isVisible())
         return;
@@ -331,13 +331,13 @@ void Rendermng::render_o_pass2()
                     {
                         if (p_transf)
                         {
-                            glPushMatrix(); checkGL();
-                            p_transf->mult_mwmx(p_t3dm->p_o[k].p_gi);
+                            glm::mat4 m2 = m * p_transf->mult_mwmx(p_t3dm->p_o[k].p_gi);
+                            glLoadMatrixf(glm::value_ptr(m2));
                         }
                         glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i.data()); checkGL();
                         if (p_transf)
                         {
-                            glPopMatrix(); checkGL();
+                            glLoadMatrixf(glm::value_ptr(m));
                         }
                     }
                     ++k;

@@ -15,13 +15,13 @@ void srand1()
 
 int randn1(int size)
 {
-	const int rozsah_casti = RAND_MAX / size;
-	int r;
+    const int rozsah_casti = RAND_MAX / size;
+    int r;
 
-	do r = rand1() / rozsah_casti;
-	while (r >= size);
+    do r = rand1() / rozsah_casti;
+    while (r >= size);
 
-	return r;
+    return r;
 }
 
 void swap_rand1(void* ptr1, void* ptr2, unsigned int size)

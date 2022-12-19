@@ -98,10 +98,11 @@ void Cam::turn_u(float T)
     p_ax += p_va*T;
 }
 
-void Cam::transform()
+glm::mat4 Cam::transform() const
 {
-    static const float convdeg = 57.2957795130823;
-    glRotatef(-p_ax*convdeg, 1.f, 0.f, 0.f); checkGL();
-    glRotatef(-p_ay*convdeg, 0.f, 1.f, 0.f); checkGL();
-    glTranslatef(-p_pos[0], -p_pos[1], -p_pos[2]); checkGL();
+    glm::mat4 ret(1);
+    ret = glm::rotate(ret, -p_ax, glm::vec3(1.f, 0.f, 0.f));
+    ret = glm::rotate(ret, -p_ay, glm::vec3(0.f, 1.f, 0.f));
+    ret = glm::translate(ret, glm::vec3(-p_pos[0], -p_pos[1], -p_pos[2]));
+    return ret;
 }

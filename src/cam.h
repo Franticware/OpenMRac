@@ -1,6 +1,8 @@
 #ifndef HLIDAC_CAM_H
 #define HLIDAC_CAM_H
 
+#include "glm1.h"
+
 class Cam {
 public:
     void init(const float* pos, float ax, float ay, float speed_transf, float speed_rot);
@@ -18,7 +20,7 @@ public:
     /*void save();
     void load();*/
 
-    void transform();
+    glm::mat4 transform() const;
 
     float p_pos[3];
     float p_ax;

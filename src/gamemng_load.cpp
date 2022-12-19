@@ -335,12 +335,8 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     p_collider->p_players = p_players;
     p_collider->p_sound_crash = p_sound_crash.get();
 
-    glPushMatrix(); checkGL();
-    glLoadIdentity(); checkGL();
-    glScalef(-1, -1, -1); checkGL();
-    glRotatef(-p_skyang, 0, 1, 0); checkGL();
-    glGetFloatv(GL_MODELVIEW_MATRIX, p_mtrx_texcm); checkGL();
-    glPopMatrix(); checkGL();
+    p_mtrx_texcm = glm::scale(glm::mat4(1), glm::vec3(-1, -1, -1));
+    p_mtrx_texcm = glm::rotate(p_mtrx_texcm, glm::radians(-p_skyang), glm::vec3(0, 1, 0));
 
     for (unsigned int i = 0; i != p_players; ++i)
     {
@@ -349,11 +345,9 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     }
 
     set_proj_mtrx();
-
     restart();
 
     p_laps = 3;
-
     return true;
 }
 

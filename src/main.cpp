@@ -103,7 +103,7 @@ void my_exit(int ret, bool callExit)
     }
     SDL_GL_DeleteContext(maincontext);
     SDL_Quit();
-    
+
 #ifndef __MACOSX__
     if (callExit)
     {
@@ -146,7 +146,7 @@ void saveTgaScreenshot()
     FILE* fout = fopenDir(filename, "wb", OPENMRAC_ORG, OPENMRAC_APP);
     //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (fout != NULL) {
-        unsigned char tgaheader[] = {    
+        unsigned char tgaheader[] = {
             0, //0  1 byte  IDLength    velikost obrazového identifikátoru
             0, //1  1 byte  ColorMapType    typ barevné mapy
             2, //2  1 byte  ImageType   typ obrázku
@@ -168,7 +168,7 @@ void saveTgaScreenshot()
         fwrite(tgaheader2, 1, sizeof(tgaheader2), fout);
         fwrite(tgaheader3, 1, sizeof(tgaheader3), fout);
         fwrite(&(pixelbuffer[0]), 1, okno_rozmery[2]*okno_rozmery[3]*3, fout);
-        
+
         fclose(fout);
     }
     ++screenshotNumber;
@@ -216,7 +216,7 @@ void initScreenModesVector(std::vector<ScreenMode>& screenModesVector, ScreenMod
 #define CAMERA_KEY_COUNT 10
 
 int my_main (int argc, char** argv)
-{   
+{
     bool skipSettings = false;
     for (int i = 1; i < argc; ++i)
     {
@@ -355,7 +355,7 @@ int my_main (int argc, char** argv)
     {
         return enableOpenGLResult; // error
     }
-    
+
     //GLfloat textureSize;
     //glGetFloatv(GL_MAX_TEXTURE_SIZE, &textureSize); checkGL();
     //fprintf(stderr, "max texture size %f\n", textureSize);
@@ -369,14 +369,14 @@ int my_main (int argc, char** argv)
     {
         SDL_SetWindowTitle(gameWindow, "OpenMRac " OPENMRAC_VERSION);
     }
-        
+
     if (strcmp((const char*)glGetString(GL_VERSION), "1.4") >= 0) {
         g_mipmaps_available = 1;
-    }   
+    }
 #ifdef __MACOSX__
     g_mipmaps_available = 1;
 #endif
-    
+
     // Initialize Open AL
 
     const char* aldevicestr = settings.getOpenalDevice();
@@ -396,7 +396,7 @@ int my_main (int argc, char** argv)
         else
             fprintf(stderr, "Error: Can't open OpenAL device \"%s\"\n", aldevicestr);
     }
-    
+
     ALfloat listenerPos[] = { 0.0, 0.0, 0.0 };
     ALfloat listenerVel[] = { 0.0, 0.0, 0.0 };
     ALfloat listenerOri[] = { 0.0, 0.0, -1.0,  0.0, 1.0, 0.0 };
@@ -453,9 +453,9 @@ int my_main (int argc, char** argv)
     glAlphaFunc(GL_GREATER, 0.5); checkGL();
     glEnable(GL_LIGHT0); checkGL();
     glEnable(GL_LIGHTING); checkGL();
-    
+
     glDepthRange(0, 1); checkGL();
-    
+
     {
         char halftonetex_pix[] = {
             0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
@@ -483,12 +483,12 @@ int my_main (int argc, char** argv)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); checkGL();
         glBindTexture(GL_TEXTURE_2D, 0); checkGL();
     }
-    
+
     g_ghost_w = okno_rozmery[2];
     g_ghost_h = okno_rozmery[3];
 
     srand1(); // defaultní hodnota seed
-    
+
     char gameDatPathCstr[1024] = {0};
 #ifdef __MACOSX__
     {
@@ -555,7 +555,7 @@ int my_main (int argc, char** argv)
 
 #ifndef NO_CAMERA
     //SDLKey kamerakeys[8] = {SDLK_LEFT, SDLK_RIGHT, SDLK_DOWN, SDLK_UP, SDLK_w, SDLK_s, SDLK_a, SDLK_d};
-    SDLKey kamerakeys[CAMERA_KEY_COUNT] = {SDLK_DELETE, SDLK_PAGEDOWN, SDLK_END, SDLK_HOME, SDLK_w, SDLK_s, SDLK_a, SDLK_d, SDLK_SPACE, SDLK_c};
+    static const SDL_Keycode kamerakeys[CAMERA_KEY_COUNT] = {SDLK_DELETE, SDLK_PAGEDOWN, SDLK_END, SDLK_HOME, SDLK_w, SDLK_s, SDLK_a, SDLK_d, SDLK_SPACE, SDLK_c};
     unsigned char kamera_bkeys[CAMERA_KEY_COUNT] = {0};
 #endif
 
@@ -642,7 +642,7 @@ int my_main (int argc, char** argv)
                         b_kamera_fast = false;
                     }
                     #endif
-                    
+
                     #if TESTING_SLOWDOWN
                     if (event.key.keysym.sym == SDLK_RCTRL) {
                         bslowdown = !bslowdown;
@@ -688,7 +688,7 @@ int my_main (int argc, char** argv)
                     if (event.key.keysym.sym == SDLK_LSHIFT) {
                         b_kamera_fast = true;
                     }
-#endif                    
+#endif
                     --n_klavesy;
                     break;
                 }
@@ -773,7 +773,7 @@ int my_main (int argc, char** argv)
             case SDL_JOYBUTTONDOWN:
                 {
                     for (int i = 0; i != 16; ++i)
-                    {                        
+                    {
                         if (controls[i].type == Control::E_JBUTTON && event.jbutton.which == controls[i].joystickDeviceIndex && event.jbutton.button == controls[i].i)
                         {
                             player_bkeys[i] = 1;
@@ -837,7 +837,7 @@ int my_main (int argc, char** argv)
 #ifndef NO_CAMERA
         float cameraDeltaT = deltaT;
 #endif
-        
+
         #if TESTING_SLOWDOWN
             if (bslowdown)
                 deltaT *= 0.01;
@@ -904,13 +904,13 @@ int my_main (int argc, char** argv)
             gamemng.input(player_bkeys);
             float deltaTclamped = std::min(deltaT, 1.f);
 
+            glm::mat4 freecam_mtrx(1);
+
             // transformace a vykreslení scény
-            glPushMatrix(); checkGL();
 #ifndef NO_CAMERA
-                if (g_freecam) kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
+                if (g_freecam) freecam_mtrx = kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
 #endif
-                gamemng.frame(deltaTclamped); // ořezání času na maximálně 1 sekundu
-            glPopMatrix(); checkGL();
+                gamemng.frame(deltaTclamped, freecam_mtrx); // ořezání času na maximálně 1 sekundu
 
             glEnable(GL_DEPTH_TEST); checkGL();
         }
@@ -952,7 +952,7 @@ int my_main (int argc, char** argv)
     }
     if (!b_test_map)
         settings.save();
-        
+
     for (unsigned i = 0; i != global_al_sources.size(); ++i) {
         alDeleteSources(1, &(global_al_sources[i]));
     }

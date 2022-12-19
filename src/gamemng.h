@@ -25,6 +25,8 @@
 #include <OpenGL/gl.h>
 #endif
 
+#include "glm1.h"
+
 #define STRING_OPTIONS_TITLE   "Options\n\n\n\n"
 #define STRING_OPTIONS_LABELS  "\n\nSound Volume:\nView Distance:"
 //#define STRING_OPTIONS_ARROW "<            >"
@@ -198,13 +200,13 @@ public:
     float p_opt_color1[3];
 };
 
-typedef float Gamemtrx[16];
+//typedef float Gamemtrx[16];
 
 class Carcam {
 public:
     void init(float r, float y, float ang, float h_ang, const float* , const float* ang0, const float* pos0, const TimeSync* timesync, const Collider* collider); // úhly jsou v radiánech, h_ang ve stupních
     void update(bool bstep);
-    void transf();
+    glm::mat4 transf();
 
     const float* p_ang_base;
     const float* p_ang0_base;
@@ -252,8 +254,8 @@ public:
     bool load(int players_sel, const int* cars_sel/*[4]*/, const int* cars_tex_sel, int map_sel, int sky_sel, bool breverse);
     void restart();
     void input(unsigned char keys[4*4]); // předání pole pravdivostních hodnot stisku kláves
-    void frame(float deltaT);
-    void render_frame();
+    void frame(float deltaT, const glm::mat4& freecam_mtrx);
+    void render_frame(const glm::mat4& m);
 
     void render_black();
     void render_bricks();
@@ -281,7 +283,7 @@ public:
     // skytex spravuje p_skysph
     float p_skyang;
 
-    float p_mtrx_texcm[16];
+    glm::mat4 p_mtrx_texcm;
 
     std::vector<Gamemap> p_maps;
     std::vector<Gameobj> p_objs;
@@ -353,8 +355,9 @@ public:
 
     Carcam p_carcam[4];
 
-    Gamemtrx p_proj_mtrx[4];
-    Gamemtrx p_proj_mtrx0;
+    glm::mat4 p_proj_mtrx[4];
+    glm::mat4 p_proj_mtrx0;
+    glm::mat4 p_proj_mtrx_active;
 
     Glfont p_glfont;
     float p_fpscoord[2];

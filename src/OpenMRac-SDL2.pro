@@ -75,6 +75,7 @@ HEADERS += \
     ghost.h \
     glext1.h \
     glhelpers1.h \
+    glm1.h \
     gltext.h \
     gridlayout.h \
     gui.h \

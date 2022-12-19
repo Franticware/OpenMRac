@@ -441,9 +441,7 @@ void MainMenu::game()
 
 void MainMenu::render() // vykreslení menu
 {
-    glPushMatrix(); checkGL();
-    glLoadIdentity(); checkGL();
-
+    /*fine*/glLoadIdentity(); checkGL();
     p_gamemng->unset_scissor();
 
     glDisable(GL_LIGHTING); checkGL();
@@ -553,7 +551,7 @@ void MainMenu::render() // vykreslení menu
     else if (p_state == STATE_CAR_SEL)
     {
 
-        glLoadIdentity(); checkGL();
+        /*fine*/glLoadIdentity(); checkGL();
 
         glDisable(GL_BLEND); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_tex_sel_bnd); checkGL();
@@ -609,7 +607,7 @@ void MainMenu::render() // vykreslení menu
     else if (p_state == STATE_TRACK_SEL)
     {
 
-        glLoadIdentity(); checkGL();
+        /*fine*/glLoadIdentity(); checkGL();
 
         glDisable(GL_BLEND); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_tex_sel_bnd); checkGL();
@@ -632,8 +630,6 @@ void MainMenu::render() // vykreslení menu
         glColor3f(1, 1, 1); checkGL();
     }
     glDisable(GL_BLEND); checkGL();
-
-    glPopMatrix(); checkGL();
 }
 
 inline bool ignoreKey(SDL_Keycode k)

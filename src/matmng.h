@@ -17,30 +17,36 @@
 #include "glhelpers1.h"
 #include "pict2.h"
 
+#include "glm1.h"
+
 class Transf {
 public:
     void init(unsigned int i_from, unsigned int i_size)
     {
         p_ibegin = i_from;
         p_iend = i_from+i_size;
-        p_mwmx.clear(); p_mwmx.resize(16*i_size);
+        p_mwmx.clear(); p_mwmx.resize(i_size);
     }
-    void set_mwmx(const float* mwmx, unsigned int i_pos)
-    {
-        if (i_pos >= p_ibegin && i_pos < p_iend)
-            memcpy(p_mwmx.data()+(i_pos-p_ibegin)*16, mwmx, sizeof(float)*16);
-    }
-    void mult_mwmx(unsigned int i_pos) const
+    void set_mwmx(const glm::mat4& mwmx, unsigned int i_pos)
     {
         if (i_pos >= p_ibegin && i_pos < p_iend)
         {
-            glMultMatrixf(p_mwmx.data()+(i_pos-p_ibegin)*16); checkGL();
+            p_mwmx[i_pos-p_ibegin] = mwmx;
         }
+    }
+    glm::mat4 mult_mwmx(unsigned int i_pos) const
+    {
+        // get multiplication matrix for sub-object
+        if (i_pos >= p_ibegin && i_pos < p_iend)
+        {
+            return p_mwmx[i_pos-p_ibegin];
+        }
+        return glm::mat4(1);
     }
 
     unsigned int p_ibegin = 0;
     unsigned int p_iend = 0;
-    std::vector<float> p_mwmx;
+    std::vector<glm::mat4> p_mwmx;
 };
 
 class Mat {
@@ -82,7 +88,7 @@ public:
     void set_transf(const Transf* transf) { p_transf = transf; }
     void render_o_pass1(const float* modelview_matrix);
     void render_o_pass1_lim(const float* modelview_matrix, unsigned int face_limit);
-    void render_o_pass2();
+    void render_o_pass2(const glm::mat4& m);
     void render_o_pass3();
     void render_o_pass_s2();
     void render_o_pass_s3();

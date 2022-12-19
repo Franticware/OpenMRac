@@ -14,18 +14,14 @@ void Glfont::set_texture(GLuint texture)
 
 void Gltext::set_pos(float x, float y)
 {
-    p_pos[0] = x;
-    p_pos[1] = y;
+    static const float scaletext = 0.319f;
+    mtrx = glm::scale(glm::mat4(1), glm::vec3(scaletext, scaletext, 1.f));
+    mtrx = glm::translate(mtrx, glm::vec3(x, y, 0.f));
 }
 
 void Gltext::render(GLuint texture)
 {
-    float scaletext = 0.319f;
-    glLoadIdentity(); checkGL();
-
-    glScalef(scaletext, scaletext, 1.0); checkGL();
-
-    glTranslatef(p_pos[0], p_pos[1], 0.f); checkGL();
+    glLoadMatrixf(glm::value_ptr(mtrx));
 
     glBindTexture(GL_TEXTURE_2D, texture); checkGL();
 
@@ -50,12 +46,7 @@ void Gltext::render(GLuint texture)
 
 void Gltext::render_c(GLuint texture)
 {
-    float scaletext = 0.319f;
-    glLoadIdentity(); checkGL();
-
-    glScalef(scaletext, scaletext, 1.0); checkGL();
-
-    glTranslatef(p_pos[0], p_pos[1], 0.f); checkGL();
+    glLoadMatrixf(glm::value_ptr(mtrx));
 
     glBindTexture(GL_TEXTURE_2D, texture); checkGL();
 
@@ -82,14 +73,8 @@ void Gltext::render_c(GLuint texture)
 
 void Gltext::renderscale(float scale, GLuint texture)
 {
-    float scaletext = 0.319f;
-    glLoadIdentity(); checkGL();
-
-    glScalef(scaletext, scaletext, 1.0); checkGL();
-
-    glTranslatef(p_pos[0], p_pos[1], 0.f); checkGL();
-
-    glScalef(scale, scale, 1.0); checkGL();
+    glm::mat4 m = glm::scale(mtrx, glm::vec3(scale, scale, 1.f));
+    glLoadMatrixf(glm::value_ptr(m));
 
     glBindTexture(GL_TEXTURE_2D, texture); checkGL();
 
@@ -199,8 +184,6 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
     p_cen_x = cen_x;
     p_cen_y = cen_y;
     p_font = font;
-    p_pos[0] = 0;
-    p_pos[1] = 0;
     for (unsigned int i = 0; i != p_h; ++i)
     {
         memcpy(p_lines[i].color_b, color_b, sizeof(float)*4);
