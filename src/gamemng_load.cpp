@@ -45,7 +45,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         // načtení textury oblohy z bufferu
         Pict2 pict;
         gbuff_in.f_open(gamesky.sky_tex, "rb");
-        pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+        pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
         GLuint skytex = load_texture(pict);
         glBindTexture(GL_TEXTURE_2D, skytex); checkGL();
@@ -54,21 +54,13 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         p_skysph.set_sun(pict); // nastavení slunce podle zeleného bodu v obrázku
         p_skysph.set_tex(skytex, p_suntex); //
 
-#if USE_CUBEMAP
+    // CUBEMAP
         // načtení textury cube mapy
         Pict2 pict_cm;
         gbuff_in.f_open(gamesky.skycm_tex, "rb");
-        pict_cm.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+        pict_cm.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
         p_skycmtex = load_texture_cube_map(pict_cm);
-#else
-        Pict2 pict_sph;
-        const char* skysph_files[4] = {"sky0s.jpg", "sky1s.jpg", "sky2s.jpg", "sky3s.jpg"};
-        gbuff_in.f_open(skysph_files[sky_sel], "rb");
-        pict_sph.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
-        gbuff_in.fclose();
-        p_skycmtex = load_texture(pict_sph, false);
-#endif
     }
 
     // loading map...

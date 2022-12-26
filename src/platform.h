@@ -3,11 +3,11 @@
 
 // Visual C++
 #if defined(_MSC_VER)
-	#include <windows.h>
-		#undef min
-	#undef max
-	#define snprintf _snprintf
-	#define M_PI		3.14159265358979323846
+    #include <windows.h>
+        #undef min
+    #undef max
+    #define snprintf _snprintf
+    #define M_PI		3.14159265358979323846
 #endif
 
 // Visual C++
@@ -28,21 +28,6 @@
 // neznámá platforma
 #else
 #error unknown platform
-#endif
-
-#if defined(__amigaos4__) || defined(__MORPHOS__)
-// use sphere envmap instead
-#define USE_CUBEMAP 0
-#else
-#define USE_CUBEMAP 1
-//#define USE_CUBEMAP 0
-#endif
-
-#if defined(__MACOSX__) || defined(__amigaos4__) || defined(__MORPHOS__)
-// use gluBuild2dMipmaps instead
-#define USE_GENERATE_MIPMAP 0
-#else
-#define USE_GENERATE_MIPMAP 1
 #endif
 
 #if defined(__MORPHOS__) // I don't know define for AROS

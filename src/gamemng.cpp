@@ -5,7 +5,7 @@
 #include "gamemng.h"
 #include "cstring1.h"
 #include "rand1.h"
-#include "mtrxinv.h"
+//#include "mtrxinv.h"
 #include "gbuff_in.h"
 #include "pict2.h"
 #include "load_texture.h"
@@ -521,17 +521,19 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
     {
         Pict2 pictsun;
         gbuff_in.f_open("skysun.png", "rb");
-        pictsun.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+        pictsun.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
-        p_suntex = load_texture_alpha(pictsun, false);
+        pictsun.r2a();
+        p_suntex = load_texture(pictsun, false);
         p_skysph.set_tex(0, p_suntex);
     }
     {
         Pict2 pictsmoke;
         gbuff_in.f_open("smokea.png", "rb");
-        pictsmoke.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+        pictsmoke.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
-        p_smoketex = load_texture_alpha(pictsmoke, false);
+        pictsmoke.r2a();
+        p_smoketex = load_texture(pictsmoke, false);
     }
     unsigned int fontsize[2] = {16, 6};
     unsigned int charsize[2] = {32, 38};
@@ -539,13 +541,13 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
 
     Pict2 pictfont_rgba;
     gbuff_in.f_open("fontd.png", "rb");
-    pictfont_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+    pictfont_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
     Pict2 pictfont_a;
     gbuff_in.f_open("fonta.png", "rb");
-    pictfont_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+    pictfont_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
-    pictfont_rgba.replace_alpha(pictfont_a);
+    pictfont_rgba.r2a(pictfont_a);
     p_fonttex = load_texture(pictfont_rgba);
     p_glfont.set_texture(p_fonttex); // kvůli render_c();
 
@@ -770,18 +772,15 @@ void Gamemng::render_frame(const glm::mat4& m)
         p_carrendermng[i].render_o_pass2(mdl_ms[i]); // vykreslení 1. části modelu
     }
 
-#if USE_CUBEMAP
+    // CUBEMAP
     // nastavení texturového prostoru pro vykreslení odrazů (cubemapa)
     glMatrixMode(GL_TEXTURE); checkGL();
-
     glm::mat4 cm_mat =
             p_mtrx_texcm * // prvotní natočení cubemapy podle polohy slunce
             glm::transpose(mdl_rot_mtrx); // inverze aktuální rotační matice, rotace podle aktuální polohy kamery
     glLoadMatrixf(glm::value_ptr(cm_mat)); checkGL();
-
     glMatrixMode(GL_MODELVIEW); checkGL();
 
-#endif
 
     // 2.fáze renderu aut - render skel a odrazů
     for (unsigned int i = 0; i != p_players; ++i)
@@ -790,11 +789,11 @@ void Gamemng::render_frame(const glm::mat4& m)
         p_carrendermng[i].render_o_pass3();
     }
 
-#if USE_CUBEMAP
+    // CUBEMAP
     glMatrixMode(GL_TEXTURE); checkGL(); // vrácení texturového prostoru do výchozího stavu
     /*fine*/glLoadIdentity(); checkGL();
     glMatrixMode(GL_MODELVIEW); checkGL();
-#endif
+
 
     static const float texCoords[8] = {0, 0, 1, 0, 1, 1, 0, 1};
     // 3.fáze renderu aut - render částic

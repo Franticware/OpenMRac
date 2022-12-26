@@ -238,7 +238,7 @@ void Glfont::init(const unsigned int mapsize[2]/*počet znaků*/, const unsigned
 
     Pict2 pict;
     gbuff_in.f_open(mapfname, "rb");
-    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
     //
 

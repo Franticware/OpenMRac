@@ -124,8 +124,6 @@ inline void safev3(float* f, const float* alt)
 
 void Skysph::set_sun_(const Pict2& pict)
 {
-    if (pict.d() < 3)
-        return;
     float xf = 0, yf = 0;
     float nf = 0;
     for (int x = 0; x != pict.w(); ++x)
@@ -194,8 +192,6 @@ void Skysph::set_sun_(const Pict2& pict)
 
 void Skysph::set_sun(const Pict2& pict)
 {
-    if (pict.d() < 3)
-        return;
     float xf = 0, yf = 0;
     float nf = 0;
     for (int x = 0; x != pict.w(); ++x)

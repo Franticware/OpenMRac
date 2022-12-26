@@ -140,7 +140,7 @@ void Rendermng::render_o_pass3()
 
         if (material.benv_map)
         {
-#if USE_CUBEMAP
+            // CUBEMAP
             glColor3f(g_envmap_shininess, g_envmap_shininess, g_envmap_shininess); checkGL();
             glEnable(GL_BLEND); checkGL();
             glBlendFunc(GL_ONE, GL_ONE); checkGL();
@@ -173,34 +173,6 @@ void Rendermng::render_o_pass3()
             glDisable(GL_TEXTURE_GEN_S); checkGL();
             glDisable(GL_TEXTURE_GEN_T); checkGL();
             glDisable(GL_TEXTURE_GEN_R); checkGL();
-#else
-            glColor3f(g_envmap_shininess, g_envmap_shininess, g_envmap_shininess); checkGL();
-            glEnable(GL_BLEND); checkGL();
-            glBlendFunc(GL_ONE, GL_ONE); checkGL();
-            glDisable(GL_LIGHTING); checkGL();
-            glEnable(GL_TEXTURE_2D); checkGL();
-            glBindTexture(GL_TEXTURE_2D, p_skycmtex); checkGL();
-            glDepthFunc(GL_EQUAL); checkGL();
-            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glEnable(GL_TEXTURE_GEN_S); checkGL();
-            glEnable(GL_TEXTURE_GEN_T); checkGL();
-            while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
-            {
-                // sem přidat transformace
-                if (p_t3dm->p_o[k].p_gi != 1)
-                {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL();
-                }
-                ++k;
-            }
-            glDepthFunc(GL_LESS); checkGL();
-            glBindTexture(GL_TEXTURE_2D, 0); checkGL();
-            glEnable(GL_LIGHTING); checkGL();
-            glDisable(GL_BLEND); checkGL();
-            glDisable(GL_TEXTURE_GEN_S); checkGL();
-            glDisable(GL_TEXTURE_GEN_T); checkGL();
-#endif
         }
         else
         {
@@ -657,13 +629,13 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 if (strSuff(p_mat[i].texd_name, ".jpg"))
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 else
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 Pict2 picta;
@@ -671,19 +643,19 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 if (strSuff(p_mat[i].texa_name, ".jpg"))
                 {
                     gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                    picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                    picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 else
                 {
                     gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                    picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                    picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
 #if !defined(__MACOSX__) && !defined(__MORPHOS__) && !defined(__amigaos4__)
                     if (g_multisampleMode && strcmp(p_mat[i].texa_name, "stromy0a.png") == 0)
                     {
                         forceMipmap = true;
-                        for (int i = 0; i != picta.w() * picta.h() * picta.d(); ++i)
+                        for (int i = 0; i != picta.w() * picta.h() * 4; ++i)
                         {
                             float oldValue = picta.px()[i] / 255.f;
                             float newValue = ((oldValue - 0.5) * 1.4 + 0.5) * 255.f;
@@ -694,26 +666,20 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                     }
 #endif
                 }
-                //bool alphaReplaced =
-                pict.replace_alpha(picta);
-                //assert(alphaReplaced);
-                //if (!alphaReplaced)
-                //{
-                //    fprintf(stderr, "%s %d %d; %s %d %d\n", p_mat[i].texd_name, pict.w(), pict.h(), p_mat[i].texa_name, picta.w(), picta.h());
-                //}
+                pict.r2a(picta);
                 p_mat[i].texture = load_texture(pict, p_mat[i].bmipmap || forceMipmap);
             } else { // 24 bit
                 Pict2 pict;
                 if (strSuff(p_mat[i].texd_name, ".jpg"))
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 else
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 p_mat[i].texture = load_texture(pict, p_mat[i].bmipmap);
@@ -725,16 +691,17 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
             if (strSuff(p_mat[i].texa_name, ".jpg"))
             {
                 gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                 gbuff_in.fclose();
             }
             else
             {
                 gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                 gbuff_in.fclose();
             }
-            p_mat[i].texture = load_texture_alpha(picta, p_mat[i].bmipmap);
+            picta.r2a();
+            p_mat[i].texture = load_texture(picta, p_mat[i].bmipmap);
         }
     }
 }

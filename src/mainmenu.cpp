@@ -366,14 +366,14 @@ void MainMenu::menu()
 
     Pict2 pictlogo_rgba;
     gbuff_in.f_open("logo-silver-d.png", "rb");
-    pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+    pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
 
     Pict2 pictlogo_a;
     gbuff_in.f_open("logo-silver-a.png", "rb");
-    pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+    pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
-    pictlogo_rgba.replace_alpha(pictlogo_a);
+    pictlogo_rgba.r2a(pictlogo_a);
     p_logo_textura = load_texture(pictlogo_rgba);
 
     //
@@ -383,7 +383,7 @@ void MainMenu::menu()
         {
             Pict2 pict_th;
             gbuff_in.f_open(p_gamemng->p_cars[i].pict_tex[j].fname, "rb");
-            pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+            pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             gbuff_in.fclose();
             p_gamemng->p_cars[i].pict_tex[j].tex = load_texture(pict_th);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
@@ -394,7 +394,7 @@ void MainMenu::menu()
     {
         Pict2 pict_th;
         gbuff_in.f_open(p_gamemng->p_maps[i].filename_tex, "rb");
-        pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+        pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
         p_gamemng->p_maps[i].pict_tex = load_texture(pict_th);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
