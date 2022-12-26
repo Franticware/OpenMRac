@@ -57,8 +57,6 @@
 
 #include "rand1.h"
 
-#include "mtrxinv.h"
-
 #include "gbuff_in.h"
 
 #include "load_texture.h"

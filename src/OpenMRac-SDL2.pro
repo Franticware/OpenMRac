@@ -44,7 +44,6 @@ SOURCES += \
         mainmenu.cpp \
         matmng.cpp \
         minial.cpp \
-        mtrxinv.cpp \
         octopus.cpp \
         particles.cpp \
         pict2.cpp \
@@ -83,7 +82,6 @@ HEADERS += \
     mainmenu.h \
     matmng.h \
     minial.h \
-    mtrxinv.h \
     octopus.h \
     particles.h \
     pict2.h \

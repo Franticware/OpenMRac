@@ -3,7 +3,6 @@
 #include "gamemng.h"
 #include "cstring1.h"
 #include "rand1.h"
-#include "mtrxinv.h"
 #include "gbuff_in.h"
 #include "pict2.h"
 #include <cmath>
