@@ -11,7 +11,7 @@ using namespace RBf;
 // odrazivost při kolizích
 float g_c_e = 0.1f;
 
-void Collider::init(float gs, float r, const T3dm* t3dm, RBSolver** rbos)
+void Collider::init(float gs, float r, const T3dm* t3dm, RBSolver** rbos, unsigned int rbos_sz)
 {
 
     p_gs = gs;
@@ -21,9 +21,7 @@ void Collider::init(float gs, float r, const T3dm* t3dm, RBSolver** rbos)
 
     p_rbos = rbos;
 
-    p_rbos_sz = 0;
-    while (rbos[p_rbos_sz] != 0)
-        ++p_rbos_sz;
+    p_rbos_sz = rbos_sz;
 
     bbox_create(p_bbox, p_bbox_sz, p_cen, t3dm);
 

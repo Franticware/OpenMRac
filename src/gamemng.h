@@ -55,14 +55,14 @@ struct Gamemap {
 };
 
 struct Gameobj {
-    Gameobj() : m(0), r(0), f(0), t3dm(0), matmng(0) { filename[0] = 0; }
+    Gameobj() : m(0), r(0), f(0) { filename[0] = 0; }
     char filename[256];
     float m; // hmotnost
     float r; // poloměr pro výpočet momentu setrvačnosti a třecí síly
     float f; // tření
     // model a materiály
-    T3dm* t3dm;
-    Matmng* matmng;
+    std::unique_ptr<T3dm> t3dm;
+    std::unique_ptr<Matmng> matmng;
 };
 
 struct Car_th {
@@ -104,15 +104,15 @@ struct Gamesky {
 };
 
 struct Mapobj {
-    Mapobj() : vert_i(0), ang(0), id(0), r(0), f(0), rbo(0), rendermng(0) { pos[0] = 0; pos[1] = 0; }
+    Mapobj() : vert_i(0), ang(0), id(0), r(0), f(0) { pos[0] = 0; pos[1] = 0; }
     unsigned int vert_i;
     float ang;
     float pos[2];
     unsigned int id;
     float r;
     float f;
-    RBSolver* rbo;
-    Rendermng* rendermng;
+    std::unique_ptr<RBSolver> rbo;
+    std::unique_ptr<Rendermng> rendermng;
 };
 
 struct Playerkeys {
@@ -229,7 +229,7 @@ const char* time_m_s(float time);
 class Gamemng {
 public:
     Gamemng() :
-        p_collider(0), p_rbos(0), p_reverse(false), p_players(0),
+        p_rbos(0), p_reverse(false), p_players(0),
         p_wide169(false), p_far(0), p_car2do(0), p_car2dp(0), p_cartransf(0), p_carrendermng(0),
         p_ghostmodel(0), p_ghostmatmng(0), p_ghostrendermng(0), p_ghosttransf(0),
         p_isGhost(0), p_ghostUpdated(0), p_ghostAvailable(0),
@@ -294,16 +294,16 @@ public:
 
     // model a materiály mapy
 
-    T3dm* p_carmodel[4];
-    Matmng* p_carmatmng[4];
+    std::unique_ptr<T3dm> p_carmodel[4];
+    std::unique_ptr<Matmng> p_carmatmng[4];
 
     std::unique_ptr<T3dm> p_map_model;
     std::unique_ptr<Matmng> p_map_matmng;
     std::unique_ptr<Octopus> p_map_oct;
     std::unique_ptr<Rendermng> p_map_rendermng;
 
-    Collider* p_collider;
-    RBSolver** p_rbos;
+    std::unique_ptr<Collider> p_collider;
+    std::vector<RBSolver*> p_rbos;
 
     float p_finish[2];
     bool p_reverse;
@@ -329,16 +329,16 @@ public:
     int get_far() { return p_far; }
 
     int p_cars_sel[4];
-    RBSolver* p_car2do; // pole objektů aut
-    Car2D* p_car2dp;
-    Transf* p_cartransf;
-    Rendermng* p_carrendermng;
+    std::vector<RBSolver> p_car2do; // pole objektů aut
+    std::vector<Car2D> p_car2dp;
+    std::vector<Transf> p_cartransf;
+    std::vector<Rendermng> p_carrendermng;
     std::vector<Particles> p_particles;
 
-    T3dm* p_ghostmodel; // pole
-    Matmng* p_ghostmatmng; // pole
-    Rendermng* p_ghostrendermng; // pole
-    Transf* p_ghosttransf; // pole
+    std::vector<T3dm> p_ghostmodel; // pole
+    std::vector<Matmng> p_ghostmatmng; // pole
+    std::vector<Rendermng> p_ghostrendermng; // pole
+    std::vector<Transf> p_ghosttransf; // pole
 
     std::unique_ptr<Ghost> p_ghostOld;
     std::vector<Ghost> p_ghostNew; // pole 4 prvků

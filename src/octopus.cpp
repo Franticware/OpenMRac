@@ -173,7 +173,7 @@ void Octocube::subdiv()
             if (sz != 0 && !bcreated)
             {
                 bcreated = true;
-                p_sub[i] = std::unique_ptr<Octocube>(new Octocube);
+                p_sub[i] = std::make_unique<Octocube>();
                 oc_ptr = p_sub[i].get();
                 // inicializace - dodělat
                 memcpy(oc_ptr->p_cen, centers[i], sizeof(float)*3);
@@ -252,7 +252,7 @@ void Octopus::init(const float frustum[6], const T3dm& t3dm, unsigned int min_tr
 {
     init_frustum(frustum);
 
-    p_oc = std::unique_ptr<Octocube>(new Octocube);
+    p_oc = std::make_unique<Octocube>();
     p_t3dm = &t3dm;
     p_m_sz = p_t3dm->p_m.size(); // (ne nezbytně) získání vlastní hodnoty počtu materiálů v modelu
 

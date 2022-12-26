@@ -22,7 +22,7 @@ public:
 class Collider {
 public:
     Collider() : p_gs(0), p_r(0), p_r_m2(0), p_r_m2_p2(0), p_colg(0), p_rbos(0), p_rbos_sz(0), p_bbox_sz(0), p_players(0), p_sound_crash(0) { }
-    void init(float gs, float r, const T3dm* t3dm, RBSolver** rbos);
+    void init(float gs, float r, const T3dm* t3dm, RBSolver** rbos, unsigned int rbos_sz);
     void test();
 
     void render(float x, float y);

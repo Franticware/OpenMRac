@@ -272,7 +272,7 @@ void Gamemng::set_far(int far1)
 
 void Gamemng::init_sound()
 {
-    p_sound_crash = std::unique_ptr<Sound_crash>(new Sound_crash);
+    p_sound_crash = std::make_unique<Sound_crash>();
     p_sound_crash->init(p_sound_game_static.p_hit_stream); // nulové *p_audiodevice je ošéfované uvnitř
     p_sound_crash->p_global_volume = &p_global_volume;
 }
@@ -390,7 +390,7 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
                 Gameobj gameobj;
                 gameobj.filename[0] = gameobj.filename[255] = '\0'; // nevím, jestli je to nutné
                 sscanf(buff, "%255s %f %f %f", gameobj.filename, &(gameobj.m), &(gameobj.r), &(gameobj.f));
-                p_objs.push_back(gameobj);
+                p_objs.push_back(std::move(gameobj));
             }
         }
         gbuff_in.fclose();
@@ -589,7 +589,7 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
 
     p_sound_game_static.init();
 
-    p_ghostOld = std::unique_ptr<Ghost>(new Ghost);
+    p_ghostOld = std::make_unique<Ghost>();
     p_ghostNew.clear(); p_ghostNew.resize(4);
 
     p_particles.resize(4);
@@ -737,6 +737,7 @@ void Gamemng::render_frame(const glm::mat4& m)
     glDepthRange(0, 1); checkGL();
     glEnable(GL_LIGHTING); checkGL();
 
+    glLoadMatrixf(glm::value_ptr(m));
     p_map_rendermng->render_o_pass_s2(); // vykreslení blendů
 
     // render objektů
