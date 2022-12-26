@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "cam.h"
 #include <cstring>
 #include <cmath>
@@ -8,10 +6,7 @@
 #else
 #include <OpenGL/gl.h>
 #endif
-#include "glhelpers1.h"
 #include <cstdio>
-
-// komentář
 
 //void Cam::save()
 //{

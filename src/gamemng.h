@@ -1,8 +1,6 @@
 #ifndef HLIDAC_GAMEMNG_H
 #define HLIDAC_GAMEMNG_H
 
-#include "platform.h"
-
 #include "3dm.h"
 #include "octopus.h"
 #include "matmng.h"
@@ -25,11 +23,8 @@
 #include <OpenGL/gl.h>
 #endif
 
-#include "glm1.h"
-
 #define STRING_OPTIONS_TITLE   "Options\n\n\n\n"
 #define STRING_OPTIONS_LABELS  "\n\nSound Volume:\nView Distance:"
-//#define STRING_OPTIONS_ARROW "<            >"
 #define STRING_OPTIONS_ARROW "<                      >"
 #define STRING_OPTIONS_ARROWS  "\n\n  " STRING_OPTIONS_ARROW "\n  " STRING_OPTIONS_ARROW "\n"
 
@@ -43,7 +38,6 @@ extern SDL_Window* gameWindow;
 
 struct Gamemap {
     Gamemap() : light_ah(0), light_av(0), pict_tex(0) { filename[0] = 0; filename_tex[0] = 0; name[0] = 0; }
-    //Gamemap(const Gamemap& gamemap) { memcpy(this, &gamemap, sizeof(Gamemap)); }
     char filename[256];
     float light_ah;
     float light_av;
@@ -244,8 +238,7 @@ public:
     ~Gamemng()
     {
         unload();
-        /*destroy all other: textura slunce*/
-        glDeleteTextures(1, &(p_suntex)); checkGL();
+        /* destroy all other */
         glDeleteTextures(1, &(p_smoketex)); checkGL();
     }
     void unload();
@@ -275,7 +268,6 @@ public:
     Playerkeys p_playerkeys[4];
 
     Skysph p_skysph;
-    GLuint p_suntex; // přenosná textura - z init, zrušit v destruktoru
     GLuint p_smoketex; // přenosná textura - z init, zrušit v destruktoru
 
     GLuint p_skycmtex; // cube map or sphere map

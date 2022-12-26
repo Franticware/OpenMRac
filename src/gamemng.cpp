@@ -518,15 +518,6 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
 
     p_skysph.init(10, 0);
     {
-        Pict2 pictsun;
-        gbuff_in.f_open("skysun.png", "rb");
-        pictsun.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-        gbuff_in.fclose();
-        pictsun.r2a();
-        p_suntex = load_texture(pictsun, false);
-        p_skysph.set_tex(0, p_suntex);
-    }
-    {
         Pict2 pictsmoke;
         gbuff_in.f_open("smokea.png", "rb");
         pictsmoke.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());

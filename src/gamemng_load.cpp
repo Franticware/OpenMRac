@@ -50,8 +50,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         glBindTexture(GL_TEXTURE_2D, skytex); checkGL();
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); checkGL(); // vertikálně se textura neopakuje
         glBindTexture(GL_TEXTURE_2D, 0); checkGL();
-        p_skysph.set_sun(pict); // nastavení slunce podle zeleného bodu v obrázku
-        p_skysph.set_tex(skytex, p_suntex); //
+        p_skysph.set_tex(skytex); //
 
     // CUBEMAP
         // načtení textury cube mapy
