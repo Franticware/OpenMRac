@@ -2,6 +2,7 @@
 
 #include "car2d.h"
 #include <algorithm>
+#include <cmath>
 
 using namespace RBf;
 

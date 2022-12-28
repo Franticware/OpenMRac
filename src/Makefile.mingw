@@ -1,20 +1,22 @@
-LIBSDL2_INCLUDEPATH =i686-w64-mingw32/include/
-LIBSDL2_LIB_PATH =i686-w64-mingw32/lib/
+LIBSDL2_INCLUDEPATH =SDL2-2.26.0/i686-w64-mingw32/include
+LIBSDL2_LIB_PATH =SDL2-2.26.0/i686-w64-mingw32/lib
 LIBSDL2_LIB =libSDL2.dll.a
 
-LIBZLIB_LIB_PATH =zlib-1.2.13/
+LIBZLIB_LIB_PATH =zlib
 LIBZLIB_LIB =libzlibstatic.a
 
-LIBPNG_INCLUDEPATH =libpng-1.6.39/
-LIBPNG_LIB_PATH =libpng-1.6.39/
-LIBPNG_LIB =libpng16.a
+LIBPNG_INCLUDEPATH =libpng
+LIBPNG_LIB_PATH =libpng
+LIBPNG_LIB =libpng.a
 
-LIBJPEG_INCLUDEPATH =libjpeg-turbo-2.1.4
-LIBJPEG_LIB_PATH =libjpeg-turbo-2.1.4/
+LIBJPEG_INCLUDEPATH =libjpeg-turbo
+LIBJPEG_LIB_PATH =libjpeg-turbo
 LIBJPEG_LIB =libjpeg.a
 
-CFLAGS = -O2 -Wall -Wextra -Wno-cast-function-type -DUSE_MINIAL -DSDL_MAIN_HANDLED -fno-exceptions -fPIC -I$(LIBSDL2_INCLUDEPATH) -I$(LIBJPEG_INCLUDEPATH) -I$(LIBPNG_INCLUDEPATH)
-LFLAGS = $(LIBSDL2_LIB_PATH)$(LIBSDL2_LIB) -lopengl32 $(LIBJPEG_LIB_PATH)$(LIBJPEG_LIB) $(LIBPNG_LIB_PATH)$(LIBPNG_LIB) $(LIBZLIB_LIB_PATH)$(LIBZLIB_LIB) -lm -s -static-libstdc++ -static-libgcc -static -mwindows
+LIBGLM_INCLUDEPATH =glm/
+
+CFLAGS = -O2 -Wall -Wextra -Wno-cast-function-type -DUSE_MINIAL -DSDL_MAIN_HANDLED -fno-exceptions -fPIC -std=c++20 -I$(LIBSDL2_INCLUDEPATH) -I$(LIBJPEG_INCLUDEPATH) -I$(LIBPNG_INCLUDEPATH) -I$(LIBGLM_INCLUDEPATH) -DM_PI=3.14159265358979323846 -DM_PIf=3.14159265358979323846f
+LFLAGS = $(LIBSDL2_LIB_PATH)/$(LIBSDL2_LIB) -lopengl32 $(LIBJPEG_LIB_PATH)/$(LIBJPEG_LIB) $(LIBPNG_LIB_PATH)/$(LIBPNG_LIB) $(LIBZLIB_LIB_PATH)/$(LIBZLIB_LIB) -lm -s -static-libstdc++ -static-libgcc -static -mwindows
 
 CXX    = i686-w64-mingw32-g++
 LINK   = i686-w64-mingw32-g++
@@ -23,7 +25,7 @@ WINDRES= i686-w64-mingw32-windres
 TARGET = openmrac.exe
 RES    = omicon.res
 # echo -n "OBJS   = "; ls *.cpp | sed 's/.cpp$/.o/g' | tr '\n' ' ' ; echo
-OBJS   = 3dm.o cam.o car2d.o collider.o controls.o cstring1.o datkey.o fopendir.o gameaux.o gamemenu.o gamemng.o gamemng_frame.o gamemng_load.o gbuff_in.o ghost.o glext1.o glhelpers1.o gltext.o gridlayout.o gui.o guifont.o load_texture.o main.o mainmenu.o matmng.o minial.o mtrxinv.o octopus.o particles.o pict2.o pict2_jpeg.o pict2_png.o rand1.o rbsolver.o settings_dat.o settingsdialog.o skysph.o soundmng.o triboxint.o 
+OBJS   = 3dm.o cam.o car2d.o collider.o controls.o cstring1.o datkey.o fopendir.o gameaux.o gamemenu.o gamemng.o gamemng_frame.o gamemng_load.o gbuff_in.o ghost.o glext1.o glhelpers1.o gltext.o gridlayout.o gui.o guifont.o load_texture.o main.o mainmenu.o matmng.o minial.o octopus.o particles.o pict2.o pict2_jpeg.o pict2_png.o rand1.o rbsolver.o settings_dat.o settingsdialog.o skysph.o soundmng.o triboxint.o 
 
 .PHONY: all clean install uninstall deb
 
