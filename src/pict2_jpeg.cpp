@@ -171,16 +171,30 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
      */
 
     {
-        cinfo.out_color_space = JCS_EXT_BGRX;
+        cinfo.out_color_space =
+#ifdef JPEG_NOT_TURBO
+                JCS_RGB;
+#else
+                JCS_EXT_BGRX;
+#endif
         create(cinfo.output_width, cinfo.output_height, 0);
         row_stride = cinfo.output_width * 4;
         buffer = (*cinfo.mem->alloc_sarray)
             ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
         while (cinfo.output_scanline < cinfo.output_height) {
             jpeg_read_scanlines(&cinfo, buffer, 1);
-            memcpy(
-                p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride,
-                *buffer, row_stride);
+#ifdef JPEG_NOT_TURBO
+            int rs = (cinfo.output_height-cinfo.output_scanline)*row_stride;
+            for (JDIMENSION i = 0; i != cinfo.output_width; ++i)
+            {
+                p_px[rs + i * 4 + 0] = (*buffer)[i * 3 + 2];
+                p_px[rs + i * 4 + 1] = (*buffer)[i * 3 + 1];
+                p_px[rs + i * 4 + 2] = (*buffer)[i * 3 + 0];
+                p_px[rs + i * 4 + 3] = 0xff;
+            }
+#else
+            memcpy(p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride, *buffer, row_stride);
+#endif
         }
     }
 
