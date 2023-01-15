@@ -344,15 +344,14 @@ int my_main (int argc, char** argv)
     g_multisampleMode = settings.get("antialiasing");
     g_textureFiltering = settings.get("texture_filter");
 
-    if (isfullscreen)
-        SDL_ShowCursor(SDL_DISABLE);
-
     int enableOpenGLResult = EnableOpenGL(isfullscreen, settings.get("vsync"),
         settings.get("screen_x"), settings.get("screen_y"));
     if (enableOpenGLResult != 0)
     {
         return enableOpenGLResult; // error
     }
+
+    SDL_ShowCursor(SDL_DISABLE);
 
     //GLfloat textureSize;
     //glGetFloatv(GL_MAX_TEXTURE_SIZE, &textureSize); checkGL();
@@ -966,52 +965,6 @@ int my_main (int argc, char** argv)
     // all is well
     return 0;
 }
-
-#if defined(__WIN32__)
-
-#ifndef DPI_ENUMS_DECLARED
-typedef enum PROCESS_DPI_AWARENESS
-{
-    PROCESS_DPI_UNAWARE = 0,
-    PROCESS_SYSTEM_DPI_AWARE = 1,
-    PROCESS_PER_MONITOR_DPI_AWARE = 2
-} PROCESS_DPI_AWARENESS;
-#endif
-
-typedef BOOL (WINAPI * SETPROCESSDPIAWARE_T)(void);
-typedef HRESULT (WINAPI * SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
-
-bool win32_SetProcessDpiAware(void) {
-    HMODULE shcore = LoadLibraryA("Shcore.dll");
-    SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
-    if (shcore) {
-        SetProcessDpiAwareness = (SETPROCESSDPIAWARENESS_T) GetProcAddress(shcore, "SetProcessDpiAwareness");
-    }
-    HMODULE user32 = LoadLibraryA("User32.dll");
-    SETPROCESSDPIAWARE_T SetProcessDPIAware = NULL;
-    if (user32) {
-        SetProcessDPIAware = (SETPROCESSDPIAWARE_T) GetProcAddress(user32, "SetProcessDPIAware");
-    }
-
-    bool ret = false;
-    if (SetProcessDpiAwareness) {
-        ret = SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) == S_OK;
-    } else if (SetProcessDPIAware) {
-        ret = SetProcessDPIAware() != 0;
-    }
-
-    if (user32) {
-        FreeLibrary(user32);
-    }
-    if (shcore) {
-        FreeLibrary(shcore);
-    }
-    return ret;
-}
-
-volatile bool ha = win32_SetProcessDpiAware();
-
-#endif
 
 int main (int argc, char** argv)
 {

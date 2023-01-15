@@ -27,6 +27,7 @@ SOURCES += \
         controls.cpp \
         cstring1.cpp \
         datkey.cpp \
+        dpiaware_win32.cpp \
         fopendir.cpp \
         gameaux.cpp \
         gamemenu.cpp \
