@@ -127,7 +127,7 @@ int g_ghost_h = 0;
 int g_multisampleMode = 2; // 0 - 0ff, 1 - 2x, 2 - 4x
 int g_textureFiltering = 2; // 0 - bilinear, 1 - trilinear, 2 - aniso
 
-void saveTgaScreenshot()
+void saveTgaScreenshot(const char* filenamePrm = nullptr)
 {
     static int screenshotNumber = 0;
     static std::vector<unsigned char> pixelbuffer;
@@ -139,7 +139,14 @@ void saveTgaScreenshot()
         return;
     glReadPixels(0,  0,  okno_rozmery[2], okno_rozmery[3], GL_BGR, GL_UNSIGNED_BYTE, &(pixelbuffer[0])); checkGL();
     char filename[256] = {0};
-    snprintf(filename, 255, "openmrac-scr%.3d.tga", screenshotNumber);
+    if (filenamePrm)
+    {
+        snprintf(filename, 255, "%s", filenamePrm);
+    }
+    else
+    {
+        snprintf(filename, 255, "openmrac-scr%.3d.tga", screenshotNumber);
+    }
     //FILE* fout = fopen(filename, "wb");
     FILE* fout = fopenDir(filename, "wb", OPENMRAC_ORG, OPENMRAC_APP);
     //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
@@ -484,7 +491,11 @@ int my_main (int argc, char** argv)
     g_ghost_w = okno_rozmery[2];
     g_ghost_h = okno_rozmery[3];
 
+#ifdef TEST_SCRSHOT
+    srand0(); // seed = 0
+#else
     srand1(); // defaultní hodnota seed
+#endif
 
     char gameDatPathCstr[1024] = {0};
 #ifdef __MACOSX__
@@ -556,20 +567,66 @@ int my_main (int argc, char** argv)
     unsigned char kamera_bkeys[CAMERA_KEY_COUNT] = {0};
 #endif
 
-    bool b_test_map = false;
-    if (b_test_map)
+    int testScrshot = -1;
+
+#ifdef TEST_SCRSHOT
     {
-        menu.p_players = 1;
+        testScrshot = 2;
+
         menu.p_cars_sel[0] = 0;
         menu.p_cars_tex_sel[0] = 0;
-        menu.p_track_sel = 0;
-        menu.p_sky_sel = 0;
-        menu.p_direction_sel = 0;
-        menu.p_view_dist = 10;
+
+        menu.p_cars_sel[1] = 1;
+        menu.p_cars_tex_sel[1] = 1;
+
+        menu.p_cars_sel[2] = 2;
+        menu.p_cars_tex_sel[2] = 2;
+
+        menu.p_cars_sel[3] = 0;
+        menu.p_cars_tex_sel[3] = 3;
+
+        switch (TEST_SCRSHOT)
+        {
+        case 0:
+            menu.p_players = 1;
+            menu.p_direction_sel = 1;
+            menu.p_track_sel = 1;
+            menu.p_sky_sel = 0;
+            menu.p_daytime_sel = 0;
+            menu.p_view_dist = 0;
+            break;
+        case 1:
+            menu.p_players = 2;
+            menu.p_direction_sel = 0;
+            menu.p_track_sel = 2;
+            menu.p_sky_sel = 1;
+            menu.p_daytime_sel = 0;
+            menu.p_view_dist = 3;
+            break;
+        case 2:
+            menu.p_players = 3;
+            menu.p_direction_sel = 1;
+            menu.p_track_sel = 3;
+            menu.p_sky_sel = 2;
+            menu.p_daytime_sel = 1;
+            menu.p_view_dist = 10;
+            break;
+        case 3:
+            menu.p_players = 4;
+            menu.p_direction_sel = 0;
+            menu.p_track_sel = 0;
+            menu.p_sky_sel = 3;
+            menu.p_daytime_sel = 1;
+            menu.p_view_dist = 0;
+            break;
+        }
+
         menu.p_sound_vol = 0;
         menu.p_laps = 20;
         menu.game();
     }
+#endif
+
 #if TESTING_SLOWDOWN
     bool bslowdown = false;
 #endif
@@ -915,6 +972,19 @@ int my_main (int argc, char** argv)
         {
             SDL_GL_SwapWindow(gameWindow);
 
+            {
+                if (testScrshot == 0)
+                {
+#define SCRSHOT_FILENAME1(s) #s
+#define SCRSHOT_FILENAME(prm) "test" SCRSHOT_FILENAME1(prm) "-gl.tga"
+                    saveTgaScreenshot(SCRSHOT_FILENAME(TEST_SCRSHOT));
+                }
+                if (testScrshot > -1)
+                {
+                    --testScrshot;
+                }
+            }
+
             if (f12pressed) {
                 f12pressed = false;
                 saveTgaScreenshot();
@@ -947,8 +1017,10 @@ int my_main (int argc, char** argv)
         settings.set("sound_volume", gamemng.get_global_volume());
         settings.set("view_distance", gamemng.get_far());
     }
-    if (!b_test_map)
-        settings.save();
+
+#ifndef TEST_SCRSHOT
+    settings.save();
+#endif
 
     for (unsigned i = 0; i != global_al_sources.size(); ++i) {
         alDeleteSources(1, &(global_al_sources[i]));

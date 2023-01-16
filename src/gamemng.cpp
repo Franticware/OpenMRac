@@ -991,6 +991,9 @@ void Gamemng::restart()
     p_timesync.init();
     p_particleTimesync.init();
     p_state = 0;
+#ifdef TEST_SCRSHOT
+    p_state = 1;
+#endif
     p_state0_time = g_state0_time;
     p_state0_5 = true;
     p_state0_5_time = 0.f;

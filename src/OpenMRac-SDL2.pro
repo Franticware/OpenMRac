@@ -11,6 +11,8 @@ QMAKE_CXXFLAGS += -DDIR_OPENMRAC_DAT=/usr/share/openmrac/
 
 QMAKE_CXXFLAGS += -DUSE_MINIAL
 
+#QMAKE_CXXFLAGS += -DTEST_SCRSHOT=0
+
 #LIBS += -lopenal
 
 LIBS += \

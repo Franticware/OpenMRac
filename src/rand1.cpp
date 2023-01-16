@@ -7,6 +7,11 @@ int rand1()
     return rand();
 }
 
+void srand0()
+{
+    srand(0);
+}
+
 void srand1()
 {
     std::chrono::milliseconds ms = std::chrono::duration_cast< std::chrono::milliseconds >(std::chrono::system_clock::now().time_since_epoch());
