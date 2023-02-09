@@ -75,17 +75,13 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     memcpy(light_ambient, gamesky.light_amb, 4*sizeof(float));
     memcpy(p_light_ambient, gamesky.light_amb, 4*sizeof(float));
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); checkGL();
+    p_shadermng.set(ShaderUniVec4::LightAmbient, glm::vec4(light_ambient[0], light_ambient[1], light_ambient[2], light_ambient[3]));
 
     float light_diffuse[4];
     memcpy(light_diffuse, gamesky.light_diff, 4*sizeof(float));
     memcpy(p_light_diffuse, gamesky.light_diff, 4*sizeof(float));
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse); checkGL();
 
-    /*p_light_ambdiff[0] = p_light_ambient[0]+p_light_diffuse[0];
-    p_light_ambdiff[1] = p_light_ambient[1]+p_light_diffuse[1];
-    p_light_ambdiff[2] = p_light_ambient[2]+p_light_diffuse[2];
-    p_light_ambdiff[3] = 1.f;*/
+    p_shadermng.set(ShaderUniVec4::LightDiffuse, glm::vec4(light_diffuse[0], light_diffuse[1], light_diffuse[2], light_diffuse[3]));
 
     p_light_position[3] = 0;
     p_light_position[0] = sinf(gamemap.light_ah*0.0174532925199433f)*cosf(gamemap.light_av*0.0174532925199433f);
@@ -103,7 +99,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         frustum[1] *= 2.f;
     }
     p_map_oct->init(frustum, *p_map_model, map_octopus_min_tris, 50);
-    p_map_rendermng->init(p_map_model.get(), p_map_matmng.get(), p_map_oct.get());
+    p_map_rendermng->init(this, p_map_model.get(), p_map_matmng.get(), p_map_oct.get());
     // end loading map
 
     // získání souřadnic objektů na mapě
@@ -185,7 +181,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         // vytvořit rendermng
         it->rendermng = std::make_unique<Rendermng>();
         it->rendermng->p_skycmtex = p_skycmtex;
-        it->rendermng->init(p_objs[it->id].t3dm.get(), p_objs[it->id].matmng.get(), 0);
+        it->rendermng->init(this, p_objs[it->id].t3dm.get(), p_objs[it->id].matmng.get(), 0);
         it->rendermng->set_oc(frustum, *(p_objs[it->id].t3dm));
     }
 
@@ -240,7 +236,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
 
     for (unsigned int i = 0; i != p_players; ++i)
     {
-        p_carrendermng[i].init(p_carmodel[i].get(), p_carmatmng[i].get(), 0);
+        p_carrendermng[i].init(this, p_carmodel[i].get(), p_carmatmng[i].get(), 0);
         p_carrendermng[i].set_oc(frustum, *(p_carmodel[i]));
         p_cartransf[i].init(2, 3); // od druhé skupiny se budou transformovat tři objekty
         p_carrendermng[i].set_transf(p_cartransf.data()+i);
@@ -305,7 +301,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
                 }
             }
             p_ghostmatmng[i].load(p_ghostmodel.data()+i);
-            p_ghostrendermng[i].init(p_ghostmodel.data()+i, p_ghostmatmng.data()+i, 0);
+            p_ghostrendermng[i].init(this, p_ghostmodel.data()+i, p_ghostmatmng.data()+i, 0);
             p_ghostrendermng[i].set_oc(frustum, p_ghostmodel[i]);
             p_ghosttransf[i].init(2, 3); // od druhé skupiny se budou transformovat tři objekty
             p_ghostrendermng[i].set_transf(p_ghosttransf.data()+i);

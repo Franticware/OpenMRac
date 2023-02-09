@@ -16,13 +16,15 @@ const Sett_entry_base entry_base[] = {
     {"vsync", 1, 0, 1, "0 - vsync off, 1 - vsync on"},
     {"antialiasing", 0, 0, 2, "0 - off, 1 - 2x, 2 - 4x"},
     {"texture_filter", 1, 0,
+
 #ifdef DISABLE_ANISOTROPY
     1
 #else
 ASSERT_ANISOTROPY
     2
 #endif
-    , "0 - bilinear, 1 - trilinear, 2 - anisotropic"},
+
+    ,"0 - bilinear, 1 - trilinear, 2 - anisotropic"},
     {"view_distance", 10, 0, 10, "10 - far (best), 0 - near"},
     {"show_fps", 0, 0, 1, "0 - fps counter off, 1 - fps counter on"},
     {"sound_volume", 100, 0, 100, "0 - 100"},
@@ -81,9 +83,7 @@ Settings::Settings(const char* filename, std::vector<JoystickDevice>* joystickDe
 int Settings::load()
 {
     // záznamy se předem nastaví na defaultní hodnoty
-    //FILE* fin = fopen(filename, "r");
     FILE* fin = fopenDir(filename, "r", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (!fin) return 1;
     char buff[1024]; // buffer pro načtení řádků
     char controlTypeBuff[1024]; // buffer pro načtení typu control
@@ -282,9 +282,7 @@ player4_brake n
 
 int Settings::save()
 {
-    //FILE* fout = fopen(filename, "w");
     FILE* fout = fopenDir(filename, "w", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (!fout) return 1;
     for (unsigned int i = 0; i != entry_size; ++i)
     {
@@ -410,7 +408,6 @@ unsigned int Settings::getDefault(const char* key)
             return entry[i].defaultVal;
         }
     }
-    //assert(0);
     return 0;
 }
 

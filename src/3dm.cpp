@@ -289,9 +289,7 @@ void T3dm::load(const char* fname, const char** o_names)
         }
     }
 
-
     gbuff_in.fclose();
-
 
     for (unsigned int i = 0; i != o_names_num;++i) // přiřazení souřadnic středů hlavních objektů poli středů (číslování pole je podle názvů)
     {

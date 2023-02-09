@@ -9,10 +9,9 @@ QMAKE_CXXFLAGS += -fno-exceptions
 
 QMAKE_CXXFLAGS += -DDIR_OPENMRAC_DAT=/usr/share/openmrac/
 
-QMAKE_CXXFLAGS += -DUSE_MINIAL
-
 #QMAKE_CXXFLAGS += -DTEST_SCRSHOT=0
 
+QMAKE_CXXFLAGS += -DUSE_MINIAL
 #LIBS += -lopenal
 
 LIBS += \
@@ -58,6 +57,7 @@ SOURCES += \
         rbsolver.cpp \
         settings_dat.cpp \
         settingsdialog.cpp \
+        shadermng.cpp \
         skysph.cpp \
         soundmng.cpp \
         triboxint.cpp
@@ -77,6 +77,7 @@ HEADERS += \
     gamemng.h \
     gbuff_in.h \
     ghost.h \
+    gl1.h \
     glext1.h \
     glhelpers1.h \
     glm1.h \
@@ -95,6 +96,7 @@ HEADERS += \
     rbsolver.h \
     settings_dat.h \
     settingsdialog.h \
+    shadermng.h \
     skysph.h \
     soundmng.h \
     triboxint.h

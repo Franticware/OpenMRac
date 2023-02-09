@@ -6,6 +6,7 @@
 #include "matmng.h"
 #include "glhelpers1.h"
 #include <algorithm>
+#include "shadermng.h"
 
 void Glfont::set_texture(GLuint texture)
 {
@@ -19,82 +20,40 @@ void Gltext::set_pos(float x, float y)
     mtrx = glm::translate(mtrx, glm::vec3(x, y, 0.f));
 }
 
-void Gltext::render(GLuint texture)
-{
-    glLoadMatrixf(glm::value_ptr(mtrx));
-
-    glBindTexture(GL_TEXTURE_2D, texture); checkGL();
-
-    glEnable(GL_BLEND); checkGL();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    for (unsigned int i = 0; i != p_h; ++i)
-    {
-        glVertexPointer(3, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data()); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data() + 3); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
-    }
-
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    glDisable(GL_BLEND); checkGL();
-}
-
-void Gltext::render_c(GLuint texture)
-{
-    glLoadMatrixf(glm::value_ptr(mtrx));
-
-    glBindTexture(GL_TEXTURE_2D, texture); checkGL();
-
-    glEnable(GL_BLEND); checkGL();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    for (unsigned int i = 0; i != p_h; ++i)
-    {
-        glColor4fv(p_lines[i].color_b); checkGL();
-        glVertexPointer(3, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data()); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data() + 3); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
-    }
-
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    glDisable(GL_BLEND); checkGL();
-    glLoadIdentity(); checkGL();
-}
-
-void Gltext::renderscale(float scale, GLuint texture)
+void Gltext::render(GLuint texture, ShaderMng* shadermng, bool useColor, float scale)
 {
     glm::mat4 m = glm::scale(mtrx, glm::vec3(scale, scale, 1.f));
-    glLoadMatrixf(glm::value_ptr(m));
-
+    shadermng->set(ShaderUniMat4::ModelViewMat, m);
+    shadermng->use(ShaderId::ColorTex);
+    shadermng->set(ShaderUniInt::AlphaDiscard, (GLint)0);
     glBindTexture(GL_TEXTURE_2D, texture); checkGL();
-
     glEnable(GL_BLEND); checkGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
     for (unsigned int i = 0; i != p_h; ++i)
     {
-        glVertexPointer(3, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data()); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, sizeof(float)*5, p_lines[i].vert.data() + 3); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
+        if (useColor)
+        {
+            glVertexAttrib4fv((GLuint)ShaderAttrib::Color, p_lines[i].color_b);
+        }
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, p_lines[i].vert.data());
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, p_lines[i].vert.data() + 3);
+        glDrawElements(GL_TRIANGLES, p_lines[i].isize, GL_UNSIGNED_SHORT, indices.data()); checkGL();
     }
-
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
     glDisable(GL_BLEND); checkGL();
+}
+
+void Gltext::render_c(GLuint texture, ShaderMng* shadermng)
+{
+    render(texture, shadermng, true);
+}
+
+void Gltext::renderscale(float scale, GLuint texture, ShaderMng* shadermng)
+{
+    render(texture, shadermng, false, scale);
 }
 
 unsigned int Glfont::get_char_i(char c) const
@@ -121,6 +80,7 @@ void Gltext::puts(unsigned int i/*číslo řádku*/, const char* text)
         // délka textu se omezí délkou alokovaného pole pro výpis textu
         unsigned int textsz1 = std::min(utextsz, p_w); // použitá délka řádku
         p_lines[i].size = textsz1*4; // počet vrcholů na řádku pro render
+        p_lines[i].isize = textsz1*6; // počet vrcholů na řádku pro render
         float line_w = 0.f; // délka řádku je součet délek všech znaků a mezer mezi nimi, mezera je i za posledním znakem
         for (unsigned int i0 = 0; i0 != textsz1; ++i0)
             line_w += p_font->p_charmap[p_font->get_char_i(text[i0])].vertw + p_font->p_dist;
@@ -191,6 +151,8 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
         p_lines[i].vert.clear();
         p_lines[i].vert.resize(p_w*4*5);
     }
+    indices.clear();
+    indices.resize(p_w*6);
     float text_h = float(p_h)*p_fontsize;
     float text_top = 0.f;
     if (p_cen_y == 0)
@@ -226,6 +188,16 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
             p_lines[i].vert[(j*4+2)*5+1] = text_top-(float(i))*p_fontsize;
             p_lines[i].vert[(j*4+3)*5+1] = text_top-(float(i))*p_fontsize;
         }
+    }
+
+    for (unsigned int j = 0; j != p_w; ++j)
+    {
+        indices[j * 6 + 0] = j * 4 + 0;
+        indices[j * 6 + 1] = j * 4 + 1;
+        indices[j * 6 + 2] = j * 4 + 2;
+        indices[j * 6 + 3] = j * 4 + 0;
+        indices[j * 6 + 4] = j * 4 + 2;
+        indices[j * 6 + 5] = j * 4 + 3;
     }
 }
 

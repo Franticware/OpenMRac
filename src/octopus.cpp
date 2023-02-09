@@ -3,11 +3,7 @@
 #include "octopus.h"
 
 #include <algorithm>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
 #include "triboxint.h"
 #include <cmath>
 
@@ -74,17 +70,6 @@ int Octocube::render_pass1(const float modelview_matrix[16]) // základní funkc
         }
     }
     return 0; // podřazené části už byly zařazeny, nadřazenému bboxu se předá výsledek 0, který znamená, že bbox není úplně vidět
-}
-
-void Octocube::render_pass2() // vykreslení všech částí patřících octocube po jednotlivých materiálech
-{
-    for (unsigned int i = 0; i != p_base->p_m_sz; ++i)
-    {
-        if (p_mi[i].p_sz)
-        {
-            glDrawElements(GL_TRIANGLES, p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_mi[i].p_i.data()); checkGL();
-        }
-    }
 }
 
 int Octocube::test(const float modelview_matrix[16]) // 0 - mimo, 1 - úplně, 2 - část
@@ -367,21 +352,4 @@ void Octopus::render_pass1_lim(const float modelview_matrix[16], unsigned int fa
         }
     }
     p_vw_sz = vw_sz_pom;
-}
-
-void Octopus::render_pass2() // vykreslení všech octocube v seznamu
-{
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_NORMAL_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()); checkGL();
-    glNormalPointer(GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()+3); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,sizeof(float)*8,p_t3dm->p_v.data()+6); checkGL();
-    for (unsigned int i = 0; i != p_vw_sz; ++i)
-    {
-        p_vw[i]->render_pass2();
-    }
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glDisableClientState(GL_NORMAL_ARRAY); checkGL();
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
 }

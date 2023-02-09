@@ -3,11 +3,7 @@
 
 #include "platform.h"
 
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
 #include <cstring>
 
 #ifndef SETKEYS
@@ -65,7 +61,7 @@ public:
     bool bmipmap; //
     char texd_name[256]; // název difuzní textury
     char texa_name[256]; // název alfa textury
-    int special; // zároveň bspecial
+    int special; // zároveň bspecial; 0 - nothing, 1 - two-sided top car part, 2 - blended (fence around Speedway), 3 - shadow
     float color[4];
 };
 
@@ -80,15 +76,19 @@ public:
     std::vector<float> p_vcolor_back;
 };
 
+class Gamemng;
+
 class Rendermng {
 public:
     Rendermng() : p_t3dm(0), p_matmng(0), p_octopus(0), p_boctocube(false), b_visible(false), p_skycmtex(0), p_transf(0) { }
-    void init(const T3dm* t3dm, const Matmng* matmng, Octopus* octopus = 0);
+    void init(Gamemng* gamemng, const T3dm* t3dm, const Matmng* matmng, Octopus* octopus = 0);
     void set_oc(const float frustum[6], const T3dm& t3dm); // nastaví jednotlivou octocube (asi)
     void set_transf(const Transf* transf) { p_transf = transf; }
     void render_o_pass1(const float* modelview_matrix);
     void render_o_pass1_lim(const float* modelview_matrix, unsigned int face_limit);
     void render_o_pass2(const glm::mat4& m);
+    void render_o_pass_glassTint(const glm::mat4& m);
+    void render_o_pass_glassReflection(const glm::mat4& m);
     void render_o_pass3();
     void render_o_pass_s2();
     void render_o_pass_s3();
@@ -98,6 +98,7 @@ public:
     }
     const T3dm* p_t3dm;
     const Matmng* p_matmng;
+    Gamemng* p_gamemng;
     Octopus* p_octopus; // pokud == 0 -> nepoužito
     bool p_boctocube;
     Octocube p_octocube;

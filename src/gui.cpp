@@ -24,7 +24,6 @@ inline void GUI_Blend(Uint32 src, Uint32& dst)
     dst = 0xff000000 | (GUI_BlendChan(sr, dr, alpha) << 16) | (GUI_BlendChan(sg, dg, alpha) << 8) | (GUI_BlendChan(sb, db, alpha));
 }
 
-
 /* The width and height in srcrect determine the size of the copied rectangle. Only the position is used in the dstrect (the width and height are ignored). Blits with negative dstrect coordinates will be clipped properly.
 If srcrect is NULL, the entire surface is copied. If dstrect is NULL, then the destination position (upper left corner) is (0, 0). */
 int GUI_BlitSurface(const GUI_Surface&    src,

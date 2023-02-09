@@ -1,11 +1,7 @@
 #ifndef HLIDAC_GLHELPERS1_H
 #define HLIDAC_GLHELPERS1_H
 
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
 #include <cmath>
 #include "platform.h"
 #include "glext1.h"
@@ -21,7 +17,7 @@ extern int g_multisampleMode;
 inline void checkGL()
 {
     GLenum err = glGetError();
-    assert(err == GL_NO_ERROR);
+    //assert(err == GL_NO_ERROR);
     if (err != GL_NO_ERROR)
     {
         fprintf(stderr, "gl err %d\n", err);
@@ -32,6 +28,7 @@ inline void checkGL()
 #define checkGL() ;
 #endif
 
+/*
 inline void setStandardAlphaTest(bool enable)
 {
 #if !defined(__MACOSX__) && !defined(__MORPHOS__)
@@ -63,6 +60,7 @@ inline void setStandardAlphaTest(bool enable)
         }
     }
 }
+*/
 
 inline void multMatVect(float result[4], const float matr[16], const float vect[4])
 {

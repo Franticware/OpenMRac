@@ -1,11 +1,7 @@
 #include "cam.h"
 #include <cstring>
 #include <cmath>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
 #include <cstdio>
 
 //void Cam::save()

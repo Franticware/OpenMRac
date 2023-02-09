@@ -536,187 +536,176 @@ void Gamemng::frame(float deltaT, const glm::mat4& freecam_mtrx)
     // vykreslení jednotlivých okének rozdělené obrazovky
     if (p_state != 2)
     {
-    for (unsigned int i = 0; i != p_players; ++i)
-    {
-        set_scissor(i); // nastaví se podokénko (nemusí zabírat celou plochu hlavního SDL okna
-        // transformace podle kamery a vykreslení
-        glm::mat4 m(1.f);
-        if (g_freecam)
+        for (unsigned int i = 0; i != p_players; ++i)
         {
-            m = freecam_mtrx;
-        }
-        else
-        {
-            if (p_state == 1)
+            set_scissor(i); // nastaví se podokénko (nemusí zabírat celou plochu hlavního SDL okna
+            // transformace podle kamery a vykreslení
+            glm::mat4 m(1.f);
+            if (g_freecam)
             {
-                m = p_carcam[i].transf();
+                m = freecam_mtrx;
             }
             else
             {
-                m = p_startcam[i].transf();
-            }
-        }
-        render_frame(m);
-
-        glEnable(GL_TEXTURE_2D); checkGL();
-        glDisable(GL_LIGHTING); checkGL();
-        glEnable(GL_BLEND); checkGL();
-        glDisable(GL_DEPTH_TEST); checkGL();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-        glColor4f(1, 1, 1, 1); checkGL();
-
-        if (!g_freecam)
-        {
-            char speedbuff[256] = {0};
-            snprintf(speedbuff, 255, "%.0f", (RBf::len(p_car2do[i].p_v)*3.6f));
-            p_playerhud[i].speed.puts(0, speedbuff);
-
-            p_playerhud[i].speed.render(p_fonttex);
-
-            p_playerhud[i].speed_km_h.render(p_fonttex);
-
-            p_playerhud[i].laptime_l.render(p_fonttex); // Prev Best Race
-            p_playerhud[i].laptime_l1.puts(0, time_m_s(p_playerstate[i].race_time));
-            p_playerhud[i].laptime_l1.render(p_fonttex);
-
-            if (p_playerstate[i].lap_i_max > 0)
-            {
-                if (!p_playerstate[i].state_finish)
+                if (p_state == 1)
                 {
-                    p_playerhud[i].laptime_r.puts(0, time_m_s(p_playerstate[i].lap_time));
-                    p_playerhud[i].laptime_r.render(p_fonttex); // aktualni casomira kola
-                    p_playerhud[i].laptime_r_lap.render(p_fonttex); // Lap
-                    p_playerhud[i].laptime_r1.render(p_fonttex); // 1/5
+                    m = p_carcam[i].transf();
+                }
+                else
+                {
+                    m = p_startcam[i].transf();
+                }
+            }
+            render_frame(m);
+
+            glEnable(GL_BLEND); checkGL();
+            glDisable(GL_DEPTH_TEST); checkGL();
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
+
+            glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1);
+
+            if (!g_freecam)
+            {
+                char speedbuff[256] = {0};
+                snprintf(speedbuff, 255, "%.0f", (RBf::len(p_car2do[i].p_v)*3.6f));
+                p_playerhud[i].speed.puts(0, speedbuff);
+
+                p_playerhud[i].speed.render(p_fonttex, &p_shadermng);
+
+                p_playerhud[i].speed_km_h.render(p_fonttex, &p_shadermng);
+
+                p_playerhud[i].laptime_l.render(p_fonttex, &p_shadermng); // Prev Best Race
+                p_playerhud[i].laptime_l1.puts(0, time_m_s(p_playerstate[i].race_time));
+                p_playerhud[i].laptime_l1.render(p_fonttex, &p_shadermng);
+
+                if (p_playerstate[i].lap_i_max > 0)
+                {
+                    if (!p_playerstate[i].state_finish)
+                    {
+                        p_playerhud[i].laptime_r.puts(0, time_m_s(p_playerstate[i].lap_time));
+                        p_playerhud[i].laptime_r.render(p_fonttex, &p_shadermng); // aktualni casomira kola
+                        p_playerhud[i].laptime_r_lap.render(p_fonttex, &p_shadermng); // Lap
+                        p_playerhud[i].laptime_r1.render(p_fonttex, &p_shadermng); // 1/5
+                    }
+                }
+
+                if (p_playerstate[i].state_finish)
+                {
+                    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1); checkGL();
+                    p_playerhud[i].position.render(p_fonttex, &p_shadermng);
+                }
+                glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1); checkGL();
+
+                if (p_playerstate[i].lap_i_max >= 2)
+                    p_playerhud[i].laptime_l_best.render(p_fonttex, &p_shadermng);
+
+                if (/*p_isGhost*/true) { // condemned
+                    if (p_newlaprecordtxttime[i] > 0.f)
+                        p_playerhud[i].newrecord.render(p_fonttex, &p_shadermng);
                 }
             }
 
-            if (p_playerstate[i].state_finish)
+            float scalepom = 7.f;
+            if (p_state == 0)
             {
-                glColor4f(1, 1, 1, 1); checkGL();
-                p_playerhud[i].position.render(p_fonttex);
+                if (p_state0_time < 3.f)
+                {
+                }
+                else if (p_state0_time < 4.f)
+                {
+                    p_gltext_start.puts(0, "3");
+                    float pom = p_state0_time - 3.f;
+
+                    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1.f-pom); checkGL();
+
+                    p_gltext_start.renderscale((0.1f+pom)*scalepom, p_fonttex, &p_shadermng);
+                }
+                else if (p_state0_time < 5.f)
+                {
+                    p_gltext_start.puts(0, "2");
+                    float pom = p_state0_time - 4.f;
+
+                    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1.f-pom); checkGL();
+
+                    p_gltext_start.renderscale((0.1f+pom)*scalepom, p_fonttex, &p_shadermng);
+                }
+                else if (p_state0_time < 6.f)
+                {
+                    p_gltext_start.puts(0, "1");
+                    float pom = p_state0_time - 5.f;
+
+                    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1.f-pom); checkGL();
+
+                    p_gltext_start.renderscale((0.1f+pom)*scalepom, p_fonttex, &p_shadermng);
+                }
             }
 
-            glColor4f(1, 1, 1, 1); checkGL();
-
-            if (p_playerstate[i].lap_i_max >= 2)
-                p_playerhud[i].laptime_l_best.render(p_fonttex);
-
-            if (/*p_isGhost*/true) { // condemned
-                if (p_newlaprecordtxttime[i] > 0.f)
-                    p_playerhud[i].newrecord.render(p_fonttex);
-            }
-        }
-
-        float scalepom = 7.f;
-        if (p_state == 0)
-        {
-            if (p_state0_time < 3.f)
+            if (p_state0_5 && p_state == 1)
             {
+                p_gltext_start.puts(0, "GO!");
+                glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1.f-p_state0_5_time); checkGL();
+
+                p_gltext_start.renderscale(3.5f, p_fonttex, &p_shadermng);
             }
-            else if (p_state0_time < 4.f)
-            {
-                p_gltext_start.puts(0, "3");
-                float pom = p_state0_time - 3.f;
-                glColor4f(1, 1, 1, 1.f-pom); checkGL();
 
-                p_gltext_start.renderscale((0.1f+pom)*scalepom, p_fonttex);
-            }
-            else if (p_state0_time < 5.f)
-            {
-                p_gltext_start.puts(0, "2");
-                float pom = p_state0_time - 4.f;
-                glColor4f(1, 1, 1, 1.f-pom); checkGL();
-
-                p_gltext_start.renderscale((0.1f+pom)*scalepom, p_fonttex);
-            }
-            else if (p_state0_time < 6.f)
-            {
-                p_gltext_start.puts(0, "1");
-                float pom = p_state0_time - 5.f;
-                glColor4f(1, 1, 1, 1.f-pom); checkGL();
-
-                p_gltext_start.renderscale((0.1f+pom)*scalepom, p_fonttex);
-            }
-        }
-
-        if (p_state0_5 && p_state == 1)
-        {
-            p_gltext_start.puts(0, "GO!");
-            glColor4f(1, 1, 1, 1.f-p_state0_5_time); checkGL();
-
-            p_gltext_start.renderscale(3.5f, p_fonttex);
-        }
-
-        glEnable(GL_LIGHTING); checkGL();
-        glDisable(GL_BLEND); checkGL();
-        glEnable(GL_DEPTH_TEST); checkGL();
-        glColor4f(1, 1, 1, 1); checkGL();
-
-        // tady vypsat testovací hodnoty při testu kláves
-        if (p_gamemenu.bmenu && p_gamemenu.state == GMSTATE_T)
-        {
-            glDisable(GL_DEPTH_TEST); checkGL();
-            glDisable(GL_LIGHTING); checkGL();
-            glDisable(GL_TEXTURE_2D); checkGL();
-            glEnable(GL_BLEND); checkGL();
-
-            render_black();
-
-            glEnable(GL_TEXTURE_2D); checkGL();
-            glEnable(GL_BLEND); checkGL();
-
-            float font_color0[4] = {0.6, 0.6, 0.6, 1};
-            float font_color1[4] = {1, 1, 1, 1};
-            p_keytest[i].player.render_c();
-
-            if (p_playerkeys[i].key_left)
-                p_keytest[i].left.set_color(0, font_color1);
-            else
-                p_keytest[i].left.set_color(0, font_color0);
-            p_keytest[i].left.render_c();
-
-            if (p_playerkeys[i].key_right)
-                p_keytest[i].right.set_color(0, font_color1);
-            else
-                p_keytest[i].right.set_color(0, font_color0);
-            p_keytest[i].right.render_c();
-
-            if (p_playerkeys[i].key_down)
-                p_keytest[i].down.set_color(0, font_color1);
-            else
-                p_keytest[i].down.set_color(0, font_color0);
-            p_keytest[i].down.render_c();
-
-            if (p_playerkeys[i].key_up)
-                p_keytest[i].up.set_color(0, font_color1);
-            else
-                p_keytest[i].up.set_color(0, font_color0);
-            p_keytest[i].up.render_c();
-
-            glEnable(GL_LIGHTING); checkGL();
             glDisable(GL_BLEND); checkGL();
             glEnable(GL_DEPTH_TEST); checkGL();
+            glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1);
+
+            // tady vypsat testovací hodnoty při testu kláves
+            if (p_gamemenu.bmenu && p_gamemenu.state == GMSTATE_T)
+            {
+                glDisable(GL_DEPTH_TEST); checkGL();
+                glEnable(GL_BLEND); checkGL();
+                render_black();
+                glEnable(GL_BLEND); checkGL();
+
+                float font_color0[4] = {0.6, 0.6, 0.6, 1};
+                float font_color1[4] = {1, 1, 1, 1};
+                p_keytest[i].player.render_c(&p_shadermng);
+
+                if (p_playerkeys[i].key_left)
+                    p_keytest[i].left.set_color(0, font_color1);
+                else
+                    p_keytest[i].left.set_color(0, font_color0);
+                p_keytest[i].left.render_c(&p_shadermng);
+
+                if (p_playerkeys[i].key_right)
+                    p_keytest[i].right.set_color(0, font_color1);
+                else
+                    p_keytest[i].right.set_color(0, font_color0);
+                p_keytest[i].right.render_c(&p_shadermng);
+
+                if (p_playerkeys[i].key_down)
+                    p_keytest[i].down.set_color(0, font_color1);
+                else
+                    p_keytest[i].down.set_color(0, font_color0);
+                p_keytest[i].down.render_c(&p_shadermng);
+
+                if (p_playerkeys[i].key_up)
+                    p_keytest[i].up.set_color(0, font_color1);
+                else
+                    p_keytest[i].up.set_color(0, font_color0);
+                p_keytest[i].up.render_c(&p_shadermng);
+                glDisable(GL_BLEND); checkGL();
+                glEnable(GL_DEPTH_TEST); checkGL();
+            }
         }
-
-
-    }
-    if (p_players == 3)
-    {
-        set_scissor(3); // 4. okno
-        glClear(GL_COLOR_BUFFER_BIT); checkGL();
-    }
+        if (p_players == 3)
+        {
+            set_scissor(3); // 4. okno
+            glClear(GL_COLOR_BUFFER_BIT); checkGL();
+        }
     }
 
     // nastavení výchozího okna (přes celé) a vypnutí scissor testu
     unset_scissor();
 
     glDisable(GL_DEPTH_TEST); checkGL();
-    glDisable(GL_LIGHTING); checkGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
 
     if (p_state == 2)
     {
-        glEnable(GL_TEXTURE_2D); checkGL();
         glDisable(GL_BLEND); checkGL();
         render_bricks();
 
@@ -724,38 +713,28 @@ void Gamemng::frame(float deltaT, const glm::mat4& freecam_mtrx)
 
         glEnable(GL_BLEND); checkGL();
         // tady kreslit text výsledků
-        p_results.title.render_c();
-        p_results.line0.render_c();
-        p_results.position.render_c();
-        p_results.time.render_c();
-        p_results.best.render_c();
+        p_results.title.render_c(&p_shadermng);
+        p_results.line0.render_c(&p_shadermng);
+        p_results.position.render_c(&p_shadermng);
+        p_results.time.render_c(&p_shadermng);
+        p_results.best.render_c(&p_shadermng);
     }
 
     if (p_gamemenu.bmenu && p_gamemenu.state != GMSTATE_T)
     {
         glDisable(GL_DEPTH_TEST); checkGL();
-        glDisable(GL_LIGHTING); checkGL();
-        glDisable(GL_TEXTURE_2D); checkGL();
         glEnable(GL_BLEND); checkGL();
         render_black();
-
-        glEnable(GL_TEXTURE_2D); checkGL();
-        glDisable(GL_LIGHTING); checkGL();
-
-
         // tady kreslit menu
-
         p_gamemenu.render();
-
-
     }
 
     glEnable(GL_BLEND); checkGL();
-    glEnable(GL_TEXTURE_2D); checkGL();
-    glColor4f(1, 1, 1, 1); checkGL();
+
+    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1, 1, 1, 1);
+
     if (p_bfps && p_state != 2)
-        p_gltext_fps.render(p_fonttex);
-    glEnable(GL_LIGHTING); checkGL();
+        p_gltext_fps.render(p_fonttex, &p_shadermng);
     glDisable(GL_BLEND); checkGL();
     glEnable(GL_DEPTH_TEST); checkGL();
 
@@ -779,48 +758,61 @@ void Gamemng::frame(float deltaT, const glm::mat4& freecam_mtrx)
 
 void Gamemng::render_black()
 {
-    /*fine*/glLoadIdentity(); checkGL();
-    glColor4f(0, 0, 0, 0.8); checkGL(); // ztmavení obrazovky černým poloprůhledným čtvercem
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    static const float vert_array[12] = {-20, -10, -10,  20, -10, -10,  20,  10, -10, -20,  10, -10};
-    glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-    glDrawArrays(GL_QUADS, 0, 4); checkGL();
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
+    glm::mat4 identityMat(1);
+    p_shadermng.set(ShaderUniMat4::ModelViewMat, identityMat);
+    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 0, 0, 0, 0.8); checkGL(); // ztmavení obrazovky černým poloprůhledným čtvercem
+    p_shadermng.use(ShaderId::Color);
+    static const float vert_array[12] = {-20, -10, -10,
+                                         20, -10, -10,
+                                         -20,  10, -10,
+                                          20,  10, -10};
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
 }
 
 void Gamemng::render_bricks()
 {
-    glBindTexture(GL_TEXTURE_2D, 0
-                  ); checkGL();
-    /*fine*/glLoadIdentity(); checkGL();
+    p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
+    p_shadermng.use(ShaderId::Color);
     static const float seda = 1.f;
-    glColor4f(seda, seda, seda, 1); checkGL(); // vykreslení pozadí s texturou cihel
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_COLOR_ARRAY); checkGL();
-    static const float vert_array[12] = {-10, -10, -10,  10, -10, -10,  10,  10, -10, -10,  10, -10};
+    glVertexAttrib4f((GLuint)ShaderAttrib::Color, seda, seda, seda, 1); checkGL(); // vykreslení pozadí s texturou cihel
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Color);
+    static const float vert_array[12] = {-10, -10, -10,
+                                         10, -10, -10,
 
-    static const float color_array[12] = {
-        0, 1, 0.2,
-        0, 1, 0.2,
-        1, 0, 0.2,
-        1, 0, 0.2,
+                                         -10,  10, -10,
+                                         10,  10, -10,
+                                        };
+
+    static const float color_array[16] = {
+        0, 1, 0.2, 1,
+        0, 1, 0.2, 1,
+        1, 0, 0.2, 1,
+        1, 0, 0.2, 1,
     };
-    glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-    glColorPointer(3, GL_FLOAT, 0, color_array);
-    glDrawArrays(GL_QUADS, 0, 4); checkGL();
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_COLOR_ARRAY); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, color_array); checkGL();
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();
 }
 
 void Gamemng::render_black_background()
 {
-    glBindTexture(GL_TEXTURE_2D, 0); checkGL();
-    /*fine*/glLoadIdentity(); checkGL();
-    static const float seda = 0.f;
-    glColor4f(seda, seda, seda, 1); checkGL(); // vykreslení pozadí s texturou cihel
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    static const float vert_array[12] = {-10, -10, -10,  10, -10, -10,  10,  10, -10, -10,  10, -10};
-    glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-    glDrawArrays(GL_QUADS, 0, 4); checkGL();
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
+    glm::mat4 identityMat(1);
+    p_shadermng.set(ShaderUniMat4::ModelViewMat, identityMat);
+    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 0, 0, 0, 0.8); checkGL(); // ztmavení obrazovky černým poloprůhledným čtvercem
+    p_shadermng.use(ShaderId::Color);
+    static const float vert_array[12] = {-10, -10, -10,
+                                         10, -10, -10,
+                                         -10,  10, -10,
+                                         10,  10, -10,
+                                        };
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
 }

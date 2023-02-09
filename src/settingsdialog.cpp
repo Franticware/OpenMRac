@@ -116,10 +116,12 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     std::vector<std::string> textureFilters;
     textureFilters.push_back("Bilinear");
     textureFilters.push_back("Trilinear");
+
     #ifndef DISABLE_ANISOTROPY
     ASSERT_ANISOTROPY
     textureFilters.push_back("Anisotropic");
     #endif
+
     m_textureFilterIndex = m_items.size();
     m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(10), /*m_layout.getCellWidth(3, 1)*/110, m_layout.getCellHeight(10, 1), textureFilters, currentTextureFilter, 20, 3));
 

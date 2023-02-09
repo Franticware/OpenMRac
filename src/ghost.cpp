@@ -22,7 +22,6 @@ bool Ghost::load(int track, int reverse) {
     char filename[1024];
     getfname(filename);
     FILE* fin = fopenDir(filename, "rb", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (fin == NULL) return false;
     if (fread(&m_version, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
     if (m_version != 104) {fclose(fin); return false;}
@@ -49,9 +48,7 @@ bool Ghost::load(int track, int reverse) {
 void Ghost::save() {
     char filename[1024];
     getfname(filename);
-    //FILE* fout = fopen(filename, "wb");
     FILE* fout = fopenDir(filename, "wb", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (fout == NULL) return;
     fwrite(&m_version, sizeof(int), 1, fout);
     fwrite(&m_track, sizeof(int), 1, fout);
@@ -73,7 +70,7 @@ void Ghost::getfname(char* buff) { // 1024 bajtů
     snprintf(buff, 1023, "%s%s.mrr", filenames[m_track], m_reverse ? "-rev" : "");
 }
 
-void Ghost::copyFrom(const Ghost& gnew) {    
+void Ghost::copyFrom(const Ghost& gnew) {
     m_version = gnew.m_version;
     m_track = gnew.m_track;
     m_reverse = gnew.m_reverse;
@@ -87,7 +84,7 @@ void Ghost::copyFrom(const Ghost& gnew) {
     }
     else
     {
-        m_num = gnew.m_num;        
+        m_num = gnew.m_num;
         std::copy_n(gnew.m_frames.begin(), m_num * 4, m_frames.begin());
     }
 }

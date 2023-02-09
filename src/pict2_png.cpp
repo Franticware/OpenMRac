@@ -44,5 +44,9 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
         png_image_free(&image);
         return 0;
     }
+    for (uint32_t i = 0; i != image.width * image.height; ++i)
+    {
+        std::swap(p_px[i * 4 + 0], p_px[i * 4 + 2]);
+    }
     return 1;
 }

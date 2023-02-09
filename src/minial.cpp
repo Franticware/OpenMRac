@@ -13,6 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <SDL2/SDL.h>
 
 #define MA_INTERP_NONE 0 // awful
@@ -195,6 +196,17 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
 
 ////////////////
 
+static bool isSdlAudioInit = false;
+
+static void sdlAudioInit(void)
+{
+    if (!isSdlAudioInit)
+    {
+        SDL_InitSubSystem(SDL_INIT_AUDIO);
+        isSdlAudioInit = true;
+    }
+}
+
 ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
 {
     if (device == 0)
@@ -213,7 +225,7 @@ ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
 
 const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
 {
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    sdlAudioInit();
     if (device == 0 && (param == ALC_ALL_DEVICES_SPECIFIER || param == ALC_DEVICE_SPECIFIER))
     {
         static std::vector<char> deviceList;
@@ -240,6 +252,7 @@ const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
 
 ALCdevice* alcOpenDevice(const ALCchar *devicename)
 {
+    sdlAudioInit();
     (void)devicename;
     sourceMap.clear();
     bufferMap.clear();
@@ -261,6 +274,7 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     }
     else
     {
+        fprintf(stderr, "MiniAL: %s\n", SDL_GetError()); fflush(stderr);
         return 0;
     }
 }

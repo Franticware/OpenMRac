@@ -1,12 +1,9 @@
 #include "platform.h"
 #include "glhelpers1.h"
 #include "skysph.h"
+#include "gamemng.h"
 #include <cmath>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
 
 /* orientace úhlu */
 /*
@@ -17,13 +14,10 @@
     z -> ang
 */
 
-void Skysph::set_light_pos()
+void Skysph::init(Gamemng* gamemng, float r_prm, float ang_prm, int h, int v) // úhel ve stupních
 {
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos); checkGL();
-}
+    p_gamemng = gamemng;
 
-void Skysph::init(float r_prm, float ang_prm, int h, int v) // úhel ve stupních
-{
     vert.clear();
     tris.clear();
 
@@ -77,16 +71,19 @@ void Skysph::init(float r_prm, float ang_prm, int h, int v) // úhel ve stupníc
 
 void Skysph::render()
 {
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    glVertexPointer(3, GL_FLOAT, sizeof(float) * 5, vert.data()); checkGL();
-    glTexCoordPointer(2, GL_FLOAT, sizeof(float) * 5, vert.data() + 3); checkGL();
+    p_gamemng->p_shadermng.use(ShaderId::Tex);
     glBindTexture(GL_TEXTURE_2D, tex_sky); checkGL();
+
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert.data());
+
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert.data() + 3);
+
     glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_SHORT, tris.data()); checkGL();
 
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
 }
 
 inline void xprod3(float* n, const float* u, const float* v)

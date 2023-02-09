@@ -42,6 +42,4 @@ public:
     std::string openalDeviceName; // jméno, pokud není default
 };
 
-//bool read_snddev_dat(char* buff);
-
 #endif

@@ -8,23 +8,14 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_endian.h>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
 
 #ifdef USE_MINIAL
 #include "minial.h"
 #else
-#ifndef __MACOSX__
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <AL/alext.h>
-#else
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#endif
 #endif
 
 #include "gltext.h"
@@ -36,7 +27,7 @@
 #include "skysph.h"
 
 #define NO_CAMERA
-//#undef NO_CAMERA
+#undef NO_CAMERA
 
 //#define TESTING_SLOWDOWN 1
 
@@ -83,8 +74,6 @@ std::vector<ALuint> global_al_buffers;
 // odrazivost při kolizích
 // magický vzorec pro výpočet útlumu při nárazu
 // další věci k časům na kolo
-
-int g_mipmaps_available = 0;
 
 int EnableOpenGL(bool fullscreen, bool vsync, int width, int height);
 
@@ -133,11 +122,20 @@ void saveTgaScreenshot(const char* filenamePrm = nullptr)
     static std::vector<unsigned char> pixelbuffer;
     GLint okno_rozmery[4];
     glGetIntegerv(GL_VIEWPORT, okno_rozmery); checkGL();
-    pixelbuffer.resize(okno_rozmery[2]*okno_rozmery[3]*3);
+    //pixelbuffer.resize(okno_rozmery[2]*okno_rozmery[3]*3);
+    pixelbuffer.resize(okno_rozmery[2]*okno_rozmery[3]*4+8);
     //okno_rozmery[2] = (okno_rozmery[2] / 4) * 4; // fix for a 4-byte padding issue // better fix is a 1-byte pixel packing
     if (okno_rozmery[2]*okno_rozmery[3] == 0)
         return;
-    glReadPixels(0,  0,  okno_rozmery[2], okno_rozmery[3], GL_BGR, GL_UNSIGNED_BYTE, &(pixelbuffer[0])); checkGL();
+    glReadPixels(0,  0,  okno_rozmery[2], okno_rozmery[3], GL_RGBA, GL_UNSIGNED_BYTE, pixelbuffer.data() + 8); checkGL();
+
+    for (int i = 0; i < okno_rozmery[2]*okno_rozmery[3]; ++i)
+    {
+        pixelbuffer[i * 3 + 0] = pixelbuffer[i * 4 + 2 + 8];
+        pixelbuffer[i * 3 + 1] = pixelbuffer[i * 4 + 1 + 8];
+        pixelbuffer[i * 3 + 2] = pixelbuffer[i * 4 + 0 + 8];
+    }
+
     char filename[256] = {0};
     if (filenamePrm)
     {
@@ -374,13 +372,6 @@ int my_main (int argc, char** argv)
         SDL_SetWindowTitle(gameWindow, "OpenMRac " OPENMRAC_VERSION);
     }
 
-    if (strcmp((const char*)glGetString(GL_VERSION), "1.4") >= 0) {
-        g_mipmaps_available = 1;
-    }
-#ifdef __MACOSX__
-    g_mipmaps_available = 1;
-#endif
-
     // Initialize Open AL
 
     const char* aldevicestr = settings.getOpenalDevice();
@@ -408,30 +399,12 @@ int my_main (int argc, char** argv)
     alListenerfv(AL_VELOCITY,    listenerVel);
     alListenerfv(AL_ORIENTATION, listenerOri);
 
-#if !defined(__MORPHOS__) && !defined(__amigaos4__)
-    Glext glext;
-    if (!glext.init_ARB_texture_cube_map())
-    {
-        fprintf(stderr, "Error: Unsupported OpenGL extension GL_ARB_texture_cube_map.\n");
-        return 5;
-    }
-
-    if (g_multisampleMode)
-    {
-        if (!glext.init_ARB_multisample())
-        {
-            fprintf(stderr, "Warning: Unsupported OpenGL extension GL_ARB_multisample.\n");
-            g_multisampleMode = 0;
-        }
-    }
-#endif
-
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    //glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     GLint okno_rozmery[4];
     glGetIntegerv(GL_VIEWPORT, okno_rozmery); checkGL();
-
+#if 0
     /* Make sure we're chaning the model view and not the projection */
     glMatrixMode( GL_MODELVIEW ); checkGL();
 
@@ -443,50 +416,10 @@ int my_main (int argc, char** argv)
     // důležité vypnutí defaultního rozptýleného světla
     float lightmodelamb0[4] = {0, 0, 0, 1};
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lightmodelamb0); checkGL();
-
-#ifndef __MORPHOS__
-    if (g_multisampleMode)
-    {
-        glEnable(GL_MULTISAMPLE_ARB); checkGL();
-    }
 #endif
-
     glEnable(GL_CULL_FACE); checkGL();
     glEnable(GL_DEPTH_TEST); checkGL();
     glDepthFunc(GL_LESS); checkGL();
-    glAlphaFunc(GL_GREATER, 0.5); checkGL();
-    glEnable(GL_LIGHT0); checkGL();
-    glEnable(GL_LIGHTING); checkGL();
-
-    glDepthRange(0, 1); checkGL();
-
-    {
-        char halftonetex_pix[] = {
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-        };
-        glGenTextures(1, &g_ghost_tex); checkGL();
-        for (int i = 0; i != 256; ++i) halftonetex_pix[i] *= 255;
-        glBindTexture(GL_TEXTURE_2D, g_ghost_tex); checkGL();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 16, 16, 0, GL_ALPHA, GL_UNSIGNED_BYTE, halftonetex_pix); checkGL();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); checkGL();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); checkGL();
-        glBindTexture(GL_TEXTURE_2D, 0); checkGL();
-    }
 
     g_ghost_w = okno_rozmery[2];
     g_ghost_h = okno_rozmery[3];
@@ -562,7 +495,6 @@ int my_main (int argc, char** argv)
     unsigned char player_bkeys[16] = {0};
 
 #ifndef NO_CAMERA
-    //SDLKey kamerakeys[8] = {SDLK_LEFT, SDLK_RIGHT, SDLK_DOWN, SDLK_UP, SDLK_w, SDLK_s, SDLK_a, SDLK_d};
     static const SDL_Keycode kamerakeys[CAMERA_KEY_COUNT] = {SDLK_DELETE, SDLK_PAGEDOWN, SDLK_END, SDLK_HOME, SDLK_w, SDLK_s, SDLK_a, SDLK_d, SDLK_SPACE, SDLK_c};
     unsigned char kamera_bkeys[CAMERA_KEY_COUNT] = {0};
 #endif
@@ -950,11 +882,11 @@ int my_main (int argc, char** argv)
 #endif
 
             glEnable(GL_DEPTH_TEST); checkGL();
-            glDisable(GL_LIGHTING); checkGL();
+            //glDisable(GL_LIGHTING); checkGL();
             glDepthFunc(GL_LESS); checkGL();
 
-            glColor4f(1.f, 1.f, 1.f, 1.f); checkGL();
-            glEnable(GL_TEXTURE_2D); checkGL();
+            //glColor4f(1.f, 1.f, 1.f, 1.f); checkGL();
+            //glEnable(GL_TEXTURE_2D); checkGL();
             gamemng.input(player_bkeys);
             float deltaTclamped = std::min(deltaT, 1.f);
 
@@ -976,7 +908,7 @@ int my_main (int argc, char** argv)
                 if (testScrshot == 0)
                 {
 #define SCRSHOT_FILENAME1(s) #s
-#define SCRSHOT_FILENAME(prm) "test" SCRSHOT_FILENAME1(prm) "-gl.tga"
+#define SCRSHOT_FILENAME(prm) "test" SCRSHOT_FILENAME1(prm) "-gles2.tga"
                     saveTgaScreenshot(SCRSHOT_FILENAME(TEST_SCRSHOT));
                 }
                 if (testScrshot > -1)
@@ -1050,9 +982,9 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
 {
     // Request OpenGL context
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -1092,6 +1024,7 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
 
     // Create our opengl context and attach it to our window
     maincontext = SDL_GL_CreateContext(gameWindow);
+
     // This makes our buffer swap syncronized with the monitor's vertical refresh
     SDL_GL_SetSwapInterval(vsync ? 1 : 0);
 

@@ -175,7 +175,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
 #ifdef JPEG_NOT_TURBO
                 JCS_RGB;
 #else
-                JCS_EXT_BGRX;
+                JCS_EXT_RGBX;
 #endif
         create(cinfo.output_width, cinfo.output_height, 0);
         row_stride = cinfo.output_width * 4;
@@ -187,9 +187,9 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
             int rs = (cinfo.output_height-cinfo.output_scanline)*row_stride;
             for (JDIMENSION i = 0; i != cinfo.output_width; ++i)
             {
-                p_px[rs + i * 4 + 0] = (*buffer)[i * 3 + 2];
+                p_px[rs + i * 4 + 0] = (*buffer)[i * 3 + 0];
                 p_px[rs + i * 4 + 1] = (*buffer)[i * 3 + 1];
-                p_px[rs + i * 4 + 2] = (*buffer)[i * 3 + 0];
+                p_px[rs + i * 4 + 2] = (*buffer)[i * 3 + 2];
                 p_px[rs + i * 4 + 3] = 0xff;
             }
 #else

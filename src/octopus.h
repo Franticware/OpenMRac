@@ -25,8 +25,6 @@ public:
     void render_level_pom(unsigned int lev);
 
     int render_pass1(const float modelview_matrix[16]);
-    int render_pass1_(const float modelview_matrix[16]);
-    void render_pass2();
 
     std::vector<Octocm> p_mi; // indexy příslušné materiálům
     std::unique_ptr<Octocube> p_sub[8]; // tam, kde je 0, nejsou další tris
@@ -57,7 +55,7 @@ public:
 
     void render_pass1(const float modelview_matrix[16]);
     void render_pass1_lim(const float modelview_matrix[16], unsigned int face_limit); // začátek testování bboxů
-    void render_pass2();
+    //void render_pass2();
 
     float p_left[2]; // hranice frustumu
     float p_right[2];

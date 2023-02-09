@@ -6,11 +6,7 @@
 #ifdef USE_MINIAL
 #include "minial.h"
 #else
-#ifndef __MACOSX__
 #include <AL/al.h>
-#else
-#include <OpenAL/al.h>
-#endif
 #endif
 
 #include <SDL2/SDL_endian.h>
@@ -74,11 +70,6 @@ public:
 
     ALbuffer p_skid_sample;
     ALbuffer p_hit_sample[2];
-    
-    //ALsource p_laprecord_stream;
-    //ALbuffer p_laprecord_sample;
-    
-    //void playLaprecord(float);
 
     void playSoundTest(float);
 };

@@ -279,10 +279,8 @@ void Gamemng::init_sound()
 void Gamemng::unset_scissor()
 {
     glDisable(GL_SCISSOR_TEST); checkGL();
-    glMatrixMode(GL_PROJECTION); checkGL();
-    glLoadMatrixf(glm::value_ptr(p_proj_mtrx0)); checkGL();
+    p_shadermng.set(ShaderUniMat4::ProjMat, p_proj_mtrx0);
     p_proj_mtrx_active = p_proj_mtrx0;
-    glMatrixMode(GL_MODELVIEW); checkGL();
 }
 
 void Gamemng::set_scissor(int player)
@@ -320,14 +318,32 @@ void Gamemng::set_scissor(int player)
         }
     }
 
-    glMatrixMode(GL_PROJECTION); checkGL();
-    glLoadMatrixf(glm::value_ptr(p_proj_mtrx[player])); checkGL();
+    p_shadermng.set(ShaderUniMat4::ProjMat, p_proj_mtrx[player]);
     p_proj_mtrx_active = p_proj_mtrx[player];
-    glMatrixMode(GL_MODELVIEW); checkGL();
 }
 
 void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_def, const char* skies_def)
 {
+    p_shadermng.init();
+
+
+    /*glGenTextures(1, &p_whitetex);
+    p_whitetex.*/
+
+
+    {
+        uint32_t white_pix[256];
+        glGenTextures(1, &p_whitetex); checkGL();
+        memset(white_pix, 0xff, 256 * 4);
+        glBindTexture(GL_TEXTURE_2D, p_whitetex); checkGL();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, white_pix); checkGL();
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); checkGL();
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); checkGL();
+        glBindTexture(GL_TEXTURE_2D, 0); checkGL();
+    }
+
+
+
     GLint viewport_pom[4];
     glGetIntegerv(GL_VIEWPORT, viewport_pom); checkGL();
     p_viewport[0] = viewport_pom[2];
@@ -516,7 +532,7 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
         gbuff_in.fclose();
     }
 
-    p_skysph.init(10, 0);
+    p_skysph.init(this, 10, 0);
     {
         Pict2 pictsmoke;
         gbuff_in.f_open("smokea.png", "rb");
@@ -703,33 +719,32 @@ extern int g_ghost_h;
 
 void Gamemng::render_frame(const glm::mat4& m)
 {
-    glLoadMatrixf(glm::value_ptr(m));
-
-    // nastavení světla pro dynamické objekty (u mapy je světlo předpočítané)
-    glLightfv(GL_LIGHT0, GL_POSITION, p_light_position); checkGL();
-
-    // vykreslení mapy
-    if (ge_bpass1)p_map_rendermng->render_o_pass1(glm::value_ptr(m)); // zjištění viditelnosti (octree)
-    p_map_rendermng->render_o_pass2(m); // vykreslení viditelných částí mapy
-
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
     // vykreslení oblohy
     glm::mat4 mdl_rot_mtrx = m; // zkopíruje se transformační matice
     mdl_rot_mtrx[3] = glm::vec4(0.f, 0.f, 0.f, 1.f); // translační část se vynuluje (obloha se neposouvá, jen rotuje)
 
     glm::mat4 sky_mat = glm::rotate(mdl_rot_mtrx, glm::radians(p_skyang), glm::vec3(0, 1, 0));
 
-    glLoadMatrixf(glm::value_ptr(sky_mat));
-
-    glDisable(GL_LIGHTING); checkGL();
-    glDepthRange(1, 1); checkGL();
-    glDepthFunc(GL_LEQUAL); checkGL();
-    glColor3f(1, 1, 1); checkGL();
+    p_shadermng.set(ShaderUniMat4::ModelViewMat, sky_mat);
+    p_shadermng.set(ShaderUniMat4::ModelViewMat, sky_mat);
     p_skysph.render();
-    glDepthFunc(GL_LESS); checkGL();
-    glDepthRange(0, 1); checkGL();
-    glEnable(GL_LIGHTING); checkGL();
 
-    glLoadMatrixf(glm::value_ptr(m));
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+
+    p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
+    p_shadermng.set(ShaderUniVec4::LightPos, m * glm::vec4(p_light_position[0], p_light_position[1], p_light_position[2], p_light_position[3]));
+
+    // vykreslení mapy
+    if (ge_bpass1)p_map_rendermng->render_o_pass1(glm::value_ptr(m)); // zjištění viditelnosti (octree)
+    p_map_rendermng->render_o_pass2(m); // vykreslení viditelných částí mapy
+
+    glDepthFunc(GL_LESS); checkGL();
+
+    p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
+
     p_map_rendermng->render_o_pass_s2(); // vykreslení blendů
 
     // render objektů
@@ -740,12 +755,22 @@ void Gamemng::render_frame(const glm::mat4& m)
         glm::mat4 mdl_mtrx = glm::translate(m, glm::vec3(mapobj.rbo->p_x0[1], 0.f, mapobj.rbo->p_x0[0]));
         mdl_mtrx = glm::rotate(mdl_mtrx, glm::radians(mapobj.rbo->p_ax0*57.29577951308232f), glm::vec3(0, 1, 0));
 
-        glLoadMatrixf(glm::value_ptr(mdl_mtrx));
+        p_shadermng.set(ShaderUniMat4::ModelViewMat, mdl_mtrx);
 
         if (ge_bpass1)mapobj.rendermng->render_o_pass1(glm::value_ptr(mdl_mtrx));
         mapobj.rendermng->render_o_pass_s3(); // vykreslení stínů
         mapobj.rendermng->render_o_pass2(mdl_mtrx);
     }
+
+    glm::mat4 cm_mat =
+            p_mtrx_texcm * // prvotní natočení cubemapy podle polohy slunce
+            glm::transpose(mdl_rot_mtrx); // inverze aktuální rotační matice, rotace podle aktuální polohy kamery
+    p_shadermng.set(ShaderUniMat4::TexMat, cm_mat);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, p_skycmtex); checkGL();
+    glActiveTexture(GL_TEXTURE0);
+
 
     glm::mat4 mdl_ms[4];
 
@@ -754,42 +779,26 @@ void Gamemng::render_frame(const glm::mat4& m)
     {
         mdl_ms[i] = glm::translate(m, glm::vec3(p_car2do[i].p_x0[1], 0.f, p_car2do[i].p_x0[0]));
         mdl_ms[i] = glm::rotate(mdl_ms[i], glm::radians(p_car2do[i].p_ax0*57.29577951308232f), glm::vec3(0, 1, 0));
-
-        glLoadMatrixf(glm::value_ptr(mdl_ms[i]));
-
+        p_shadermng.set(ShaderUniMat4::ModelViewMat, mdl_ms[i]);
         if (ge_bpass1)p_carrendermng[i].render_o_pass1(glm::value_ptr(mdl_ms[i])); // zjištění, zda jde auto vidět (přes 1 bounding sphere)
         p_carrendermng[i].render_o_pass_s3(); // vykreslení stínů
         p_carrendermng[i].render_o_pass2(mdl_ms[i]); // vykreslení 1. části modelu
     }
-
-    // CUBEMAP
-    // nastavení texturového prostoru pro vykreslení odrazů (cubemapa)
-    glMatrixMode(GL_TEXTURE); checkGL();
-    glm::mat4 cm_mat =
-            p_mtrx_texcm * // prvotní natočení cubemapy podle polohy slunce
-            glm::transpose(mdl_rot_mtrx); // inverze aktuální rotační matice, rotace podle aktuální polohy kamery
-    glLoadMatrixf(glm::value_ptr(cm_mat)); checkGL();
-    glMatrixMode(GL_MODELVIEW); checkGL();
-
-
-    // 2.fáze renderu aut - render skel a odrazů
     for (unsigned int i = 0; i != p_players; ++i)
     {
-        glLoadMatrixf(glm::value_ptr(mdl_ms[i]));
-        p_carrendermng[i].render_o_pass3();
+        p_carrendermng[i].render_o_pass_glassTint(mdl_ms[i]);
     }
-
-    // CUBEMAP
-    glMatrixMode(GL_TEXTURE); checkGL(); // vrácení texturového prostoru do výchozího stavu
-    /*fine*/glLoadIdentity(); checkGL();
-    glMatrixMode(GL_MODELVIEW); checkGL();
-
+    for (unsigned int i = 0; i != p_players; ++i)
+    {
+        p_carrendermng[i].render_o_pass_glassReflection(mdl_ms[i]);
+    }
 
     static const float texCoords[8] = {0, 0, 1, 0, 1, 1, 0, 1};
     // 3.fáze renderu aut - render částic
     static std::vector<float> vertexArray;
     static std::vector<float> texCoordArray;
     static std::vector<float> colorArray;
+    static std::vector<GLushort> indexArray;
     vertexArray.clear();
     texCoordArray.clear();
     colorArray.clear();
@@ -852,78 +861,57 @@ void Gamemng::render_frame(const glm::mat4& m)
             }
         }
     }
+    for (GLushort i = indexArray.size()/6; i < vertexArray.size()/12; ++i)
+    {
+        indexArray.push_back(i * 4 + 0);
+        indexArray.push_back(i * 4 + 1);
+        indexArray.push_back(i * 4 + 2);
+
+        indexArray.push_back(i * 4 + 0);
+        indexArray.push_back(i * 4 + 2);
+        indexArray.push_back(i * 4 + 3);
+    }
+
+    int indexArraySize = vertexArray.size()/12*6;
 
     if (!vertexArray.empty() && !texCoordArray.empty() && !colorArray.empty())
     {
-        glDisable(GL_LIGHTING); checkGL();
         glEnable(GL_BLEND); checkGL();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_smoketex); checkGL();
         glDepthMask(GL_FALSE); checkGL();
-        /*fine*/glLoadIdentity(); checkGL();
-        glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-        glEnableClientState(GL_COLOR_ARRAY); checkGL(); // smoke color array
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-        glVertexPointer(3, GL_FLOAT, 0, &vertexArray[0]); checkGL();
-        glColorPointer(4, GL_FLOAT, 0, &colorArray[0]); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, &texCoordArray[0]); checkGL();
-        glDrawArrays(GL_QUADS, 0, vertexArray.size() / 3); checkGL(); // smoke render
-        glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-        glDisableClientState(GL_COLOR_ARRAY); checkGL();
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+        p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1.f));
+        p_shadermng.use(ShaderId::ColorTex);
+        p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL(); // smoke color array
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vertexArray.data());
+        glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, colorArray.data());
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texCoordArray.data());
+        glDrawElements(GL_TRIANGLES, indexArraySize, GL_UNSIGNED_SHORT, indexArray.data()); // smoke render
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();
         glDepthMask(GL_TRUE); checkGL();
         glDisable(GL_BLEND); checkGL();
-        glEnable(GL_LIGHTING); checkGL();
     }
 
     // render ghost car
     if (p_isGhost && (p_ghostUpdated || p_ghostAvailable) && p_playerstate[0].lap_i_max > 0 && p_playerstate[0].lap_i_max <= p_laps) // rendering
     {
 
+
         bool useSampleCoverage = g_multisampleMode;
 
-#if defined(__MACOSX__) || defined(__amigaos4__)
-        useSampleCoverage = false;
-#endif
-
-#ifndef __MORPHOS__
         if (useSampleCoverage)
         {
-            glSampleCoverageARB(0.5, GL_FALSE); checkGL();
+            glSampleCoverage(0.5, GL_FALSE); checkGL();
             glEnable(GL_SAMPLE_COVERAGE); checkGL();
         }
         else
-#endif
         {
-            glDepthRange(0,0); checkGL();
-            glEnable(GL_ALPHA_TEST); checkGL(); // never alpha to coverage!
-
-            glMatrixMode(GL_PROJECTION); checkGL();
-            /*fine*/glLoadIdentity(); checkGL();
-                glMatrixMode(GL_MODELVIEW); checkGL();
-                /*fine*/glLoadIdentity(); checkGL();
-                glEnable(GL_TEXTURE_2D); checkGL();
-                glBindTexture(GL_TEXTURE_2D, g_ghost_tex); checkGL();
-
-                glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); checkGL();
-
-                glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-                const float vert_array[8] = {-1,-1,1,-1,1,1,-1,1};
-                const float texc_array[8] = {0,0,g_ghost_w/16.f,0,g_ghost_w/16.f,g_ghost_h/16.f,0,g_ghost_h/16.f};
-                glVertexPointer(2, GL_FLOAT, 0, vert_array); checkGL();
-                glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-                glDrawArrays(GL_QUADS, 0, 4); checkGL();
-                glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE); checkGL();
-
-            glMatrixMode(GL_PROJECTION); checkGL();
-            glLoadMatrixf(glm::value_ptr(p_proj_mtrx_active));
-            glMatrixMode(GL_MODELVIEW); checkGL();
-            glDisable(GL_ALPHA_TEST); checkGL(); // never alpha to coverage!
-            glDepthRange(0, 1); checkGL();
+            p_shadermng.set(ShaderUniInt::Halftone, (GLint)1);
         }
 
         float framef = p_ghost_time*10.0;
@@ -955,34 +943,22 @@ void Gamemng::render_frame(const glm::mat4& m)
             glm::mat4 mdl_mtrx = glm::translate(m, glm::vec3(ghostY, 0.f, ghostX));
             mdl_mtrx = glm::rotate(mdl_mtrx, glm::radians(ghostA*57.29577951308232f), glm::vec3(0.f, 1.f, 0.f));
 
-            glLoadMatrixf(glm::value_ptr(mdl_mtrx));
+            p_shadermng.set(ShaderUniMat4::ModelViewMat, mdl_mtrx);
 
             if (ge_bpass1) p_ghostrendermng[p_ghostUpdated].render_o_pass1(glm::value_ptr(mdl_mtrx)); // zjištění, zda jde auto vidět (přes 1 bounding sphere)
             p_ghostrendermng[p_ghostUpdated].render_o_pass_s3(); // vykreslení stínů
             p_ghostrendermng[p_ghostUpdated].render_o_pass2(mdl_mtrx); // vykreslení 1. části modelu
-
-            // nastavení texturového prostoru pro vykreslení odrazů (cubemapa)
-            glMatrixMode(GL_TEXTURE); checkGL();
-            glm::mat4 cm_mat = p_mtrx_texcm * glm::transpose(mdl_rot_mtrx);
-            glLoadMatrixf(glm::value_ptr(cm_mat)); checkGL();
-            glMatrixMode(GL_MODELVIEW); checkGL();
-
-            // 2.fáze renderu aut - render skel a odrazů
-            glLoadMatrixf(glm::value_ptr(mdl_mtrx));
-
-            p_ghostrendermng[p_ghostUpdated].render_o_pass3();
-
-            glMatrixMode(GL_TEXTURE); checkGL(); // vrácení texturového prostoru do výchozího stavu
-            /*fine*/glLoadIdentity(); checkGL();
-            glMatrixMode(GL_MODELVIEW); checkGL();
+            p_ghostrendermng[p_ghostUpdated].render_o_pass_glassTint(mdl_mtrx);
+            p_ghostrendermng[p_ghostUpdated].render_o_pass_glassReflection(mdl_mtrx);
         }
-
-#ifndef __MORPHOS__
         if (useSampleCoverage)
         {
             glDisable(GL_SAMPLE_COVERAGE); checkGL();
         }
-#endif
+        else
+        {
+            p_shadermng.set(ShaderUniInt::Halftone, (GLint)0);
+        }
     }
 }
 
@@ -1063,10 +1039,7 @@ void Gamemng::restart()
         p_car2do[i].p_x0[0] = p_car2do[i].p_x[0];
 
         p_carcam[i].p_ang = p_carcam[i].p_ang0 = startang;
-
-
     }
-
     for (std::vector<Mapobj>::iterator it = p_mapobjs.begin(); it != p_mapobjs.end(); ++it)
     {
         it->rbo->p_x[0] = it->pos[0];
@@ -1076,7 +1049,6 @@ void Gamemng::restart()
         it->rbo->p_v[0] = it->rbo->p_v[1] = 0.f;
         it->rbo->p_av = 0.f;
     }
-
     for (int i = 0; i != 4; ++i)
     {
         p_playerstate[i].lap_i = 0;
@@ -1095,27 +1067,22 @@ void Gamemng::restart()
         p_playerstate[i].position_time = 0.f;
         p_playerstate[i].state_position = 0;
     }
-
     p_ghost_time = 0.f;
-
     for (int i = 0; i != 4; ++i)
     {
         p_particles[i].clear();
     }
-
     glClear (GL_COLOR_BUFFER_BIT); checkGL();
     SDL_GL_SwapWindow(gameWindow);
     glClear (GL_COLOR_BUFFER_BIT); checkGL();
     SDL_GL_SwapWindow(gameWindow);
     glClear (GL_COLOR_BUFFER_BIT); checkGL();
-
 }
 
 void Gamemng::set_proj_mtrx()
 {
     p_proj_mtrx0 = glm::frustum(-p_frust[0]*p_frust[2], p_frust[0]*p_frust[2],
             -p_frust[1]*p_frust[2], p_frust[1]*p_frust[2], p_frust[2], p_frust[3]);
-
     switch (p_players)
     {
     case 1:
@@ -1139,4 +1106,3 @@ void Gamemng::set_proj_mtrx()
                 -p_frust[1]*p_frust[2]*3, p_frust[1]*p_frust[2], p_frust[2], p_frust[3]);
     }
 }
-

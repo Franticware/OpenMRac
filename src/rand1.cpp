@@ -10,6 +10,7 @@ int rand1()
 void srand0()
 {
     srand(0);
+    //srand(2);
 }
 
 void srand1()

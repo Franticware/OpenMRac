@@ -11,17 +11,13 @@
 #include "gltext.h"
 #include "soundmng.h"
 #include "settings_dat.h"
-//#include "mainmenu.h"
 #include "ghost.h"
 #include "particles.h"
+#include "shadermng.h"
 
 #include <vector>
 #include <memory>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
 
 #define STRING_OPTIONS_TITLE   "Options\n\n\n\n"
 #define STRING_OPTIONS_LABELS  "\n\nSound Volume:\nView Distance:"
@@ -233,6 +229,7 @@ public:
         {
             p_carmodel[i] = 0;
             p_carmatmng[i] = 0;
+            p_ghost_step[i] = 0;
         }
     }
     ~Gamemng()
@@ -267,7 +264,11 @@ public:
 //////////////////////////////////////////////////////
     Playerkeys p_playerkeys[4];
 
+    ShaderMng p_shadermng;
     Skysph p_skysph;
+
+    GLuint p_whitetex;
+
     GLuint p_smoketex; // přenosná textura - z init, zrušit v destruktoru
 
     GLuint p_skycmtex; // cube map or sphere map
@@ -307,7 +308,6 @@ public:
     float p_light_position[4];
     float p_light_ambient[4];
     float p_light_diffuse[4];
-    //float p_light_ambdiff[4];
 
     GLint p_viewport[2];
     GLint p_scissor[2];
@@ -390,7 +390,6 @@ public:
 
     Results p_results;
 
-    //unsigned int* p_keysym;
     Keytest p_keytest[4];
 
     Sound_game_static p_sound_game_static;

@@ -1,4 +1,3 @@
-#include "platform.h"
 #include "mainmenu.h"
 #include "load_texture.h"
 #include "glhelpers1.h"
@@ -123,9 +122,7 @@ void MainMenu::init(Gamemng* gamemng, Settings* settings)
     p_text_best_laps.puts(0, "Best Laps");
 
     p_text_best_laps_header.init(60, 1, 2.f, -1, -1, &(p_gamemng->p_glfont), font_color_hi);
-    //p_text_best_laps_header.set_pos(19.5f, 9.5f);
     p_text_best_laps_header.set_pos(19.5f, 9.5f);
-    //p_text_best_laps_header.puts(0, "Track            Car     Lap Time");
     p_text_best_laps_header.puts(0, "Track                     Car           Lap Time");
 
     p_text_best_laps_tracks.init(40, 8, 2.f, -1, -1, &(p_gamemng->p_glfont), font_color_hi);
@@ -207,8 +204,6 @@ void MainMenu::init(Gamemng* gamemng, Settings* settings)
         "Right\n"
         );
 
-    //p_text_controls2.puts(2, "a");
-
     p_text_controls_status.init(256, 3, 0.8f, 0, 0, &(p_gamemng->p_glfont), font_color);
     p_text_controls_status.set_pos(0.f, -13.f);
 
@@ -237,7 +232,6 @@ void MainMenu::init(Gamemng* gamemng, Settings* settings)
     p_text_opt3.set_pos(0.f, 0.f);
     p_text_opt3.puts(0, STRING_OPTIONS_ARROWS);
 
-//#define leftRightSel     "<                    >\n"
 #define leftRightSel     "<                             >\n"
 
     p_text_carsel.init(40, 10, 2.f, 0, 0, &(p_gamemng->p_glfont), font_color);
@@ -441,14 +435,11 @@ void MainMenu::game()
 
 void MainMenu::render() // vykreslení menu
 {
-    /*fine*/glLoadIdentity(); checkGL();
+    p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
     p_gamemng->unset_scissor();
-
-    glDisable(GL_LIGHTING); checkGL();
     glDisable(GL_BLEND); checkGL();
     glDisable(GL_DEPTH_TEST); checkGL();
-    glEnable(GL_TEXTURE_2D); checkGL();
-    glColor4f(1, 1, 1, 1); checkGL();
+    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
 
     if (!(p_state >= STATE_CONTROLS_BEGIN && p_state < STATE_CONTROLS_END) &&
         p_state != STATE_CONTROLS_TEST_KEYBOARD_SCREEN)
@@ -464,123 +455,153 @@ void MainMenu::render() // vykreslení menu
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
 
     // tady kreslit hlavní menu
-
     if (p_state >= STATE_RACE && p_state <= STATE_Q)
     {
+        p_gamemng->p_shadermng.use(ShaderId::Tex);
+
         glBindTexture(GL_TEXTURE_2D, p_logo_textura); checkGL();
         static const float seda = 1.f;
-        glColor4f(seda, seda, seda, 1.0); checkGL(); // vykreslení obrázku loga
-        glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+        // vykreslení obrázku loga
+        glVertexAttrib4f((GLuint)ShaderAttrib::Color, seda, seda, seda,1); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         float y_coord = 2.8 - 0.2;
-        static const float vert_array[12] = {-4, -2+y_coord, -10,  4, -2+y_coord, -10,  4,  2+y_coord, -10, -4,  2+y_coord, -10};
+        static const float vert_array[12] = {-4, -2+y_coord, -10,
+                                             4, -2+y_coord, -10,
+                                             -4,  2+y_coord, -10,
+                                             4,  2+y_coord, -10,
+                                            };
         float texc_size = 1;
-        static const float texc_array[8] = {0, 0,       texc_size, 0,       texc_size,  texc_size,      0,  texc_size     };
-        glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
-        glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+        static const float texc_array[8] = {0, 0,
+                                            texc_size, 0,
+                                            0,  texc_size,
+                                            texc_size,  texc_size,
+                                           };
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array); checkGL();
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
 
-        glColor4f(1, 1, 1, 1); checkGL();
-        p_text_main.render_c();
+        glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
+        p_text_main.render_c(&p_gamemng->p_shadermng);
 
-        p_text_main_ver.render_c();
-        p_text_main_www.render_c();
+        p_text_main_ver.render_c(&p_gamemng->p_shadermng);
+        p_text_main_www.render_c(&p_gamemng->p_shadermng);
     }
     else if (p_state >= STATE_R_NUM && p_state <= STATE_R_GO)
     {
-        p_text_race_go.render_c();
-        p_text_race_n.render_c();
-        p_text_race_car.render_c();
-        p_text_race_car2.render_c();
-        p_text_race_track0.render_c();
-        p_text_race_track1.render_c();
-        p_text_race_track24.render_c();
-        p_text_race_track35.render_c();
+        p_text_race_go.render_c(&p_gamemng->p_shadermng);
+        p_text_race_n.render_c(&p_gamemng->p_shadermng);
+        p_text_race_car.render_c(&p_gamemng->p_shadermng);
+        p_text_race_car2.render_c(&p_gamemng->p_shadermng);
+        p_text_race_track0.render_c(&p_gamemng->p_shadermng);
+        p_text_race_track1.render_c(&p_gamemng->p_shadermng);
+        p_text_race_track24.render_c(&p_gamemng->p_shadermng);
+        p_text_race_track35.render_c(&p_gamemng->p_shadermng);
 
-        p_text_race_status.render_c();
+        p_text_race_status.render_c(&p_gamemng->p_shadermng);
     }
     else if (p_state >= STATE_CONTROLS_BEGIN && p_state < STATE_CONTROLS_END)
     {
-        p_text_controls.render_c();
-        p_text_controls0.render_c();
-        p_text_controls1.render_c();
-        p_text_controls2.render_c();
+        p_text_controls.render_c(&p_gamemng->p_shadermng);
+        p_text_controls0.render_c(&p_gamemng->p_shadermng);
+        p_text_controls1.render_c(&p_gamemng->p_shadermng);
+        p_text_controls2.render_c(&p_gamemng->p_shadermng);
 
         if (p_state >= STATE_CONTROLS_P1_UP && p_state <= STATE_CONTROLS_P4_RIGHT && p_enterMode)
         {
-            p_text_controls_status_enter.render_c();
+            p_text_controls_status_enter.render_c(&p_gamemng->p_shadermng);
         }
         else
         {
-            p_text_controls_status.render_c();
+            p_text_controls_status.render_c(&p_gamemng->p_shadermng);
         }
     }
     else if (p_state == STATE_CONTROLS_TEST_KEYBOARD_SCREEN)
     {
-        p_text_test_keyboard.render_c();
-        p_text_test_keyboard_description.render_c();
-        p_text_test_keyboard_status.render_c();
+        p_text_test_keyboard.render_c(&p_gamemng->p_shadermng);
+        p_text_test_keyboard_description.render_c(&p_gamemng->p_shadermng);
+        p_text_test_keyboard_status.render_c(&p_gamemng->p_shadermng);
     }
     else if (p_state == STATE_BEST_LAPS_SCREEN)
     {
-        p_text_best_laps.render_c();
-        p_text_best_laps_header.render_c();
-        p_text_best_laps_tracks.render_c();
-        p_text_best_laps_tracks_reversed_flag.render_c();
-        p_text_best_laps_cars.render_c();
-        p_text_best_laps_times.render_c();
+        p_text_best_laps.render_c(&p_gamemng->p_shadermng);
+        p_text_best_laps_header.render_c(&p_gamemng->p_shadermng);
+        p_text_best_laps_tracks.render_c(&p_gamemng->p_shadermng);
+        p_text_best_laps_tracks_reversed_flag.render_c(&p_gamemng->p_shadermng);
+        p_text_best_laps_cars.render_c(&p_gamemng->p_shadermng);
+        p_text_best_laps_times.render_c(&p_gamemng->p_shadermng);
     }
     else if (p_state >= STATE_OPTIONS_SOUNDVOL && p_state <= STATE_OPTIONS_VIEWDIST)
     {
-        p_text_opt.render_c();
-        p_text_opt2.render_c();
-        p_text_opt3.render_c();
-        glDisable(GL_TEXTURE_2D); checkGL();
+        static const GLushort quad0[6] = { 0, 1, 2, 0, 2, 3 };
+        static const GLushort quad1[6] = { 4, 5, 6, 4, 6, 7 };
+
+        p_text_opt.render_c(&p_gamemng->p_shadermng);
+        p_text_opt2.render_c(&p_gamemng->p_shadermng);
+        p_text_opt3.render_c(&p_gamemng->p_shadermng);
+
+        p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
+        p_gamemng->p_shadermng.use(ShaderId::Color);
+
         glDisable(GL_BLEND); checkGL();
-        glColor4f(1, 1, 1, 1); checkGL();
-        glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-        glVertexPointer(3, GL_FLOAT, 0, p_opt_verts); checkGL();
-        glColor3fv(p_opt_color0); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
-        glColor3fv(p_opt_color1); checkGL();
-        glDrawArrays(GL_QUADS, 4, 4); checkGL();
-        glDisableClientState(GL_VERTEX_ARRAY); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, p_opt_verts); checkGL();
+        glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color0); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad0); checkGL();
+        glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color1); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad1); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     }
     else if (p_state == STATE_CAR_SEL)
     {
-
-        /*fine*/glLoadIdentity(); checkGL();
+        p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
+        p_gamemng->p_shadermng.use(ShaderId::ColorTex);
+        p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
 
         glDisable(GL_BLEND); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_tex_sel_bnd); checkGL();
-        glColor4f(1, 1, 1, 1);  checkGL(); // vykreslení obrázku loga
-        glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+        // vykreslení obrázku loga
+        glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         float y_coord = 1.f*0.319f;
         float size = 0.5f*0.319f;
-        static const float vert_array[12] = {-16*size, -10*size+y_coord, -10,  16*size, -10*size+y_coord, -10,  16*size,  10*size+y_coord, -10, -16*size,  10*size+y_coord, -10};
-        static const float texc_array[8] = {0, 0,       1, 0,       1,  1,      0,  1     };
-        glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
-        glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+        static const float vert_array[12] = {-16*size, -10*size+y_coord, -10,
+                                             16*size, -10*size+y_coord, -10,
 
+                                             -16*size,  10*size+y_coord, -10,
+                                             16*size,  10*size+y_coord, -10,
+                                            };
+        static const float texc_array[8] = {0, 0,
+                                            1, 0,
+
+                                            0,  1,
+                                            1,  1,
+                                           };
+
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array); checkGL();
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         glEnable(GL_BLEND); checkGL();
 
-        p_text_carsel.render_c();
-        glColor3f(1, 1, 1); checkGL();
+        p_text_carsel.render_c(&p_gamemng->p_shadermng);
+        glVertexAttrib3f((GLuint)ShaderAttrib::Color, 1,1,1); checkGL();
 
         glEnable(GL_BLEND); checkGL();
 
         {
-            glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-            glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-            float size = 0.319f;
-            float yposun0 = (1+6)*0.319f;
-            float yposun1 = (1-6)*0.319f;
+            glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+            glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+
+            float size = 1;
+            float yposun0 = (1+6);
+            float yposun1 = (1-6);
+
             static const float vert_array[24] = {-1*size, -0.506316f*size+yposun0, -10, 1*size, -0.546316f*size+yposun0, -10, 1*size, 0.546316f*size+yposun0, -10, -1*size, 0.506316f*size+yposun0, -10,
                 -1*size, -0.506316f*size+yposun1, -10, 1*size, -0.546316f*size+yposun1, -10, 1*size, 0.546316f*size+yposun1, -10, -1*size, 0.506316f*size+yposun1, -10
                 };
@@ -596,38 +617,55 @@ void MainMenu::render() // vykreslení menu
                 0.875, 0.28125,
 
                 };
-            glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-            glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-            glDrawArrays(GL_QUADS, 0, 8); checkGL();
-            glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+
+            static const GLushort ind_array[12] = {
+                0,1,2, 0,2,3,
+                4,5,6, 4,6,7
+            };
+
+            glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
+            glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array); checkGL();
+            glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, ind_array); checkGL();
+
+            glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+            glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         }
 
     }
     else if (p_state == STATE_TRACK_SEL)
     {
-
-        /*fine*/glLoadIdentity(); checkGL();
+        p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
+        p_gamemng->p_shadermng.use(ShaderId::ColorTex);
+        p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
 
         glDisable(GL_BLEND); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_tex_sel_bnd); checkGL();
-        glColor4f(1, 1, 1, 1);  checkGL(); // vykreslení obrázku loga
-        glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+        glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         float y_coord = 1.f*0.319f;
         float size = 0.5f*0.319f;
-        static const float vert_array[12] = {-16*size, -10*size+y_coord, -10,  16*size, -10*size+y_coord, -10,  16*size,  10*size+y_coord, -10, -16*size,  10*size+y_coord, -10};
-        static const float texc_array[8] = {0, 0,       1, 0,       1,  1,      0,  1     };
-        glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
-        glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+        static const float vert_array[12] = {-16*size, -10*size+y_coord, -10,
+                                             16*size, -10*size+y_coord, -10,
+                                             -16*size,  10*size+y_coord, -10,
+                                             16*size,  10*size+y_coord, -10,
+                                            };
+        static const float texc_array[8] = {0, 0,
+                                            1, 0,
+                                            0,  1,
+                                            1,  1,
+                                           };
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array);
+
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
 
         glEnable(GL_BLEND); checkGL();
 
-        p_text_carsel.render_c();
-        glColor3f(1, 1, 1); checkGL();
+        p_text_carsel.render_c(&p_gamemng->p_shadermng);
+        glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
     }
     glDisable(GL_BLEND); checkGL();
 }
