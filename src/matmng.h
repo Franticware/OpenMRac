@@ -1,19 +1,12 @@
 #ifndef HLIDAC_MATMNG_H
 #define HLIDAC_MATMNG_H
 
-#include "platform.h"
-
+#include "3dm.h"
+#include "octopus.h"
+#include "pict2.h"
+#include "glm1.h"
 #include "gl1.h"
 #include <cstring>
-
-#ifndef SETKEYS
-    #include "3dm.h"
-    #include "octopus.h"
-#endif
-#include "glhelpers1.h"
-#include "pict2.h"
-
-#include "glm1.h"
 
 class Transf {
 public:
@@ -65,7 +58,6 @@ public:
     float color[4];
 };
 
-#ifndef SETKEYS
 class Matmng {
 public:
     void load(const T3dm* t3dm, const float* ambcolor = 0, const float* diffcolor = 0, const float* lightpos = 0);
@@ -108,6 +100,5 @@ public:
     GLuint p_skycmtex;
     const Transf* p_transf;
 };
-#endif
 
 #endif

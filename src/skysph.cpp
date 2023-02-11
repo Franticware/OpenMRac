@@ -1,5 +1,3 @@
-#include "platform.h"
-#include "glhelpers1.h"
 #include "skysph.h"
 #include "gamemng.h"
 #include <cmath>
@@ -84,27 +82,4 @@ void Skysph::render()
 
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-}
-
-inline void xprod3(float* n, const float* u, const float* v)
-{
-    n[0] = u[1]*v[2]-u[2]*v[1];
-    n[1] = u[2]*v[0]-u[0]*v[2];
-    n[2] = u[0]*v[1]-u[1]*v[0];
-}
-
-inline void norm3(float* f)
-{
-    float len = sqrtf(f[0]*f[0]+f[1]*f[1]+f[2]*f[2]);
-    f[0] /= len;
-    f[1] /= len;
-    f[2] /= len;
-}
-
-inline void safev3(float* f, const float* alt)
-{
-    if (!isfinite1(f[0]) || !isfinite1(f[1]) || !isfinite1(f[2]))
-    {
-        memcpy(f, alt, sizeof(float)*3);
-    }
 }

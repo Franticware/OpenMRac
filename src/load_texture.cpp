@@ -1,6 +1,4 @@
 #include "load_texture.h"
-#include "glext1.h"
-#include "glhelpers1.h"
 #include "bits.h"
 
 unsigned int g_texture_memory_usage = 0;
@@ -69,7 +67,6 @@ GLuint load_texture(const Pict2& pict, bool bmipmap)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, textureWrap); checkGL();
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrap); checkGL();
         }
-
         if (g_textureFiltering == 2)
         {
             #ifndef DISABLE_ANISOTROPY
@@ -79,7 +76,6 @@ GLuint load_texture(const Pict2& pict, bool bmipmap)
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, maxAniso); checkGL();
             #endif
         }
-
         glBindTexture(GL_TEXTURE_2D, 0); checkGL();
         return textura;
     }

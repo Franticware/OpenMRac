@@ -2,8 +2,7 @@
 
 #include <vector>
 #include <cstdio>
-
-#include "glhelpers1.h"
+#include <string>
 
 ShaderMng::ShaderMng()
 {
@@ -62,8 +61,6 @@ void main()
 
     const char* fShaderTexSrc =
 R"SRC(
-precision mediump float;
-
 uniform sampler2D uTex0;
 
 varying vec2 vTex;
@@ -97,8 +94,6 @@ void main()
 
     const char* fShaderTexColorSrc =
 R"SRC(
-precision mediump float;
-
 uniform int uAlphaDiscard;
 uniform int uHalftone;
 
@@ -139,8 +134,6 @@ void main()
 
     const char* fShaderColorSrc =
 R"SRC(
-precision mediump float;
-
 varying vec4 vColor;
 
 void main()
@@ -174,8 +167,6 @@ void main()
 
     const char* fShaderTexLightSrc =
 R"SRC(
-precision mediump float;
-
 uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
@@ -243,8 +234,6 @@ void main()
 
     const char* fShaderCarTopSrc =
 R"SRC(
-precision mediump float;
-
 uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
@@ -311,8 +300,6 @@ void main()
 
     const char* fShaderCarSrc =
 R"SRC(
-precision mediump float;
-
 uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
@@ -362,8 +349,6 @@ void main()
 
     const char* fShaderGlassTintSrc =
 R"SRC(
-precision mediump float;
-
 uniform int uHalftone;
 
 uniform sampler2D uTex0;
@@ -413,8 +398,6 @@ void main()
 
     const char* fShaderGlassReflectionSrc =
 R"SRC(
-precision mediump float;
-
 uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
@@ -445,8 +428,8 @@ void main()
 
     for (int i = 0; i != (int)ShaderId::Count; ++i)
     {
-        const char* vSrc = nullptr;
-        const char* fSrc = nullptr;
+        std::string vSrc;
+        std::string fSrc;
 
         shaders[i].program = 0;
 
@@ -489,8 +472,15 @@ void main()
             break;
         }
 
-        if (vSrc && fSrc)
+        if (!vSrc.empty() && !fSrc.empty())
         {
+#if USE_GL_ES2
+            fSrc = "precision mediump float;\n"+fSrc;
+#else
+            static const char* version120line = "#version 120\n";
+            vSrc = version120line+vSrc;
+            fSrc = version120line+fSrc;
+#endif
             GLuint programObject = glCreateProgram();
 
             glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Pos, "aPos");
@@ -498,8 +488,8 @@ void main()
             glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Tex, "aTex");
             glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Normal, "aNormal");
 
-            GLuint vId = loadShader(GL_VERTEX_SHADER, vSrc);
-            GLuint fId = loadShader(GL_FRAGMENT_SHADER, fSrc);
+            GLuint vId = loadShader(GL_VERTEX_SHADER, vSrc.c_str());
+            GLuint fId = loadShader(GL_FRAGMENT_SHADER, fSrc.c_str());
 
             if (programObject != 0)
             {

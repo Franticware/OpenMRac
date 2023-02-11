@@ -78,8 +78,8 @@ struct Gamecar {
     ALbuffer p_engine0_sample;
     ALbuffer p_engine1_sample;
 
-    float exhaust_position[3];
-    float exhaust_direction[3];
+    glm::vec3 exhaust_position;
+    glm::vec3 exhaust_direction;
 
     char name[256];
 };

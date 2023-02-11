@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "gbuff_in.h"
 
 Gbuff_in gbuff_in;
@@ -96,7 +94,7 @@ bool Gbuff_in::f_open(const char* fname, const char* mode) /* "r" nebo "rb" */
 {
     if (p_bactive) // pokud je soubor otevřený, neotevře se jiný a vrátí se false (chyba)
         return false;
-	// parametr mode je "r"
+    // parametr mode je "r"
     if (strlen(mode) == 1 && *mode == 'r')
     {
         if (p_bdat)
@@ -113,7 +111,7 @@ bool Gbuff_in::f_open(const char* fname, const char* mode) /* "r" nebo "rb" */
         p_bbin = false;
         return true;
     }
-	// parametr mode je "rb"
+    // parametr mode je "rb"
     else if (strlen(mode) == 2 && *mode == 'r' && mode[1] == 'b')
     {
         if (p_bdat) // otevření z paku

@@ -1,5 +1,3 @@
-#include "platform.h"
-#include "glhelpers1.h"
 #include "octopus.h"
 
 #include <algorithm>

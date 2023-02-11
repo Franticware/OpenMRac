@@ -4,9 +4,9 @@
 #include "cstring1.h"
 #include <cstdio>
 #include <algorithm>
-#include "glext1.h"
 #include "fopendir.h"
 #include "appdefs.h"
+#include "gl1.h"
 
     // name,     default, min, max, comment
 const Sett_entry_base entry_base[] = {

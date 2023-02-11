@@ -1,8 +1,6 @@
 #ifndef HLIDAC_GLTEXT_H
 #define HLIDAC_GLTEXT_H
 
-#include "platform.h"
-
 #include <cstring>
 #include "gl1.h"
 

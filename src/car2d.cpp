@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "car2d.h"
 #include <algorithm>
 #include <cmath>

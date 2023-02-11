@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "gamemng.h"
 #include "cstring1.h"
 #include "rand1.h"
@@ -8,7 +6,6 @@
 #include "load_texture.h"
 #include <cmath>
 #include <algorithm>
-#include "glhelpers1.h"
 
 #include "soundmng.h"
 

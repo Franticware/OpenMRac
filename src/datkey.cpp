@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "datkey.h"
 
 #include <SDL2/SDL_endian.h>

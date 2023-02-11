@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "gamemng.h"
 #include "cstring1.h"
 #include "rand1.h"

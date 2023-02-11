@@ -1,10 +1,8 @@
-#include "platform.h"
 #include "load_texture.h"
 #include "gltext.h"
 #include "pict2.h"
 #include "gbuff_in.h"
 #include "matmng.h"
-#include "glhelpers1.h"
 #include <algorithm>
 #include "shadermng.h"
 

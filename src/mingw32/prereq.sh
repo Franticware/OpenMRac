@@ -2,6 +2,15 @@
 
 cd ..
 
+rm -Rf glee
+git clone https://github.com/Franticware/glee
+cd glee
+cmake -DCMAKE_TOOLCHAIN_FILE="../mingw32/mingw32-toolchain.cmake" \
+-S. -B. \
+-DCMAKE_BUILD_TYPE:STRING="MinSizeRel"
+make
+cd ..
+
 SDL2VER=2.26.1
 rm -Rf SDL2
 rm -f SDL2-devel-$SDL2VER-mingw.tar.gz SDL2.dll

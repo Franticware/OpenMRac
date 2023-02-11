@@ -1,6 +1,5 @@
 #include "mainmenu.h"
 #include "load_texture.h"
-#include "glhelpers1.h"
 #include "gbuff_in.h"
 #include "rand1.h"
 #include "appdefs.h"

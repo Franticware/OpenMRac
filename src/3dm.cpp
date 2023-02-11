@@ -1,7 +1,7 @@
 #include "3dm.h"
 #include "gbuff_in.h"
 #include "cstring1.h"
-#include "glhelpers1.h"
+#include "glm1.h"
 
 #include <cstdio>
 #include <cstring>
@@ -74,6 +74,15 @@ void T3dm::scale(float aspect)
             p_v[i * 8 + j] *= aspect;
         }
     }
+}
+
+inline void T3dm_normalize(float vect[3])
+{
+    glm::vec3 v(vect[0], vect[1], vect[2]);
+    v = glm::normalize(v);
+    vect[0] = v[0];
+    vect[1] = v[1];
+    vect[2] = v[2];
 }
 
 void T3dm::load(const char* fname, const char** o_names)
@@ -323,6 +332,6 @@ void T3dm::load(const char* fname, const char** o_names)
 
     for (unsigned int i = 0; i != vertexnum; ++i) // normalizace normál
     {
-        normalize(p_v.data() + i * 8 + 3);
+        T3dm_normalize(p_v.data() + i * 8 + 3);
     }
 }

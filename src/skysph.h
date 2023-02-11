@@ -1,11 +1,8 @@
 #ifndef HLIDAC_SKYSPH_H
 #define HLIDAC_SKYSPH_H
 
-#include "platform.h"
-
 #include "pict2.h"
 #include "gl1.h"
-#include "glhelpers1.h"
 
 #include <cstdint>
 #include <vector>

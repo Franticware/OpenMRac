@@ -26,7 +26,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
     image.version = PNG_IMAGE_VERSION;
     if (bfile)
     {
-        if (!png_image_begin_read_from_file(&image, (char*)fname_data)) {
+        if (!png_image_begin_read_from_file(&image, (const char*)fname_data)) {
             return 0;
         }
     }
@@ -36,17 +36,13 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
             return 0;
         }
     }
-    image.format = PNG_FORMAT_BGRA;
+    image.format = PNG_FORMAT_RGBA;
     create(image.width, image.height, 0);
     // a negative stride indicates that the bottom-most row is first in the buffer
     // (as expected by openGL)
     if (!png_image_finish_read(&image, NULL, p_px.data(), -image.width*4, NULL)) {
         png_image_free(&image);
         return 0;
-    }
-    for (uint32_t i = 0; i != image.width * image.height; ++i)
-    {
-        std::swap(p_px[i * 4 + 0], p_px[i * 4 + 2]);
     }
     return 1;
 }

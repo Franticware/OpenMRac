@@ -1,4 +1,3 @@
-#include "platform.h"
 #include "appdefs.h"
 
 #include <cstdio> // ve windows výstup na konzoli funguje až po zavolání ActivateConsole
@@ -20,14 +19,8 @@
 
 #include "gltext.h"
 
-#include "glext1.h"
-
-#include "octopus.h"
-
-#include "skysph.h"
-
 #define NO_CAMERA
-#undef NO_CAMERA
+//#undef NO_CAMERA
 
 //#define TESTING_SLOWDOWN 1
 
@@ -36,30 +29,13 @@
 #endif
 
 #include "gameaux.h"
-#include "pict2.h"
-
-#include "matmng.h"
-
-#include "datkey.h"
-
-#include "cstring1.h"
-
 #include "gamemng.h"
-
 #include "rand1.h"
-
 #include "gbuff_in.h"
-
-#include "load_texture.h"
-
 #include "settings_dat.h"
-
 #include "controls.h"
-
 #include "mainmenu.h"
-
 #include "settingsdialog.h"
-
 #include "fopendir.h"
 
 #ifdef __MACOSX__
@@ -363,10 +339,6 @@ int my_main (int argc, char** argv)
     //fprintf(stderr, "max texture size %f\n", textureSize);
     //fflush(stderr);
 
-#if !USE_VSYNC
-    bool limitFramerate = settings.get("vsync");
-#endif
-
     if (gameWindow)
     {
         SDL_SetWindowTitle(gameWindow, "OpenMRac " OPENMRAC_VERSION);
@@ -570,14 +542,6 @@ int my_main (int argc, char** argv)
 
     while (!done)
     {
-
-#if !USE_VSYNC
-        Uint32 startFrameTime = 0;
-        if (limitFramerate)
-        {
-            startFrameTime = SDL_GetTicks();
-        }
-#endif
         // message processing loop
         SDL_Event event;
         memset(&event, 0, sizeof(SDL_Event));
@@ -927,19 +891,6 @@ int my_main (int argc, char** argv)
         {
             SDL_Delay(10);
         }
-#if !USE_VSYNC
-        else if (limitFramerate)
-        {
-            const Uint32 minFrameTime = 8;
-            Uint32 endFrameTime = SDL_GetTicks();
-            Uint32 frameTime = endFrameTime - startFrameTime; // when the timer overflows, frameTime gets very big, then it is not less then minimum frame time and framerate limiting is skipped; fortunately this happens once in ~49 days ;-)
-            if (frameTime < minFrameTime)
-            {
-                Uint32 frameDelay = minFrameTime - frameTime;
-                SDL_Delay(frameDelay);
-            }
-        }
-#endif
     } // end main loop
 
     // Zapiseme nastaveni
@@ -982,9 +933,20 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
 {
     // Request OpenGL context
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+
+#if USE_GL_ES2
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#elif USE_GL_COMPAT
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+#elif USE_GL_CORE3
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else
+    #error "USE_GL_... not set"
+#endif
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -1018,6 +980,7 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
 
     if (!gameWindow)
     {
+        fprintf(stderr, "SDL window not created: %s\n", SDL_GetError()); fflush(stdout);
         SDL_Quit();
         return 1;
     }

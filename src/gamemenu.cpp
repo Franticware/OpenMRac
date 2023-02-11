@@ -1,7 +1,5 @@
-#include "platform.h"
 #include "gamemng.h"
 #include "mainmenu.h"
-#include "glhelpers1.h"
 
 #include <SDL2/SDL.h>
 

@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "rbsolver.h"
 #include <algorithm>
 

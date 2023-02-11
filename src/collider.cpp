@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "collider.h"
 #include <cstdlib>
 

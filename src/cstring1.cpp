@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include <cstring>
 
 bool isSpace(int c)

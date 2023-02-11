@@ -1,6 +1,6 @@
 #include "particles.h"
 #include "rbsolver.h"
-#include "glhelpers1.h"
+#include "glm1.h"
 
 #include <algorithm>
 
@@ -14,8 +14,8 @@ bool Particle::step(float deltaT)
     }
     float deccelerationSize = 1.f;
 
-    float decceleration[3] = {velocity[0], velocity[1], velocity[2]};
-    normalize(decceleration);
+    glm::vec3 decceleration(velocity[0], velocity[1], velocity[2]);
+    glm::normalize(decceleration);
     for (int i = 0; i != 3; ++i)
     {
         decceleration[i] *= deccelerationSize * deltaT;

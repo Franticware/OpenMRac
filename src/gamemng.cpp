@@ -1,7 +1,3 @@
-#include "platform.h"
-
-#include "glext1.h"
-#include "glhelpers1.h"
 #include "gamemng.h"
 #include "cstring1.h"
 #include "rand1.h"
@@ -426,10 +422,10 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
                 gamecar.name[0] = gamecar.name[255] = 0;
                 sscanf(buff, "%255s %255s %255s %255s %f %f %f %f %f %f %f %255s", gamecar.filename, gamecar.filename_cmo,
                     gamecar.fname_sample_engine0, gamecar.fname_sample_engine1, &gamecar.engine1_pitch,
-                    gamecar.exhaust_position, gamecar.exhaust_position + 1, gamecar.exhaust_position + 2,
-                    gamecar.exhaust_direction, gamecar.exhaust_direction + 1, gamecar.exhaust_direction + 2,
+                    &gamecar.exhaust_position[0], &gamecar.exhaust_position[1], &gamecar.exhaust_position[2],
+                    &gamecar.exhaust_direction[0], &gamecar.exhaust_direction[1], &gamecar.exhaust_direction[2],
                     gamecar.name);
-                normalize(gamecar.exhaust_direction);
+                glm::normalize(gamecar.exhaust_direction);
                 for (unsigned int i = 0; i < strlen(gamecar.name); ++i)
                 {
                     if (gamecar.name[i] == '_')

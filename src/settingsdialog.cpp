@@ -1,6 +1,5 @@
 #include "settingsdialog.h"
-#include "glext1.h"
-#include "platform.h"
+#include "gl1.h"
 
 SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, ScreenMode currentScreenMode, ScreenMode defaultScreenMode, bool currentVsyncState,
     int currentAntialiasingMode,
@@ -94,13 +93,7 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     m_resolutionsComboIndex = m_items.size();
     m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(4), m_layout.getCellWidth(3, 1), m_layout.getCellHeight(4, 1), resolutions, currentScreenModeIndex, 20, 7));
     m_vsyncIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellX(2), m_layout.getCellY(6), m_layout.getCellWidth(2, 2), m_layout.getCellHeight(6, 1),
-#if USE_VSYNC
-        "Enable VSync"
-#else
-        "Limit Framerate"
-#endif
-        ));
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellX(2), m_layout.getCellY(6), m_layout.getCellWidth(2, 2), m_layout.getCellHeight(6, 1), "Enable VSync"));
     m_items[m_vsyncIndex].checked = currentVsyncState;
 
 

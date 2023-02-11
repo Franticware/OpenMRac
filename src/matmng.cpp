@@ -1,18 +1,9 @@
-#include "platform.h"
-
 #include "matmng.h"
 #include "cstring1.h"
-
 #include "pict2.h"
-
-#include "glhelpers1.h"
-#include "glext1.h"
-
 #include "bits.h"
-
 #include "gbuff_in.h"
 #include "load_texture.h"
-
 #include "gamemng.h"
 
 #include <algorithm>
