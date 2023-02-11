@@ -424,8 +424,6 @@ void main()
 
     // ///////////////////
 
-
-
     for (int i = 0; i != (int)ShaderId::Count; ++i)
     {
         std::string vSrc;

@@ -19,12 +19,11 @@
 
 #include "gltext.h"
 
-#define NO_CAMERA
-//#undef NO_CAMERA
-
+// for testing
+#define FREE_CAMERA 1
 //#define TESTING_SLOWDOWN 1
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
 #include "cam.h"
 #endif
 
@@ -454,7 +453,7 @@ int my_main (int argc, char** argv)
     gamemng.p_gamemenu.p_menu = &menu;
 
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
     Cam kamera;
     float pos[3] = {0,0,0};
     kamera.init(pos, 0,0,50/**0.2*/,M_PI/**0.2*/);
@@ -466,7 +465,7 @@ int my_main (int argc, char** argv)
 
     unsigned char player_bkeys[16] = {0};
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
     static const SDL_Keycode kamerakeys[CAMERA_KEY_COUNT] = {SDLK_DELETE, SDLK_PAGEDOWN, SDLK_END, SDLK_HOME, SDLK_w, SDLK_s, SDLK_a, SDLK_d, SDLK_SPACE, SDLK_c};
     unsigned char kamera_bkeys[CAMERA_KEY_COUNT] = {0};
 #endif
@@ -536,7 +535,7 @@ int my_main (int argc, char** argv)
 #endif
     bool f12pressed = false;
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
     bool b_kamera_fast = true;
 #endif
 
@@ -583,7 +582,7 @@ int my_main (int argc, char** argv)
                         gamemng.p_gamemenu.keydown(event.key.keysym.sym);
                     }
 
-                    #ifndef NO_CAMERA
+                    #if FREE_CAMERA
                     if (event.key.keysym.sym == SDLK_TAB)
                     {
                         g_freecam = !g_freecam;
@@ -608,7 +607,7 @@ int my_main (int argc, char** argv)
                         /*if ((unsigned int)(event.key.keysym.sym) == player_keys[i])
                             player_bkeys[i] = 1;*/
                     }
-#ifndef NO_CAMERA
+#if FREE_CAMERA
                     // ovládání free kamery - keydown
                     if (g_freecam)
                         for (int i = 0; i != CAMERA_KEY_COUNT; ++i)
@@ -629,7 +628,7 @@ int my_main (int argc, char** argv)
                             player_bkeys[i] = 0;
                         }
                     }
-#ifndef NO_CAMERA
+#if FREE_CAMERA
                     // ovládání free kamery - keyup
                     if (g_freecam)
                         for (int i = 0; i != CAMERA_KEY_COUNT; ++i)
@@ -784,7 +783,7 @@ int my_main (int argc, char** argv)
 
         float deltaT = getdeltaT(); // čas mezi snímky v sekundách
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
         float cameraDeltaT = deltaT;
 #endif
 
@@ -828,7 +827,7 @@ int my_main (int argc, char** argv)
                 ++frame_clr_cnt;
             }
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
             float speed = b_kamera_fast ? 1.f : 0.1f;
             float rotSpeed = b_kamera_fast ? 1.f : 0.4f;
             if (kamera_bkeys[0]) kamera.turn_l(cameraDeltaT*rotSpeed);
@@ -857,7 +856,7 @@ int my_main (int argc, char** argv)
             glm::mat4 freecam_mtrx(1);
 
             // transformace a vykreslení scény
-#ifndef NO_CAMERA
+#if FREE_CAMERA
                 if (g_freecam) freecam_mtrx = kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
 #endif
                 gamemng.frame(deltaTclamped, freecam_mtrx); // ořezání času na maximálně 1 sekundu

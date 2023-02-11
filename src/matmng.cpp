@@ -148,13 +148,7 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
     if (!isVisible())
         return;
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    if (p_matmng->p_bstatic_light)
-    {
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Color);
-        glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, p_matmng->p_vcolor.data());
-    } else {
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    }
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
     glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data());
     glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+3);
@@ -175,35 +169,23 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
         //if (material.balpha_test) setStandardAlphaTest(true);
         if (!material.blighting)
         {
-            if (p_matmng->p_bstatic_light)
-            {
-                glDisableVertexAttribArray((GLuint)ShaderAttrib::Color);
-            }
             glVertexAttrib4fv((GLuint)ShaderAttrib::Color, material.color);
             p_gamemng->p_shadermng.use(ShaderId::ColorTex);
             p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)material.balpha_test);
         }
         else
         {
-            if (p_matmng->p_bstatic_light)
+            if (material.benv_map)
             {
-                p_gamemng->p_shadermng.use(ShaderId::ColorTex);
-                p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)material.balpha_test);
+                p_gamemng->p_shadermng.use(ShaderId::Car);
             }
             else
             {
-                if (material.benv_map)
-                {
-                    p_gamemng->p_shadermng.use(ShaderId::Car);
-                }
-                else
-                {
-                    p_gamemng->p_shadermng.use(ShaderId::LightTex);
-                    p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)material.balpha_test);
-                }
+                p_gamemng->p_shadermng.use(ShaderId::LightTex);
+                p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)material.balpha_test);
             }
         }
-        if (material.bboth_side && !p_matmng->p_bstatic_light)
+        if (material.bboth_side)
         {
             glDisable(GL_CULL_FACE); checkGL();
         }
@@ -261,41 +243,13 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
                 k = l;
             }
         }
-
-        if (material.bboth_side && !p_matmng->p_bstatic_light)
+        if (material.bboth_side)
         {
             glEnable(GL_CULL_FACE); checkGL();
         }
-        if (material.bboth_side && p_matmng->p_bstatic_light)
-        {
-                glFrontFace(GL_CW); checkGL();
-                glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, p_matmng->p_vcolor_back.data());
-                for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
-                {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
-                }
-                glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, p_matmng->p_vcolor.data());
-                glFrontFace(GL_CCW); checkGL();
-        }
-
-        //if (material.balpha_test) setStandardAlphaTest(false);
-        if (!material.blighting)
-        {
-            if (p_matmng->p_bstatic_light)
-            {
-                glEnableVertexAttribArray((GLuint)ShaderAttrib::Color);
-            }
-        }
     }
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    if (p_matmng->p_bstatic_light)
-    {
-        glDisableVertexAttribArray((GLuint)ShaderAttrib::Color);
-    }
-    else
-    {
-        glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    }
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
 }
 
@@ -413,13 +367,7 @@ void Rendermng::render_o_pass_s2()
     if (p_boctocube && !b_visible)
         return;
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    if (p_matmng->p_bstatic_light)
-    {
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Color);
-        glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, p_matmng->p_vcolor.data());
-    } else {
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    }
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
     glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8,p_t3dm->p_v.data());
     glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+3);
@@ -439,24 +387,12 @@ void Rendermng::render_o_pass_s2()
         {
             p_gamemng->p_shadermng.use(ShaderId::ColorTex);
             p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
-
-            if (p_matmng->p_bstatic_light)
-            {
-                glDisableVertexAttribArray((GLuint)ShaderAttrib::Color);
-            }
             glVertexAttrib4fv((GLuint)ShaderAttrib::Color, material.color); checkGL();
         }
         else
         {
             p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
-            if (p_matmng->p_bstatic_light)
-            {
-                p_gamemng->p_shadermng.use(ShaderId::ColorTex);
-            }
-            else
-            {
-                p_gamemng->p_shadermng.use(ShaderId::LightTex);
-            }
+            p_gamemng->p_shadermng.use(ShaderId::LightTex);
         }
 
         // TADY JE TO GRÓ
@@ -470,28 +406,11 @@ void Rendermng::render_o_pass_s2()
                 }
             }
         }
-
-        if (!material.blighting)
-        {
-            if (p_matmng->p_bstatic_light)
-            {
-                glEnableVertexAttribArray((GLuint)ShaderAttrib::Color);
-            }
-        }
     }
     glDisable(GL_BLEND); checkGL();
-
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    if (p_matmng->p_bstatic_light)
-    {
-        glDisableVertexAttribArray((GLuint)ShaderAttrib::Color);
-    }
-    else
-    {
-        glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    }
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-
 }
 
 void Mat::default_mat()
@@ -587,7 +506,7 @@ inline float minfloat(float f1, float f2)
     return (f1 < f2) ? f1 : f2;
 }
 
-void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolor, const float* lightpos)
+void Matmng::load(const T3dm* t3dm)
 {
     p_t3dm = t3dm;
     //p_m_sz = p_t3dm->p_m.size();
@@ -602,29 +521,6 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
         } else {
             p_mat[i].load("");
         }
-    }
-    if (diffcolor && ambcolor && lightpos) // je zadáno světlo pro výpočet osvětlení
-    {
-        p_bstatic_light = true;
-        p_vcolor.clear(); p_vcolor.resize(p_t3dm->p_v.size()/2);
-        p_vcolor_back.clear(); p_vcolor_back.resize(p_t3dm->p_v.size()/2);
-        for (unsigned int i = 0; i != p_t3dm->p_v.size()/8; ++i)
-        {
-            float nl = lightpos[0]*p_t3dm->p_v[i*8+3]+lightpos[1]*p_t3dm->p_v[i*8+4]+lightpos[2]*p_t3dm->p_v[i*8+5];
-            for (unsigned int j = 0; j != 3; ++j)
-            {
-                p_vcolor[i*4+j] = minfloat(maxfloat(ambcolor[j]+maxfloat(diffcolor[j]*nl, 0.f), 0.f), 1.f);
-            }
-            p_vcolor[i*4+3] = 1.f;
-            for (unsigned int j = 0; j != 3; ++j)
-            {
-                p_vcolor_back[i*4+j] = minfloat(maxfloat(ambcolor[j]+maxfloat(diffcolor[j]*(-nl), 0.f), 0.f), 1.f);
-            }
-            p_vcolor_back[i*4+3] = 1.f;
-        }
-        //I=c_a I_a +c_d I_d (NL) // +c_s I_s (VR)^n // specular u statického osvětlení nebude
-    } else {
-        p_bstatic_light = false;
     }
     // načíst textury
     for (unsigned int i = 0; i != p_mat.size(); ++i)

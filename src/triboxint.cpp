@@ -1,5 +1,3 @@
-#include "rbsolver.h"
-
 float det3(const float c0[3], const float c1[3], const float c2[3])
 {
     return c0[0]*c1[1]*c2[2]+c0[1]*c1[2]*c2[0]+c0[2]*c1[0]*c2[1]

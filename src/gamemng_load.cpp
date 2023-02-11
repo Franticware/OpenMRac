@@ -1,6 +1,4 @@
 #include "gamemng.h"
-#include "cstring1.h"
-#include "rand1.h"
 #include "gbuff_in.h"
 #include "pict2.h"
 #include <cmath>
@@ -87,7 +85,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     p_light_position[2] = cosf(gamemap.light_ah*0.0174532925199433f)*cosf(gamemap.light_av*0.0174532925199433f);
 
     // načte všechny materiály pro daný 3D model a vytvoří případně statické osvětlení (je jeho majitelem)
-    p_map_matmng->load(p_map_model.get(), light_ambient, light_diffuse, p_light_position);
+    p_map_matmng->load(p_map_model.get());
 
     float frustum[6] = {-p_frust[0], p_frust[0], -p_frust[1], p_frust[1], p_frust[2], p_frust[3]};
     // pokud jsou dva hráči, obraz je extrémně širokoúhlý

@@ -60,12 +60,9 @@ public:
 
 class Matmng {
 public:
-    void load(const T3dm* t3dm, const float* ambcolor = 0, const float* diffcolor = 0, const float* lightpos = 0);
+    void load(const T3dm* t3dm);
     const T3dm* p_t3dm = nullptr;
     std::vector<Mat> p_mat;
-    bool p_bstatic_light = false; // not dynamic lighting?
-    std::vector<float> p_vcolor; //
-    std::vector<float> p_vcolor_back;
 };
 
 class Gamemng;
