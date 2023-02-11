@@ -71,7 +71,7 @@ void T3dm::scale(float aspect)
     {
         for (unsigned int j = 0; j != 3; ++j)
         {
-            p_v[i * 8 + j] *= aspect;
+            p_v[i * (size_t)T3dmA::Count + j] *= aspect;
         }
     }
 }
@@ -102,7 +102,7 @@ void T3dm::load(const char* fname, const char** o_names)
     gbuff_in.rewind();
     //p_v_sz = vertexnum;
     p_v.clear();
-    p_v.resize(vertexnum * 8, 0);
+    p_v.resize(vertexnum * (size_t)T3dmA::Count, 0);
     std::vector<unsigned char> nf(vertexnum, 0); // normal flag (flag společné normály)
     unsigned int objectnum = 0, texturenum = 0; // počet objektů, textur
     unsigned int object_i = 0; // index aktuálního objektu
@@ -219,28 +219,31 @@ void T3dm::load(const char* fname, const char** o_names)
                     gbuff_in.fgets(buff, 1024);
                     if (*buff == ' ') // řádek začíná mezerou, je na něm jen UV, vertex a normála je společná s předchozím
                     {
-                        p_v[i*8  ] = point_prev[0];
-                        p_v[i*8+1] = point_prev[1];
-                        p_v[i*8+2] = point_prev[2];
-                        if (sscanf(buff, " %f %f", &(p_v[i*8+6]), &(p_v[i*8+7])) != 2)
+                        p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0] = point_prev[0];
+                        p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1] = point_prev[1];
+                        p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2] = point_prev[2];
+                        if (sscanf(buff, " %f %f", &(p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Tex0]), &(p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Tex1])) != 2)
                         {
                         }
                         nf[i] = 1;
                     } else { // řádek obsahuje vertex a UV
                         if (sscanf(buff, "%f %f %f %f %f",
-                            &(p_v[i*8]), &(p_v[i*8+1]), &(p_v[i*8+2]),
-                            &(p_v[i*8+6]), &(p_v[i*8+7])) != 5)
+                                   &(p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]),
+                                   &(p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]),
+                                   &(p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]),
+                                   &(p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Tex0]),
+                                   &(p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Tex1])) != 5)
                         {
                         }
-                        point_prev[0] = p_v[i*8  ];
-                        point_prev[1] = p_v[i*8+1];
-                        point_prev[2] = p_v[i*8+2];
+                        point_prev[0] = p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0];
+                        point_prev[1] = p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1];
+                        point_prev[2] = p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2];
                     }
                     if (!mainflags[object_i]) // posunutí vedlejšího objektu na střed
                     {
-                        p_v[i*8  ] += centers[object_i*3+0];
-                        p_v[i*8+1] += centers[object_i*3+1];
-                        p_v[i*8+2] += centers[object_i*3+2];
+                        p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0] += centers[object_i*3+0];
+                        p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1] += centers[object_i*3+1];
+                        p_v[i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2] += centers[object_i*3+2];
                     }
                 }
                 gbuff_in.fgets(buff, 1024); // načtení počtu pložek
@@ -270,13 +273,13 @@ void T3dm::load(const char* fname, const char** o_names)
                     uint16_t* p_i = p_o[object_i].p_i.data();
                     float normal[3];
                     float v0[3] = {
-                        p_v[p_i[i*3+1]*8  ]-p_v[p_i[i*3]*8  ],
-                        p_v[p_i[i*3+1]*8+1]-p_v[p_i[i*3]*8+1],
-                        p_v[p_i[i*3+1]*8+2]-p_v[p_i[i*3]*8+2]};
+                        p_v[p_i[i*3+1]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]-p_v[p_i[i*3]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0],
+                        p_v[p_i[i*3+1]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]-p_v[p_i[i*3]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1],
+                        p_v[p_i[i*3+1]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]-p_v[p_i[i*3]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
                     float v1[3] = {
-                        p_v[p_i[i*3+2]*8  ]-p_v[p_i[i*3]*8  ],
-                        p_v[p_i[i*3+2]*8+1]-p_v[p_i[i*3]*8+1],
-                        p_v[p_i[i*3+2]*8+2]-p_v[p_i[i*3]*8+2]};
+                        p_v[p_i[i*3+2]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]-p_v[p_i[i*3]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0],
+                        p_v[p_i[i*3+2]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]-p_v[p_i[i*3]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1],
+                        p_v[p_i[i*3+2]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]-p_v[p_i[i*3]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
                     crossprod(normal, v0, v1); // výpočet normály plošky (nenormalizované, velikost podle obsahu plošky)
 
                     for (unsigned int c = 0; c != 3; ++c) // zopakování pro každý index vertexu plo?ky
@@ -286,9 +289,9 @@ void T3dm::load(const char* fname, const char** o_names)
                             --j;
 
                         do { // přičtení normály všem společným vrcholům (počet vrcholů = 0...n)
-                            p_v[j*8+3] += normal[0];
-                            p_v[j*8+4] += normal[1];
-                            p_v[j*8+5] += normal[2];
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm0] += normal[0];
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm1] += normal[1];
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm2] += normal[2];
                             ++j;
                         } while (j != vertexnum && nf[j] == 1);
                     }
@@ -322,9 +325,9 @@ void T3dm::load(const char* fname, const char** o_names)
         {
             for (unsigned int j = vertnum_prev; j != vertnums[i]; ++j)
             {
-                p_v[j*8  ] -= p_cen[p_o[i].p_gi*3  ];
-                p_v[j*8+1] -= p_cen[p_o[i].p_gi*3+1];
-                p_v[j*8+2] -= p_cen[p_o[i].p_gi*3+2];
+                p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0] -= p_cen[p_o[i].p_gi*3  ];
+                p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1] -= p_cen[p_o[i].p_gi*3+1];
+                p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2] -= p_cen[p_o[i].p_gi*3+2];
             }
         }
         vertnum_prev = vertnums[i];
@@ -332,6 +335,6 @@ void T3dm::load(const char* fname, const char** o_names)
 
     for (unsigned int i = 0; i != vertexnum; ++i) // normalizace normál
     {
-        T3dm_normalize(p_v.data() + i * 8 + 3);
+        T3dm_normalize(p_v.data() + i * (size_t)T3dmA::Count + (size_t)T3dmA::Norm0);
     }
 }

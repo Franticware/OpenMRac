@@ -146,9 +146,9 @@ void Octocube::subdiv()
                 unsigned int iv0 = p_mi[j].p_i[k*3];
                 unsigned int iv1 = p_mi[j].p_i[k*3+1];
                 unsigned int iv2 = p_mi[j].p_i[k*3+2];
-                float v0[3] = {p_base->p_t3dm->p_v[iv0*8], p_base->p_t3dm->p_v[iv0*8+1], p_base->p_t3dm->p_v[iv0*8+2]};
-                float v1[3] = {p_base->p_t3dm->p_v[iv1*8], p_base->p_t3dm->p_v[iv1*8+1], p_base->p_t3dm->p_v[iv1*8+2]};
-                float v2[3] = {p_base->p_t3dm->p_v[iv2*8], p_base->p_t3dm->p_v[iv2*8+1], p_base->p_t3dm->p_v[iv2*8+2]};
+                float v0[3] = {p_base->p_t3dm->p_v[iv0*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0], p_base->p_t3dm->p_v[iv0*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1], p_base->p_t3dm->p_v[iv0*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
+                float v1[3] = {p_base->p_t3dm->p_v[iv1*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0], p_base->p_t3dm->p_v[iv1*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1], p_base->p_t3dm->p_v[iv1*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
+                float v2[3] = {p_base->p_t3dm->p_v[iv2*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0], p_base->p_t3dm->p_v[iv2*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1], p_base->p_t3dm->p_v[iv2*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
                 if (triboxint(centers[i], subr, v0, v1, v2)) // pokud je uvnitř krychle
                     sz += 3;
             }
@@ -178,9 +178,9 @@ void Octocube::subdiv()
                     unsigned int iv0 = p_mi[j].p_i[k*3];
                     unsigned int iv1 = p_mi[j].p_i[k*3+1];
                     unsigned int iv2 = p_mi[j].p_i[k*3+2];
-                    float v0[3] = {p_base->p_t3dm->p_v[iv0*8], p_base->p_t3dm->p_v[iv0*8+1], p_base->p_t3dm->p_v[iv0*8+2]};
-                    float v1[3] = {p_base->p_t3dm->p_v[iv1*8], p_base->p_t3dm->p_v[iv1*8+1], p_base->p_t3dm->p_v[iv1*8+2]};
-                    float v2[3] = {p_base->p_t3dm->p_v[iv2*8], p_base->p_t3dm->p_v[iv2*8+1], p_base->p_t3dm->p_v[iv2*8+2]};
+                    float v0[3] = {p_base->p_t3dm->p_v[iv0*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0], p_base->p_t3dm->p_v[iv0*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1], p_base->p_t3dm->p_v[iv0*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
+                    float v1[3] = {p_base->p_t3dm->p_v[iv1*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0], p_base->p_t3dm->p_v[iv1*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1], p_base->p_t3dm->p_v[iv1*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
+                    float v2[3] = {p_base->p_t3dm->p_v[iv2*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0], p_base->p_t3dm->p_v[iv2*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1], p_base->p_t3dm->p_v[iv2*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]};
                     if (triboxint(centers[i], subr, v0, v1, v2)) // pokud je uvnitř krychle
                     {
                         p_sub[i]->p_mi[j].p_i[l] = iv0;
@@ -254,17 +254,17 @@ void Octopus::init(const float frustum[6], const T3dm& t3dm, unsigned int min_tr
             {
                 if (!bbnds)
                 {
-                    xmin = xmax = p_t3dm->p_v[objekt.p_i[j]*8];
-                    ymin = ymax = p_t3dm->p_v[objekt.p_i[j]*8+1];
-                    zmin = zmax = p_t3dm->p_v[objekt.p_i[j]*8+2];
+                    xmin = xmax = p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0];
+                    ymin = ymax = p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1];
+                    zmin = zmax = p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2];
                     bbnds = true;
                 } else {
-                    xmin = std::min(xmin, p_t3dm->p_v[objekt.p_i[j]*8]);
-                    ymin = std::min(ymin, p_t3dm->p_v[objekt.p_i[j]*8+1]);
-                    zmin = std::min(zmin, p_t3dm->p_v[objekt.p_i[j]*8+2]);
-                    xmax = std::max(xmax, p_t3dm->p_v[objekt.p_i[j]*8]);
-                    ymax = std::max(ymax, p_t3dm->p_v[objekt.p_i[j]*8+1]);
-                    zmax = std::max(zmax, p_t3dm->p_v[objekt.p_i[j]*8+2]);
+                    xmin = std::min(xmin, p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]);
+                    ymin = std::min(ymin, p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]);
+                    zmin = std::min(zmin, p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]);
+                    xmax = std::max(xmax, p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]);
+                    ymax = std::max(ymax, p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]);
+                    zmax = std::max(zmax, p_t3dm->p_v[objekt.p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]);
                 }
             }
         }

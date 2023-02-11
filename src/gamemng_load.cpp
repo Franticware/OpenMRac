@@ -111,9 +111,9 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
             {
                 if (it->vert_i == m_o.p_i[i] ||
                     ( // pokud je to jiný bod ve stejném místě
-                    p_map_model->p_v[it->vert_i*8+0] == p_map_model->p_v[m_o.p_i[i]*8+0]&&
-                    p_map_model->p_v[it->vert_i*8+1] == p_map_model->p_v[m_o.p_i[i]*8+1]&&
-                    p_map_model->p_v[it->vert_i*8+2] == p_map_model->p_v[m_o.p_i[i]*8+2]
+                    p_map_model->p_v[it->vert_i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0] == p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]&&
+                    p_map_model->p_v[it->vert_i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1] == p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]&&
+                    p_map_model->p_v[it->vert_i*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2] == p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]
                     )) // pokud už pole obsahuje bod s indexem, je nalezen
                 {
                     bfound = true;
@@ -124,16 +124,16 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
             {
                 Mapobj mapobj;
                 mapobj.vert_i = m_o.p_i[i];
-                mapobj.ang = p_map_model->p_cen[m_o.p_gi*3+1]+p_map_model->p_v[m_o.p_i[i]*8+1]*M_PI;
+                mapobj.ang = p_map_model->p_cen[m_o.p_gi*3+1]+p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]*M_PI;
                 mapobj.ang /= 10.f;
-                mapobj.pos[0] = p_map_model->p_cen[m_o.p_gi*3+0]+p_map_model->p_v[m_o.p_i[i]*8+2];
-                mapobj.pos[1] = p_map_model->p_cen[m_o.p_gi*3+2]+p_map_model->p_v[m_o.p_i[i]*8+0];
+                mapobj.pos[0] = p_map_model->p_cen[m_o.p_gi*3+0]+p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2];
+                mapobj.pos[1] = p_map_model->p_cen[m_o.p_gi*3+2]+p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0];
                 const int texo_w = 8;
                 const int texo_h = 8;
                 int texo_x = 0;
                 int texo_y = 0;
-                texo_x = (int)floor(p_map_model->p_v[m_o.p_i[i]*8+6]*float(texo_w));
-                texo_y = (int)floor(p_map_model->p_v[m_o.p_i[i]*8+7]*float(texo_h));
+                texo_x = (int)floor(p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Tex0]*float(texo_w));
+                texo_y = (int)floor(p_map_model->p_v[m_o.p_i[i]*(size_t)T3dmA::Count+(size_t)T3dmA::Tex1]*float(texo_h));
                 int o_id = texo_x+texo_y*texo_w;
                 --o_id;
                 if (o_id < 0 || o_id >= int(p_objs.size()))

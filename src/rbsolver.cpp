@@ -146,12 +146,12 @@ void bbox_create(std::vector<BBox> &bbox, unsigned int& size, float* center, con
 
         for (unsigned int i = 0; i != ln_sz; ++i)
         {
-            float f_i0[2] = {t3dm->p_v[8*b_ln[i].i0+2], t3dm->p_v[8*b_ln[i].i0]};
-            float f_i1[2] = {t3dm->p_v[8*b_ln[i].i1+2], t3dm->p_v[8*b_ln[i].i1]};
+            float f_i0[2] = {t3dm->p_v[(size_t)T3dmA::Count*b_ln[i].i0+2], t3dm->p_v[(size_t)T3dmA::Count*b_ln[i].i0]};
+            float f_i1[2] = {t3dm->p_v[(size_t)T3dmA::Count*b_ln[i].i1+2], t3dm->p_v[(size_t)T3dmA::Count*b_ln[i].i1]};
             for (unsigned int j = 0; j != ln_sz; ++j)
             {
-                float f_i0_2[2] = {t3dm->p_v[8*b_ln[j].i0+2], t3dm->p_v[8*b_ln[j].i0]};
-                float f_i1_2[2] = {t3dm->p_v[8*b_ln[j].i1+2], t3dm->p_v[8*b_ln[j].i1]};
+                float f_i0_2[2] = {t3dm->p_v[(size_t)T3dmA::Count*b_ln[j].i0+2], t3dm->p_v[(size_t)T3dmA::Count*b_ln[j].i0]};
+                float f_i1_2[2] = {t3dm->p_v[(size_t)T3dmA::Count*b_ln[j].i1+2], t3dm->p_v[(size_t)T3dmA::Count*b_ln[j].i1]};
 
                 if (equals(f_i0, f_i0_2) && b_ln[i].i0 > b_ln[j].i0)
                     b_ln[i].i0 = b_ln[j].i0;
@@ -189,8 +189,8 @@ void bbox_create(std::vector<BBox> &bbox, unsigned int& size, float* center, con
         {
             if (b_ln[i].b_ln)
             {
-                bbox[j].x[0] = t3dm->p_v[8*b_ln[i].i0+2];
-                bbox[j].x[1] = t3dm->p_v[8*b_ln[i].i0  ];
+                bbox[j].x[0] = t3dm->p_v[(size_t)T3dmA::Count*b_ln[i].i0+(size_t)T3dmA::Pos2];
+                bbox[j].x[1] = t3dm->p_v[(size_t)T3dmA::Count*b_ln[i].i0+(size_t)T3dmA::Pos0];
 
                 ladd(bbox[j].x, center); // přepočet do absolutních souřadnic podle středu objektu
 

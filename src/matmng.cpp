@@ -24,17 +24,17 @@ void Rendermng::set_oc(const float frustum[6], const T3dm& t3dm)
             {
                 if (bfirst)
                 {
-                    bbox_x[0] = bbox_x[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*8+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0];
-                    bbox_y[0] = bbox_y[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*8+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1];
-                    bbox_z[0] = bbox_z[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*8+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2];
+                    bbox_x[0] = bbox_x[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0];
+                    bbox_y[0] = bbox_y[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1];
+                    bbox_z[0] = bbox_z[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2];
                     bfirst = false;
                 } else {
-                    bbox_x[0] = std::min(bbox_x[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
-                    bbox_x[1] = std::max(bbox_x[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
-                    bbox_y[0] = std::min(bbox_y[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
-                    bbox_y[1] = std::max(bbox_y[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
-                    bbox_z[0] = std::min(bbox_z[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
-                    bbox_z[1] = std::max(bbox_z[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*8+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
+                    bbox_x[0] = std::min(bbox_x[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
+                    bbox_x[1] = std::max(bbox_x[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
+                    bbox_y[0] = std::min(bbox_y[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
+                    bbox_y[1] = std::max(bbox_y[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
+                    bbox_z[0] = std::min(bbox_z[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
+                    bbox_z[1] = std::max(bbox_z[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
                 }
             }
         }
@@ -91,8 +91,8 @@ void Rendermng::render_o_pass_s3()
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
 
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data());
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data() + 6);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
 
     unsigned int l = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
@@ -150,9 +150,9 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data());
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+3);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+6);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
     unsigned int k = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
@@ -264,9 +264,9 @@ void Rendermng::render_o_pass_glassTint(const glm::mat4& m)
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data());
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+3);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+6);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
     unsigned int k = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
@@ -317,9 +317,9 @@ void Rendermng::render_o_pass_glassReflection(const glm::mat4& m)
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data());
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+3);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+6);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
     unsigned int k = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
@@ -369,9 +369,9 @@ void Rendermng::render_o_pass_s2()
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8,p_t3dm->p_v.data());
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*8, p_t3dm->p_v.data()+3);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*8,p_t3dm->p_v.data()+6);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count,p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count,p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
         const Mat& material = p_matmng->p_mat[i];
