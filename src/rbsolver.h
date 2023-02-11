@@ -123,8 +123,6 @@ namespace RBf {
     }
     inline float safe(float f)
     {
-        /*if (!isfinite1(f))
-            return 0.f;*/
         if (!std::isfinite(f))
             return 0.f;
         return f;
