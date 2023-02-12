@@ -13,6 +13,7 @@ public:
     void init_stdin() { p_bdat = false; }
     bool init_dat(const char* fname);
     // společné fce
+    bool exists(const char* fname) const { p_datdec.exists(fname); }
     bool f_open(const char* fname, const char* mode); /* "r" nebo "rb" */
     void fclose(); // normálně int fclose(FILE*)
     // fce pro práci s textovým souborem

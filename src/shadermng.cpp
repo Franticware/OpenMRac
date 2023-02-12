@@ -207,6 +207,103 @@ void main()
 
     // ///////////////////
 
+    const char* vShaderTexLightSunkSrc =
+R"SRC(
+uniform mat4 uModelViewMat;
+uniform mat4 uProjModelViewMat;
+uniform mat3 uNormMat;
+
+attribute vec3 aPos;
+attribute vec3 aNormal;
+attribute vec3 aTan;
+attribute vec3 aBitan;
+attribute vec2 aTex;
+
+varying vec2 vTex;
+varying vec3 vNormal;
+varying vec3 vTan;
+varying vec3 vBitan;
+varying vec3 vEyePos;
+varying mat3 vTBN;
+
+void main()
+{
+    vTex = aTex;
+    vNormal = uNormMat * aNormal;
+    vTan = uNormMat * aTan;
+    vBitan = uNormMat * aBitan;
+    vTBN[0][0] = vTan.x;    vTBN[1][0] = vTan.y;    vTBN[2][0] = vTan.z;
+    vTBN[0][1] = vBitan.x;  vTBN[1][1] = vBitan.y;  vTBN[2][1] = vBitan.z;
+    vTBN[0][2] = vNormal.x; vTBN[1][2] = vNormal.y; vTBN[2][2] = vNormal.z;
+    vEyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
+    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
+}
+)SRC";
+
+    const char* fShaderTexLightSunkSrc =
+R"SRC(
+uniform vec4 uLightPos;
+uniform vec4 uLightAmbient;
+uniform vec4 uLightDiffuse;
+
+uniform int uAlphaDiscard;
+uniform int uHalftone;
+
+uniform sampler2D uTex0;
+uniform sampler2D uTex1;
+
+varying vec2 vTex;
+varying vec3 vNormal;
+varying vec3 vTan;
+varying vec3 vBitan;
+varying vec3 vEyePos;
+varying mat3 vTBN;
+
+void main()
+{
+    if (uHalftone != 0 && mod(gl_FragCoord.x+gl_FragCoord.y+0.5, 2.0) < 1.0)
+        discard;
+    vec3 normal = vNormal;
+    if (!gl_FrontFacing)
+    {
+        normal = -normal;
+    }
+    float intensity = max(0.0, dot(normal, uLightPos.xyz));
+    vec4 color = vec4(vec3(intensity), 1.0) * uLightDiffuse + uLightAmbient;
+    color.r = clamp(color.r, 0.0, 1.0);
+    color.g = clamp(color.g, 0.0, 1.0);
+    color.b = clamp(color.b, 0.0, 1.0);
+    color.a = 1.0;
+    vec4 texColor = vec4(1.0, 0.0, 1.0, 1.0); // debug magenta
+    vec4 colorSunk = texture2D(uTex1, vTex);
+    if (colorSunk.a != 0.0)
+    {
+        vec3 eyeDir = normalize(vEyePos);
+        vec3 tbnTrans = vTBN * eyeDir;
+        vec2 offset = tbnTrans.xy / tbnTrans.z * (colorSunk.a * 0.04);
+        vec2 texc = vTex - offset;
+        float sunk = texture2D(uTex1, texc).a;
+        if (sunk != 0.0)
+        {
+            texColor = texture2D(uTex0, texc);
+        }
+        else
+        {
+            texColor = colorSunk;
+        }
+    }
+    else
+    {
+        texColor = texture2D(uTex0, vTex);
+    }
+    gl_FragColor = texColor * color;
+    if (uAlphaDiscard != 0 && gl_FragColor.a < 0.5)
+        discard;
+}
+)SRC";
+
+    // ///////////////////
+
     const char* vShaderCarTopSrc =
 R"SRC(
 uniform mat4 uModelViewMat;
@@ -241,7 +338,7 @@ uniform vec4 uLightDiffuse;
 uniform int uHalftone;
 
 uniform sampler2D uTex0;
-uniform samplerCube uCube1;
+uniform samplerCube uCube;
 
 varying vec2 vTex;
 varying vec3 vNormal;
@@ -260,7 +357,7 @@ void main()
     }
     else
     {
-        vec4 envColor = textureCube( uCube1, vCubeRay );
+        vec4 envColor = textureCube(uCube, vCubeRay);
         vec3 normal = vNormal;
         float intensity = max(0.0, dot(normal, uLightPos.xyz));
         vec4 color = vec4(vec3(intensity), 1.0) * uLightDiffuse + uLightAmbient;
@@ -307,7 +404,7 @@ uniform vec4 uLightDiffuse;
 uniform int uHalftone;
 
 uniform sampler2D uTex0;
-uniform samplerCube uCube1;
+uniform samplerCube uCube;
 
 varying vec2 vTex;
 varying vec3 vNormal;
@@ -317,8 +414,8 @@ void main()
 {
     if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
         discard;
-    vec4 texColor = texture2D( uTex0, vTex );
-    vec4 envColor = textureCube( uCube1, vCubeRay );
+    vec4 texColor = texture2D(uTex0, vTex);
+    vec4 envColor = textureCube(uCube, vCubeRay);
     vec3 normal = vNormal;
     float intensity = max(0.0, dot(normal, uLightPos.xyz));
     vec4 color = vec4(vec3(intensity), 1.0) * uLightDiffuse + uLightAmbient;
@@ -405,7 +502,7 @@ uniform vec4 uLightDiffuse;
 uniform int uHalftone;
 
 uniform sampler2D uTex0;
-uniform samplerCube uCube1;
+uniform samplerCube uCube;
 
 varying vec2 vTex;
 varying vec3 vNormal;
@@ -415,10 +512,10 @@ void main()
 {
     if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
         discard;
-    vec4 texColor = texture2D( uTex0, vTex );
+    vec4 texColor = texture2D(uTex0, vTex);
     if (texColor.a >= 0.5)
         discard;
-    gl_FragColor = textureCube( uCube1, vCubeRay );
+    gl_FragColor = textureCube(uCube, vCubeRay);
 }
 )SRC";
 
@@ -445,6 +542,10 @@ void main()
         case ShaderId::LightTex:
             vSrc = vShaderTexLightSrc;
             fSrc = fShaderTexLightSrc;
+            break;
+        case ShaderId::LightTexSunk:
+            vSrc = vShaderTexLightSunkSrc;
+            fSrc = fShaderTexLightSunkSrc;
             break;
         case ShaderId::Tex:
             vSrc = vShaderTexSrc;
@@ -485,6 +586,8 @@ void main()
             glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Color, "aColor");
             glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Tex, "aTex");
             glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Normal, "aNormal");
+            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Tan, "aTan");
+            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Bitan, "aBitan");
 
             GLuint vId = loadShader(GL_VERTEX_SHADER, vSrc.c_str());
             GLuint fId = loadShader(GL_FRAGMENT_SHADER, fSrc.c_str());
@@ -528,9 +631,28 @@ void main()
 
                 glUseProgram(programObject);
 
-                glUniform1i(glGetUniformLocation(programObject, "uTex0"), 0);
-                glUniform1i(glGetUniformLocation(programObject, "uCube1"), 1);
-
+                for (int i = 0; i != (int)ShaderUniTex::Count; ++i)
+                {
+                    GLint loc = -1;
+                    switch ((ShaderUniTex)i)
+                    {
+                    case ShaderUniTex::Tex0:
+                        loc = glGetUniformLocation(programObject, "uTex0");
+                        break;
+                    case ShaderUniTex::Tex1:
+                        loc = glGetUniformLocation(programObject, "uTex1");
+                        break;
+                    case ShaderUniTex::Cube:
+                        loc = glGetUniformLocation(programObject, "uCube");
+                        break;
+                    default:
+                        break;
+                    }
+                    if (loc != -1)
+                    {
+                        glUniform1i(loc, i);
+                    }
+                }
                 shaders[i].program = programObject;
             }
         }

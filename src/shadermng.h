@@ -10,6 +10,7 @@ enum class ShaderId {
     Tex,
     ColorTex, // uses AlphaDiscard
     LightTex, // uses AlphaDiscard
+    LightTexSunk, // uses AlphaDiscard
     Car, // never alpha discard
     CarTop, // always alpha discard
     GlassTint,
@@ -19,9 +20,11 @@ enum class ShaderId {
 
 enum class ShaderAttrib {
     Pos = 0,
-    Color = 1,
-    Tex = 2,
+    Color,
+    Tex,
     Normal,
+    Tan,
+    Bitan,
     Count
 };
 
@@ -42,6 +45,13 @@ enum class ShaderUniVec4 {
 enum class ShaderUniInt {
     AlphaDiscard,
     Halftone,
+    Count
+};
+
+enum class ShaderUniTex {
+    Tex0,
+    Tex1,
+    Cube,
     Count
 };
 

@@ -763,7 +763,7 @@ void Gamemng::render_frame(const glm::mat4& m)
             glm::transpose(mdl_rot_mtrx); // inverze aktuální rotační matice, rotace podle aktuální polohy kamery
     p_shadermng.set(ShaderUniMat4::TexMat, cm_mat);
 
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE0 + (int)ShaderUniTex::Cube);
     glBindTexture(GL_TEXTURE_CUBE_MAP, p_skycmtex); checkGL();
     glActiveTexture(GL_TEXTURE0);
 

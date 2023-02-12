@@ -149,14 +149,26 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
         return;
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tan);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Bitan);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
     glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
     glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tan0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Bitan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Bitan0);
     glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
     unsigned int k = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
         const Mat& material = p_matmng->p_mat[i];
+
+        if (material.bsunken)
+        {
+            glActiveTexture(GL_TEXTURE0 + (int)ShaderUniTex::Tex1);
+            glBindTexture(GL_TEXTURE_2D, material.texsunk); checkGL();
+            glActiveTexture(GL_TEXTURE0);
+        }
+
         if (material.texture)
         {
             glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
@@ -181,7 +193,14 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
             }
             else
             {
-                p_gamemng->p_shadermng.use(ShaderId::LightTex);
+                if (material.bsunken)
+                {
+                    p_gamemng->p_shadermng.use(ShaderId::LightTexSunk);
+                }
+                else
+                {
+                    p_gamemng->p_shadermng.use(ShaderId::LightTex);
+                }
                 p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)material.balpha_test);
             }
         }
@@ -250,6 +269,8 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
     }
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tan);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Bitan);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
 }
 
@@ -429,6 +450,21 @@ void Mat::load(const char* fname)
 
     if (!gbuff_in.f_open(fname, "r"))
         return;
+
+    if (strSuff(fname, ".3mt"))
+    {
+        strncpy(suna_name, fname, sizeof(suna_name));
+        suna_name[strlen(suna_name)-7] = 0;
+        strncat1(suna_name, suna_name, "sunk.png", sizeof(suna_name));
+        strncpy(sund_name, fname, sizeof(sund_name));
+        sund_name[strlen(sund_name)-7] = 0;
+        strncat1(sund_name, sund_name, "sunkc.png", sizeof(sund_name));
+        if (gbuff_in.exists(suna_name) && gbuff_in.exists(sund_name))
+        {
+            bsunken = true;
+        }
+    }
+
     char buff[1024];
     if (gbuff_in.fgets(buff, 1024))
     {
@@ -617,6 +653,27 @@ void Matmng::load(const T3dm* t3dm)
             }
             picta.r2a();
             p_mat[i].texture = load_texture(picta, p_mat[i].bmipmap);
+        }
+        if (p_mat[i].bsunken)
+        {
+            Pict2 pict;
+            {
+                gbuff_in.f_open(p_mat[i].sund_name, "rb");
+                pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+                gbuff_in.fclose();
+            }
+            Pict2 picta;
+            {
+                gbuff_in.f_open(p_mat[i].suna_name, "rb");
+                picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+                gbuff_in.fclose();
+            }
+            pict.r2a(picta);
+            p_mat[i].texsunk = load_texture(pict, false);
+            glBindTexture(GL_TEXTURE_2D, p_mat[i].texsunk); checkGL();
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); checkGL();
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); checkGL();
+            glBindTexture(GL_TEXTURE_2D, 0); checkGL();
         }
     }
 }

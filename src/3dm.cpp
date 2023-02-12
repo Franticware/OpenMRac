@@ -59,7 +59,7 @@ void T3dm::load(const char* fname, const char** o_names)
     gbuff_in.rewind();
     //p_v_sz = vertexnum;
     p_v.clear();
-    p_v.resize(vertexnum * (size_t)T3dmA::Count, 0);
+    p_v.resize(vertexnum * (size_t)T3dmA::Count, 0.f);
     std::vector<unsigned char> nf(vertexnum, 0); // normal flag (flag společné normály)
     unsigned int objectnum = 0, texturenum = 0; // počet objektů, textur
     unsigned int object_i = 0; // index aktuálního objektu
@@ -232,9 +232,21 @@ void T3dm::load(const char* fname, const char** o_names)
                     {
                         pos[m] = glm::make_vec3(p_v.data()+p_i[i*3+m]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0);
                     }
-                    glm::vec3 v0 = pos[1]-pos[0];
-                    glm::vec3 v1 = pos[2]-pos[0];
-                    glm::vec3 normal = glm::cross(v0, v1); // výpočet normály plošky (nenormalizované, velikost podle obsahu plošky)
+                    glm::vec2 tex[3];
+                    for (int m = 0; m != 3; ++m)
+                    {
+                        tex[m] = glm::make_vec2(p_v.data()+p_i[i*3+m]*(size_t)T3dmA::Count+(size_t)T3dmA::Tex0);
+                    }
+                    const glm::vec3 dir0 = pos[1]-pos[0];
+                    const glm::vec3 dir1 = pos[2]-pos[0];
+                    const glm::vec3 normal = glm::cross(dir0, dir1); // výpočet normály plošky (nenormalizované, velikost podle obsahu plošky)
+
+                    const glm::vec2 deltaTex0 = tex[1]-tex[0];
+                    const glm::vec2 deltaTex1 = tex[2]-tex[0];
+                    const float tanBitanR = 1.0f/(deltaTex0.x*deltaTex1.y-deltaTex0.y*deltaTex1.x);
+                    const glm::vec3 tangent = (dir0*deltaTex1.y-dir1*deltaTex0.y)*tanBitanR;
+                    const glm::vec3 bitangent = (dir1*deltaTex0.x-dir0*deltaTex1.x)*tanBitanR;
+
                     for (unsigned int c = 0; c != 3; ++c) // zopakování pro každý index vertexu plo?ky
                     {
                         unsigned int j = p_i[i*3+c]; // j <- aktuální index vertexu
@@ -242,9 +254,18 @@ void T3dm::load(const char* fname, const char** o_names)
                             --j;
 
                         do { // přičtení normály všem společným vrcholům (počet vrcholů = 0...n)
-                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm0] += normal[0];
-                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm1] += normal[1];
-                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm2] += normal[2];
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm0] += normal.x;
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm1] += normal.y;
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Norm2] += normal.z;
+
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Tan0] += tangent.x;
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Tan1] += tangent.y;
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Tan2] += tangent.z;
+
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Bitan0] += bitangent.x;
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Bitan1] += bitangent.y;
+                            p_v[j*(size_t)T3dmA::Count+(size_t)T3dmA::Bitan2] += bitangent.z;
+
                             ++j;
                         } while (j != vertexnum && nf[j] == 1);
                     }
@@ -283,8 +304,13 @@ void T3dm::load(const char* fname, const char** o_names)
     }
     for (unsigned int i = 0; i != vertexnum; ++i) // normalizace normál
     {
-        glm::vec3 normal = glm::make_vec3(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Norm0);
-        normal = glm::normalize(normal);
+        glm::vec3 normal = glm::normalize(glm::make_vec3(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Norm0));
         glm::assign1(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Norm0, normal);
+
+        glm::vec3 tangent = glm::normalize(glm::make_vec3(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Tan0));
+        glm::assign1(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Tan0, tangent);
+
+        glm::vec3 bitangent = glm::normalize(glm::make_vec3(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Bitan0));
+        glm::assign1(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Bitan0, bitangent);
     }
 }

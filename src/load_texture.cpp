@@ -22,7 +22,7 @@ GLuint load_texture(const Pict2& pict, bool bmipmap)
             unsigned int pict_h = pict.h();
             if (bits_count(pict.h()) != 1 && bits_count(pict.h()+1) == 1) // předpřipravené mipmapy
                 pict_h = (pict.h()+1)/2;
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pict.w(), pict_h, 0, /*GL_BGRA*/GL_RGBA, GL_UNSIGNED_BYTE, pict.c_px()); checkGL();
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pict.w(), pict_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pict.c_px()); checkGL();
             g_texture_memory_usage += 4*pict.w()*pict_h;
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); checkGL();
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); checkGL();

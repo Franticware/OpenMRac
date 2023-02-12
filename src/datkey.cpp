@@ -28,6 +28,18 @@ bool Datdec::load(const char* fname)
     return true;
 }
 
+bool Datdec::exists(const char* fname) const
+{
+    unsigned int i = 0;
+    while (i != p_files.size())
+    {
+        if (strcmp(p_files[i].p_fname, fname) == 0)
+            break;
+        ++i;
+    }
+    return i != p_files.size();
+}
+
 struct TarHeader
 {                              /* byte offset */
   char name[100];               /*   0 */

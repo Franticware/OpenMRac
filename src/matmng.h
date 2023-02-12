@@ -40,20 +40,24 @@ public:
 
 class Mat {
 public:
-    Mat() : texture(0), balpha_test(false), benv_map(false), bboth_side(false), blighting(false), bmipmap(false), special(0) { texd_name[0] = 0; texa_name[0] = 0; }
-    ~Mat() { glDeleteTextures(1, &texture); checkGL(); texture = 0; }
+    Mat() : texture(0), texsunk(0), balpha_test(false), benv_map(false), bboth_side(false), blighting(false), bmipmap(false), bsunken(false), special(0) { texd_name[0] = 0; texa_name[0] = 0; sund_name[0] = 0; suna_name[0] = 0; }
+    ~Mat() { glDeleteTextures(1, &texture); glDeleteTextures(1, &texsunk); checkGL(); texture = 0; }
     void load(const char* fname);
     void default_mat();
     void setgl();
 
     GLuint texture; // id textury
+    GLuint texsunk; // id sunken textury
     bool balpha_test; // alfa test
     bool benv_map; // mapa prostředí
     bool bboth_side; // oboustranný materiál
     bool blighting;
     bool bmipmap; //
+    bool bsunken;
     char texd_name[256]; // název difuzní textury
     char texa_name[256]; // název alfa textury
+    char sund_name[256]; // název barvy sunken textury
+    char suna_name[256]; // název alpha sunken textury
     int special; // zároveň bspecial; 0 - nothing, 1 - two-sided top car part, 2 - blended (fence around Speedway), 3 - shadow
     float color[4];
 };
