@@ -67,9 +67,14 @@ void Skysph::init(Gamemng* gamemng, float r_prm, float ang_prm, int h, int v) //
     vert.push_back(1.f);
 }
 
-void Skysph::render()
+void Skysph::render(const glm::mat4& sky_mat)
 {
     p_gamemng->p_shadermng.use(ShaderId::Tex);
+    p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, sky_mat);
+
+    glDepthRangef(1, 1); // f is important! glDepthRange with double parameters does not work in GLES2!
+    glDepthFunc(GL_LEQUAL);
+
     glBindTexture(GL_TEXTURE_2D, tex_sky); checkGL();
 
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
@@ -82,4 +87,7 @@ void Skysph::render()
 
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+
+    glDepthFunc(GL_LESS);
+    glDepthRangef(0, 1);
 }

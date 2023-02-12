@@ -715,21 +715,6 @@ extern int g_ghost_h;
 
 void Gamemng::render_frame(const glm::mat4& m)
 {
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    // vykreslení oblohy
-    glm::mat4 mdl_rot_mtrx = m; // zkopíruje se transformační matice
-    mdl_rot_mtrx[3] = glm::vec4(0.f, 0.f, 0.f, 1.f); // translační část se vynuluje (obloha se neposouvá, jen rotuje)
-
-    glm::mat4 sky_mat = glm::rotate(mdl_rot_mtrx, glm::radians(p_skyang), glm::vec3(0, 1, 0));
-
-    p_shadermng.set(ShaderUniMat4::ModelViewMat, sky_mat);
-    p_shadermng.set(ShaderUniMat4::ModelViewMat, sky_mat);
-    p_skysph.render();
-
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
-
     p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
     p_shadermng.set(ShaderUniVec4::LightPos, m * glm::vec4(p_light_position[0], p_light_position[1], p_light_position[2], p_light_position[3]));
 
@@ -737,11 +722,15 @@ void Gamemng::render_frame(const glm::mat4& m)
     if (ge_bpass1)p_map_rendermng->render_o_pass1(glm::value_ptr(m)); // zjištění viditelnosti (octree)
     p_map_rendermng->render_o_pass2(m); // vykreslení viditelných částí mapy
 
-    glDepthFunc(GL_LESS); checkGL();
+    // vykreslení oblohy
+    glm::mat4 mdl_rot_mtrx = m; // zkopíruje se transformační matice
+    mdl_rot_mtrx[3] = glm::vec4(0.f, 0.f, 0.f, 1.f); // translační část se vynuluje (obloha se neposouvá, jen rotuje)
+    glm::mat4 sky_mat = glm::rotate(mdl_rot_mtrx, glm::radians(p_skyang), glm::vec3(0, 1, 0));
+    p_skysph.render(sky_mat);
 
+    // vykreslení blendů
     p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
-
-    p_map_rendermng->render_o_pass_s2(); // vykreslení blendů
+    p_map_rendermng->render_o_pass_s2();
 
     // render objektů
     for (unsigned int i = 0; i != p_mapobjs.size(); ++i)

@@ -3,6 +3,7 @@
 
 #include "pict2.h"
 #include "gl1.h"
+#include "glm1.h"
 
 #include <cstdint>
 #include <vector>
@@ -15,7 +16,7 @@ public:
     Skysph() : r(0), ang(0), size(0), tex_sky(0) { }
     void init(Gamemng* gamemng, float r_prm, float ang_prm, int h = 40, int v = 10);
     void set_tex(GLuint tex_sky_prm) { tex_sky = tex_sky_prm; }
-    void render();
+    void render(const glm::mat4& sky_mat);
     float r;
     float ang;
     std::vector<float> vert;

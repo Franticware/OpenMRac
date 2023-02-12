@@ -453,10 +453,10 @@ void Mat::load(const char* fname)
 
     if (strSuff(fname, ".3mt"))
     {
-        strncpy(suna_name, fname, sizeof(suna_name));
+        strncpy(suna_name, fname, sizeof(suna_name)-1);
         suna_name[strlen(suna_name)-7] = 0;
         strncat1(suna_name, suna_name, "sunk.png", sizeof(suna_name));
-        strncpy(sund_name, fname, sizeof(sund_name));
+        strncpy(sund_name, fname, sizeof(sund_name)-1);
         sund_name[strlen(sund_name)-7] = 0;
         strncat1(sund_name, sund_name, "sunkc.png", sizeof(sund_name));
         if (gbuff_in.exists(suna_name) && gbuff_in.exists(sund_name))

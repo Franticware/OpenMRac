@@ -20,7 +20,7 @@
 #include "gltext.h"
 
 // for testing
-#define FREE_CAMERA 1
+//#define FREE_CAMERA 1
 //#define TESTING_SLOWDOWN 1
 
 #if FREE_CAMERA
@@ -375,19 +375,7 @@ int my_main (int argc, char** argv)
 
     GLint okno_rozmery[4];
     glGetIntegerv(GL_VIEWPORT, okno_rozmery); checkGL();
-#if 0
-    /* Make sure we're chaning the model view and not the projection */
-    glMatrixMode( GL_MODELVIEW ); checkGL();
 
-    // nastavení úvodních materiálů a zobrazení
-    float material1[4] = {1, 1, 1, 1};
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, material1); checkGL();
-    float lightspec0[4] = {0, 0, 0, 1};
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightspec0); checkGL();
-    // důležité vypnutí defaultního rozptýleného světla
-    float lightmodelamb0[4] = {0, 0, 0, 1};
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lightmodelamb0); checkGL();
-#endif
     glEnable(GL_CULL_FACE); checkGL();
     glEnable(GL_DEPTH_TEST); checkGL();
     glDepthFunc(GL_LESS); checkGL();
@@ -845,11 +833,7 @@ int my_main (int argc, char** argv)
 #endif
 
             glEnable(GL_DEPTH_TEST); checkGL();
-            //glDisable(GL_LIGHTING); checkGL();
-            glDepthFunc(GL_LESS); checkGL();
 
-            //glColor4f(1.f, 1.f, 1.f, 1.f); checkGL();
-            //glEnable(GL_TEXTURE_2D); checkGL();
             gamemng.input(player_bkeys);
             float deltaTclamped = std::min(deltaT, 1.f);
 
@@ -857,9 +841,9 @@ int my_main (int argc, char** argv)
 
             // transformace a vykreslení scény
 #if FREE_CAMERA
-                if (g_freecam) freecam_mtrx = kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
+            if (g_freecam) freecam_mtrx = kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
 #endif
-                gamemng.frame(deltaTclamped, freecam_mtrx); // ořezání času na maximálně 1 sekundu
+            gamemng.frame(deltaTclamped, freecam_mtrx); // ořezání času na maximálně 1 sekundu
 
             glEnable(GL_DEPTH_TEST); checkGL();
         }
