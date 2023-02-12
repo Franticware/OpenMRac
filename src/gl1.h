@@ -20,6 +20,14 @@
 
 #endif
 
+#if USE_GL_ES2
+// f is important! glDepthRange with double parameters does not work in GLES2!
+inline void glDepthRange1(float a, float b) { glDepthRangef(a, b); }
+#else
+// Older OpenGL versions do not have glDepthRangef. What a pain.
+inline void glDepthRange1(float a, float b) { glDepthRange(a, b); }
+#endif
+
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
 #endif

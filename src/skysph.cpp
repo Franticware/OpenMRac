@@ -72,22 +72,22 @@ void Skysph::render(const glm::mat4& sky_mat)
     p_gamemng->p_shadermng.use(ShaderId::Tex);
     p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, sky_mat);
 
-    glDepthRangef(1, 1); // f is important! glDepthRange with double parameters does not work in GLES2!
-    glDepthFunc(GL_LEQUAL);
+    glDepthRange1(1, 1); checkGL();
+    glDepthFunc(GL_LEQUAL); checkGL();
 
     glBindTexture(GL_TEXTURE_2D, tex_sky); checkGL();
 
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert.data());
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert.data()); checkGL();
 
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert.data() + 3);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert.data() + 3); checkGL();
 
     glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_SHORT, tris.data()); checkGL();
 
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
 
-    glDepthFunc(GL_LESS);
-    glDepthRangef(0, 1);
+    glDepthFunc(GL_LESS); checkGL();
+    glDepthRange1(0, 1); checkGL();
 }
