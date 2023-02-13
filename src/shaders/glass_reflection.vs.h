@@ -1,4 +1,4 @@
-vs=R"SRC(
+vs=R"GLSL(
 uniform mat4 uModelViewMat;
 uniform mat4 uProjModelViewMat;
 uniform mat4 uTexMat;
@@ -20,4 +20,4 @@ gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
 vec3 eyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
 vCubeRay = normalize(mat3(uTexMat) * reflect(eyePos, vNormal));
 }
-)SRC";
+)GLSL";

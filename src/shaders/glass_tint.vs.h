@@ -1,4 +1,4 @@
-vs=R"SRC(
+vs=R"GLSL(
 uniform mat4 uProjModelViewMat;
 uniform mat3 uNormMat;
 
@@ -12,4 +12,4 @@ void main()
 vTex = aTex;
 gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
 }
-)SRC";
+)GLSL";

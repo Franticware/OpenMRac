@@ -1,4 +1,4 @@
-fs=R"SRC(
+fs=R"GLSL(
 uniform int uHalftone;
 
 uniform sampler2D uTex0;
@@ -16,4 +16,4 @@ if (texColor.a >= 0.5)
     discard;
 gl_FragColor = vec4(0.0, 0.0, 0.0, 0.6);
 }
-)SRC";
+)GLSL";

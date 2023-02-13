@@ -1,4 +1,4 @@
-fs=R"SRC(
+fs=R"GLSL(
 uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
@@ -25,4 +25,4 @@ color.rgb = clamp(color.rgb, 0.0, 1.0);
 color.a = 1.0;
 gl_FragColor = texColor * color + vec4(envColor.rgb, 0.0);
 }
-)SRC";
+)GLSL";

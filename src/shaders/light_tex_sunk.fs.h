@@ -1,4 +1,4 @@
-fs=R"SRC(
+fs=R"GLSL(
 uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
@@ -57,4 +57,4 @@ gl_FragColor = texColor * color;
 if (uAlphaDiscard != 0 && gl_FragColor.a < 0.5)
     discard;
 }
-)SRC";
+)GLSL";

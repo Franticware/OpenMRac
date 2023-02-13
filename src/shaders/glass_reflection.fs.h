@@ -1,4 +1,4 @@
-fs=R"SRC(
+fs=R"GLSL(
 uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
@@ -21,4 +21,4 @@ if (texColor.a >= 0.5)
     discard;
 gl_FragColor = textureCube(uCube, vCubeRay);
 }
-)SRC";
+)GLSL";

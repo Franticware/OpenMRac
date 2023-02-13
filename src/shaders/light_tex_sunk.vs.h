@@ -1,4 +1,4 @@
-vs=R"SRC(
+vs=R"GLSL(
 uniform mat4 uModelViewMat;
 uniform mat4 uProjModelViewMat;
 uniform mat3 uNormMat;
@@ -28,4 +28,4 @@ vTBN[0][2] = vNormal.x; vTBN[1][2] = vNormal.y; vTBN[2][2] = vNormal.z;
 vEyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
 gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
 }
-)SRC";
+)GLSL";
