@@ -92,6 +92,24 @@ HEADERS += \
     settings_dat.h \
     settingsdialog.h \
     shadermng.h \
+    shaders/car.fs.h \
+    shaders/car.vs.h \
+    shaders/car_top.fs.h \
+    shaders/car_top.vs.h \
+    shaders/color.fs.h \
+    shaders/color.vs.h \
+    shaders/color_tex.fs.h \
+    shaders/color_tex.vs.h \
+    shaders/glass_reflection.fs.h \
+    shaders/glass_reflection.vs.h \
+    shaders/glass_tint.fs.h \
+    shaders/glass_tint.vs.h \
+    shaders/light_tex.fs.h \
+    shaders/light_tex.vs.h \
+    shaders/light_tex_sunk.fs.h \
+    shaders/light_tex_sunk.vs.h \
+    shaders/tex.fs.h \
+    shaders/tex.vs.h \
     skysph.h \
     soundmng.h \
     triboxint.h

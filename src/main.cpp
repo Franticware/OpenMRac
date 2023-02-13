@@ -130,11 +130,11 @@ void saveTgaScreenshot(const char* filenamePrm = nullptr)
             2, //2  1 byte  ImageType   typ obrázku
             0,0, //3    2 byte  CMapStart   počátek barevné palety
             0,0, //5    2 byte  CMapLength  délka barevné palety
-            0, //7  1 byte  CMapDepth   bitová hloubka položek barevné palety
-            0,0, //8    2 byte  XOffset     X-ová souřadnice počátku obrázku
-            0,0 //10    2 byte  YOffset     Y-ová souřadnice počátku obrázku
+            0 //7  1 byte  CMapDepth   bitová hloubka položek barevné palety
             };
         unsigned short tgaheader2[] = {
+            SDL_SwapLE16(0), // 8    2 byte  XOffset     X-ová souřadnice počátku obrázku
+            SDL_SwapLE16(0), //10    2 byte  YOffset     Y-ová souřadnice počátku obrázku
             SDL_SwapLE16(static_cast<unsigned short>(okno_rozmery[2])),//12     2 byte  Width   šířka obrázku uvedená v pixelech
             SDL_SwapLE16(static_cast<unsigned short>(okno_rozmery[3]))//14  2 byte  Height  výška obrázku uvedená v pixelech
             };

@@ -4,6 +4,67 @@
 #include <cstdio>
 #include <string>
 
+#define STR_SWCASE(prefix, ec, id) case ec::id: return prefix #id
+
+inline const char* strShaderAttrib(int a)
+{
+    switch ((ShaderAttrib)a)
+    {
+    STR_SWCASE("a", ShaderAttrib, Pos);
+    STR_SWCASE("a", ShaderAttrib, Color);
+    STR_SWCASE("a", ShaderAttrib, Tex);
+    STR_SWCASE("a", ShaderAttrib, Normal);
+    STR_SWCASE("a", ShaderAttrib, Tan);
+    STR_SWCASE("a", ShaderAttrib, Bitan);
+    default: assert(false && "unexpected id"); return nullptr;
+    }
+}
+
+inline const char* strShaderUniMat4(int a)
+{
+    switch ((ShaderUniMat4)a)
+    {
+    STR_SWCASE("u", ShaderUniMat4, ProjMat);
+    STR_SWCASE("u", ShaderUniMat4, ModelViewMat);
+    STR_SWCASE("u", ShaderUniMat4, TexMat);
+    default: assert(false && "unexpected id"); return nullptr;
+    }
+}
+
+inline const char* strShaderUniVec4(int a)
+{
+    switch ((ShaderUniVec4)a)
+    {
+    STR_SWCASE("u", ShaderUniVec4, LightPos);
+    STR_SWCASE("u", ShaderUniVec4, LightAmbient);
+    STR_SWCASE("u", ShaderUniVec4, LightDiffuse);
+    default: assert(false && "unexpected id"); return nullptr;
+    }
+}
+
+inline const char* strShaderUniInt(int a)
+{
+    switch ((ShaderUniInt)a)
+    {
+    STR_SWCASE("u", ShaderUniInt, AlphaDiscard);
+    STR_SWCASE("u", ShaderUniInt, Halftone);
+    default: assert(false && "unexpected id"); return nullptr;
+    }
+}
+
+inline const char* strShaderUniTex(int a)
+{
+    switch ((ShaderUniTex)a)
+    {
+    STR_SWCASE("u", ShaderUniTex, Tex0);
+    STR_SWCASE("u", ShaderUniTex, Tex1);
+    STR_SWCASE("u", ShaderUniTex, Cube);
+    default: assert(false && "unexpected id"); return nullptr;
+    }
+}
+
+#undef STR_SWCASE
+
 ShaderMng::ShaderMng()
 {
     currentShader = ShaderId::None;
@@ -43,563 +104,90 @@ static GLuint loadShader(GLenum type, const char *shaderSrc)
 
 void ShaderMng::init()
 {
-    const char* vShaderTexSrc =
-R"SRC(
-uniform mat4 uProjModelViewMat;
-
-attribute vec3 aPos;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-
-void main()
-{
-    vTex = aTex;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-}
-)SRC";
-
-    const char* fShaderTexSrc =
-R"SRC(
-uniform sampler2D uTex0;
-
-varying vec2 vTex;
-
-void main()
-{
-    gl_FragColor = texture2D( uTex0, vTex );
-}
-)SRC";
-
-    // ///////////////////
-
-    const char* vShaderTexColorSrc =
-R"SRC(
-uniform mat4 uProjModelViewMat;
-
-attribute vec3 aPos;
-attribute vec4 aColor;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-varying vec4 vColor;
-
-void main()
-{
-    vTex = aTex;
-    vColor = aColor;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-}
-)SRC";
-
-    const char* fShaderTexColorSrc =
-R"SRC(
-uniform int uAlphaDiscard;
-uniform int uHalftone;
-
-uniform sampler2D uTex0;
-
-varying vec2 vTex;
-varying vec4 vColor;
-
-void main()
-{
-    //uniform int uHalftone;
-    if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
-        discard;
-    gl_FragColor = texture2D( uTex0, vTex ) * vColor;
-    if (uAlphaDiscard != 0 && gl_FragColor.a < 0.5)
-        discard;
-}
-)SRC";
-
-    // ///////////////////
-
-
-    const char* vShaderColorSrc =
-R"SRC(
-uniform mat4 uProjModelViewMat;
-
-attribute vec3 aPos;
-attribute vec4 aColor;
-
-varying vec4 vColor;
-
-void main()
-{
-    vColor = aColor;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-}
-)SRC";
-
-    const char* fShaderColorSrc =
-R"SRC(
-varying vec4 vColor;
-
-void main()
-{
-    gl_FragColor = vColor;
-}
-)SRC";
-
-    // ///////////////////
-
-    const char* vShaderTexLightSrc =
-R"SRC(
-uniform mat4 uModelViewMat;
-uniform mat4 uProjModelViewMat;
-uniform mat3 uNormMat;
-
-attribute vec3 aPos;
-attribute vec3 aNormal;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-
-void main()
-{
-    vTex = aTex;
-    vNormal = uNormMat * aNormal;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-}
-)SRC";
-
-    const char* fShaderTexLightSrc =
-R"SRC(
-uniform vec4 uLightPos;
-uniform vec4 uLightAmbient;
-uniform vec4 uLightDiffuse;
-
-uniform int uAlphaDiscard;
-uniform int uHalftone;
-
-uniform sampler2D uTex0;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-
-void main()
-{
-    if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
-        discard;
-
-    vec3 normal = vNormal;
-    if (!gl_FrontFacing)
-    {
-        normal = -normal;
-    }
-
-    float intensity = max(0.0, dot(normal, uLightPos.xyz));
-
-    vec4 color = vec4(vec3(intensity), 1.0) * uLightDiffuse + uLightAmbient;
-    color.r = clamp(color.r, 0.0, 1.0);
-    color.g = clamp(color.g, 0.0, 1.0);
-    color.b = clamp(color.b, 0.0, 1.0);
-    color.a = 1.0;
-
-    gl_FragColor = texture2D( uTex0, vTex ) * color;
-
-    if (uAlphaDiscard != 0 && gl_FragColor.a < 0.5)
-        discard;
-}
-)SRC";
-
-    // ///////////////////
-
-    const char* vShaderTexLightSunkSrc =
-R"SRC(
-uniform mat4 uModelViewMat;
-uniform mat4 uProjModelViewMat;
-uniform mat3 uNormMat;
-
-attribute vec3 aPos;
-attribute vec3 aNormal;
-attribute vec3 aTan;
-attribute vec3 aBitan;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vTan;
-varying vec3 vBitan;
-varying vec3 vEyePos;
-varying mat3 vTBN;
-
-void main()
-{
-    vTex = aTex;
-    vNormal = uNormMat * aNormal;
-    vTan = uNormMat * aTan;
-    vBitan = uNormMat * aBitan;
-    vTBN[0][0] = vTan.x;    vTBN[1][0] = vTan.y;    vTBN[2][0] = vTan.z;
-    vTBN[0][1] = vBitan.x;  vTBN[1][1] = vBitan.y;  vTBN[2][1] = vBitan.z;
-    vTBN[0][2] = vNormal.x; vTBN[1][2] = vNormal.y; vTBN[2][2] = vNormal.z;
-    vEyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-}
-)SRC";
-
-    const char* fShaderTexLightSunkSrc =
-R"SRC(
-uniform vec4 uLightPos;
-uniform vec4 uLightAmbient;
-uniform vec4 uLightDiffuse;
-
-uniform int uAlphaDiscard;
-uniform int uHalftone;
-
-uniform sampler2D uTex0;
-uniform sampler2D uTex1;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vTan;
-varying vec3 vBitan;
-varying vec3 vEyePos;
-varying mat3 vTBN;
-
-void main()
-{
-    if (uHalftone != 0 && mod(gl_FragCoord.x+gl_FragCoord.y+0.5, 2.0) < 1.0)
-        discard;
-    vec3 normal = vNormal;
-    if (!gl_FrontFacing)
-    {
-        normal = -normal;
-    }
-    float intensity = max(0.0, dot(normal, uLightPos.xyz));
-    vec4 color = vec4(vec3(intensity), 1.0) * uLightDiffuse + uLightAmbient;
-    color.r = clamp(color.r, 0.0, 1.0);
-    color.g = clamp(color.g, 0.0, 1.0);
-    color.b = clamp(color.b, 0.0, 1.0);
-    color.a = 1.0;
-    vec4 texColor = vec4(1.0, 0.0, 1.0, 1.0); // debug magenta
-    vec4 colorSunk = texture2D(uTex1, vTex);
-    if (colorSunk.a != 0.0)
-    {
-        vec3 eyeDir = normalize(vEyePos);
-        vec3 tbnTrans = vTBN * eyeDir;
-        vec2 offset = tbnTrans.xy / tbnTrans.z * (colorSunk.a * 0.04);
-        vec2 texc = vTex - offset;
-        float sunk = texture2D(uTex1, texc).a;
-        if (sunk != 0.0)
-        {
-            texColor = texture2D(uTex0, texc);
-        }
-        else
-        {
-            texColor = colorSunk;
-        }
-    }
-    else
-    {
-        texColor = texture2D(uTex0, vTex);
-    }
-    gl_FragColor = texColor * color;
-    if (uAlphaDiscard != 0 && gl_FragColor.a < 0.5)
-        discard;
-}
-)SRC";
-
-    // ///////////////////
-
-    const char* vShaderCarTopSrc =
-R"SRC(
-uniform mat4 uModelViewMat;
-uniform mat4 uProjModelViewMat;
-uniform mat4 uTexMat;
-uniform mat3 uNormMat;
-
-attribute vec3 aPos;
-attribute vec3 aNormal;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vCubeRay;
-
-void main()
-{
-    vTex = aTex;
-    vNormal = uNormMat * aNormal;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-    vec3 eyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
-    vCubeRay = normalize(mat3(uTexMat) * reflect(eyePos, vNormal));
-}
-)SRC";
-
-    const char* fShaderCarTopSrc =
-R"SRC(
-uniform vec4 uLightPos;
-uniform vec4 uLightAmbient;
-uniform vec4 uLightDiffuse;
-
-uniform int uHalftone;
-
-uniform sampler2D uTex0;
-uniform samplerCube uCube;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vCubeRay;
-
-void main()
-{
-    if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
-        discard;
-    vec4 texColor = texture2D( uTex0, vTex );
-    if (texColor.a < 0.5)
-        discard;
-    if (!gl_FrontFacing)
-    {
-        gl_FragColor = vec4(0.0, 0.0, 0.0, texColor.a);
-    }
-    else
-    {
-        vec4 envColor = textureCube(uCube, vCubeRay);
-        vec3 normal = vNormal;
-        float intensity = max(0.0, dot(normal, uLightPos.xyz));
-        vec4 color = vec4(vec3(intensity), 1.0) * uLightDiffuse + uLightAmbient;
-        color.rgb = clamp(color.rgb, 0.0, 1.0);
-        color.a = 1.0;
-        gl_FragColor = texColor * color + vec4(envColor.rgb, 0.0);
-    }
-}
-)SRC";
-
-    // ///////////////////
-
-    const char* vShaderCarSrc =
-R"SRC(
-uniform mat4 uModelViewMat;
-uniform mat4 uProjModelViewMat;
-uniform mat4 uTexMat;
-uniform mat3 uNormMat;
-
-attribute vec3 aPos;
-attribute vec3 aNormal;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vCubeRay;
-
-void main()
-{
-    vTex = aTex;
-    vNormal = uNormMat * aNormal;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-    vec3 eyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
-    vCubeRay = normalize(mat3(uTexMat) * reflect(eyePos, vNormal));
-}
-)SRC";
-
-    const char* fShaderCarSrc =
-R"SRC(
-uniform vec4 uLightPos;
-uniform vec4 uLightAmbient;
-uniform vec4 uLightDiffuse;
-
-uniform int uHalftone;
-
-uniform sampler2D uTex0;
-uniform samplerCube uCube;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vCubeRay;
-
-void main()
-{
-    if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
-        discard;
-    vec4 texColor = texture2D(uTex0, vTex);
-    vec4 envColor = textureCube(uCube, vCubeRay);
-    vec3 normal = vNormal;
-    float intensity = max(0.0, dot(normal, uLightPos.xyz));
-    vec4 color = vec4(vec3(intensity), 1.0) * uLightDiffuse + uLightAmbient;
-    color.rgb = clamp(color.rgb, 0.0, 1.0);
-    color.a = 1.0;
-    gl_FragColor = texColor * color + vec4(envColor.rgb, 0.0);
-}
-)SRC";
-
-    // ///////////////////
-
-    const char* vShaderGlassTintSrc =
-R"SRC(
-uniform mat4 uProjModelViewMat;
-uniform mat3 uNormMat;
-
-attribute vec3 aPos;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-
-void main()
-{
-    vTex = aTex;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-}
-)SRC";
-
-    const char* fShaderGlassTintSrc =
-R"SRC(
-uniform int uHalftone;
-
-uniform sampler2D uTex0;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vCubeRay;
-
-void main()
-{
-    if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
-        discard;
-    vec4 texColor = texture2D( uTex0, vTex );
-    if (texColor.a >= 0.5)
-        discard;
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 0.6);
-}
-)SRC";
-
-    // ///////////////////
-
-
-    const char* vShaderGlassReflectionSrc =
-R"SRC(
-uniform mat4 uModelViewMat;
-uniform mat4 uProjModelViewMat;
-uniform mat4 uTexMat;
-uniform mat3 uNormMat;
-
-attribute vec3 aPos;
-attribute vec3 aNormal;
-attribute vec2 aTex;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vCubeRay;
-
-void main()
-{
-    vTex = aTex;
-    vNormal = uNormMat * aNormal;
-    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-    vec3 eyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
-    vCubeRay = normalize(mat3(uTexMat) * reflect(eyePos, vNormal));
-}
-)SRC";
-
-    const char* fShaderGlassReflectionSrc =
-R"SRC(
-uniform vec4 uLightPos;
-uniform vec4 uLightAmbient;
-uniform vec4 uLightDiffuse;
-
-uniform int uHalftone;
-
-uniform sampler2D uTex0;
-uniform samplerCube uCube;
-
-varying vec2 vTex;
-varying vec3 vNormal;
-varying vec3 vCubeRay;
-
-void main()
-{
-    if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
-        discard;
-    vec4 texColor = texture2D(uTex0, vTex);
-    if (texColor.a >= 0.5)
-        discard;
-    gl_FragColor = textureCube(uCube, vCubeRay);
-}
-)SRC";
-
-    // ///////////////////
+#if 0 // test stringify completeness
+#define TEST_STR_EC_COMPLETE(ec) do { for (int i = 0; i != (int)ec::Count; ++i) str##ec(i); } while (false)
+TEST_STR_EC_COMPLETE(ShaderAttrib);
+TEST_STR_EC_COMPLETE(ShaderUniMat4);
+TEST_STR_EC_COMPLETE(ShaderUniVec4);
+TEST_STR_EC_COMPLETE(ShaderUniInt);
+TEST_STR_EC_COMPLETE(ShaderUniTex);
+#undef TEST_STR_EC_COMPLETE
+#endif
 
     for (int i = 0; i != (int)ShaderId::Count; ++i)
     {
-        std::string vSrc;
-        std::string fSrc;
-
-        shaders[i].program = 0;
-
+        ShaderWrap& sh = shaders[i];
+        sh.program = 0;
+        std::string vs;
+        std::string fs;
         ShaderId id = (ShaderId)i;
         switch (id)
         {
         case ShaderId::ColorTex:
-            vSrc = vShaderTexColorSrc;
-            fSrc = fShaderTexColorSrc;
+            #include "shaders/color_tex.vs.h"
+            #include "shaders/color_tex.fs.h"
             break;
         case ShaderId::Color:
-            vSrc = vShaderColorSrc;
-            fSrc = fShaderColorSrc;
+            #include "shaders/color.vs.h"
+            #include "shaders/color.fs.h"
             break;
         case ShaderId::LightTex:
-            vSrc = vShaderTexLightSrc;
-            fSrc = fShaderTexLightSrc;
+            #include "shaders/light_tex.vs.h"
+            #include "shaders/light_tex.fs.h"
             break;
         case ShaderId::LightTexSunk:
-            vSrc = vShaderTexLightSunkSrc;
-            fSrc = fShaderTexLightSunkSrc;
+            #include "shaders/light_tex_sunk.vs.h"
+            #include "shaders/light_tex_sunk.fs.h"
             break;
         case ShaderId::Tex:
-            vSrc = vShaderTexSrc;
-            fSrc = fShaderTexSrc;
+            #include "shaders/tex.vs.h"
+            #include "shaders/tex.fs.h"
             break;
         case ShaderId::CarTop:
-            vSrc = vShaderCarTopSrc;
-            fSrc = fShaderCarTopSrc;
+            #include "shaders/car_top.vs.h"
+            #include "shaders/car_top.fs.h"
             break;
         case ShaderId::Car:
-            vSrc = vShaderCarSrc;
-            fSrc = fShaderCarSrc;
+            #include "shaders/car.vs.h"
+            #include "shaders/car.fs.h"
             break;
         case ShaderId::GlassTint:
-            vSrc = vShaderGlassTintSrc;
-            fSrc = fShaderGlassTintSrc;
+            #include "shaders/glass_tint.vs.h"
+            #include "shaders/glass_tint.fs.h"
             break;
         case ShaderId::GlassReflection:
-            vSrc = vShaderGlassReflectionSrc;
-            fSrc = fShaderGlassReflectionSrc;
+            #include "shaders/glass_reflection.vs.h"
+            #include "shaders/glass_reflection.fs.h"
             break;
         default:
             break;
         }
 
-        if (!vSrc.empty() && !fSrc.empty())
+        if (!vs.empty() && !fs.empty())
         {
 #if USE_GL_ES2
-            fSrc = "precision mediump float;\n"+fSrc;
+            fs = "precision mediump float;"+fs;
 #else
-            static const char* version120line = "#version 120\n";
-            vSrc = version120line+vSrc;
-            fSrc = version120line+fSrc;
+            static const char* version120line = "#version 120";
+            vs = version120line+vs;
+            fs = version120line+fs;
 #endif
             GLuint programObject = glCreateProgram();
-
-            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Pos, "aPos");
-            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Color, "aColor");
-            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Tex, "aTex");
-            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Normal, "aNormal");
-            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Tan, "aTan");
-            glBindAttribLocation(programObject, (GLuint)ShaderAttrib::Bitan, "aBitan");
-
-            GLuint vId = loadShader(GL_VERTEX_SHADER, vSrc.c_str());
-            GLuint fId = loadShader(GL_FRAGMENT_SHADER, fSrc.c_str());
+            for (int i = 0; i != (GLuint)ShaderAttrib::Count; ++i)
+            {
+                glBindAttribLocation(programObject, i, strShaderAttrib(i));
+            }
+            GLuint vId = loadShader(GL_VERTEX_SHADER, vs.c_str());
+            GLuint fId = loadShader(GL_FRAGMENT_SHADER, fs.c_str());
 
             if (programObject != 0)
             {
                 glAttachShader(programObject, vId);
                 glAttachShader(programObject, fId);
 
-            // Link the program
+                // Link the program
                 glLinkProgram(programObject);
-            // Check the link status
+                // Check the link status
                 GLint linked;
                 glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
                 if(!linked)
@@ -614,46 +202,31 @@ void main()
                     }
                     glDeleteProgram(programObject);
                 }
-
-                shaders[i].mat4locs[(int)ShaderUniMat4::ModelViewMat] = glGetUniformLocation(programObject, "uModelViewMat");
-                shaders[i].mat4locs[(int)ShaderUniMat4::ProjMat] = glGetUniformLocation(programObject, "uProjMat");
-                shaders[i].mat4locs[(int)ShaderUniMat4::TexMat] = glGetUniformLocation(programObject, "uTexMat");
-
-                shaders[i].pmvloc = glGetUniformLocation(programObject, "uProjModelViewMat");
-                shaders[i].normloc = glGetUniformLocation(programObject, "uNormMat");
-
-                shaders[i].vec4locs[(int)ShaderUniVec4::LightPos] = glGetUniformLocation(programObject, "uLightPos");
-                shaders[i].vec4locs[(int)ShaderUniVec4::LightAmbient] = glGetUniformLocation(programObject, "uLightAmbient");
-                shaders[i].vec4locs[(int)ShaderUniVec4::LightDiffuse] = glGetUniformLocation(programObject, "uLightDiffuse");
-
-                shaders[i].intlocs[(int)ShaderUniInt::AlphaDiscard] = glGetUniformLocation(programObject, "uAlphaDiscard");
-                shaders[i].intlocs[(int)ShaderUniInt::Halftone] = glGetUniformLocation(programObject, "uHalftone");
+                sh.pmvloc = glGetUniformLocation(programObject, "uProjModelViewMat");
+                sh.normloc = glGetUniformLocation(programObject, "uNormMat");
+                for (int j = 0; j != (int)ShaderUniMat4::Count; ++j)
+                {
+                    sh.mat4locs[j] = glGetUniformLocation(programObject, strShaderUniMat4(j));
+                }
+                for (int j = 0; j != (int)ShaderUniVec4::Count; ++j)
+                {
+                    sh.vec4locs[j] = glGetUniformLocation(programObject, strShaderUniVec4(j));
+                }
+                for (int j = 0; j != (int)ShaderUniInt::Count; ++j)
+                {
+                    sh.intlocs[j] = glGetUniformLocation(programObject, strShaderUniInt(j));
+                }
 
                 glUseProgram(programObject);
-
-                for (int i = 0; i != (int)ShaderUniTex::Count; ++i)
+                for (int j = 0; j != (int)ShaderUniTex::Count; ++j)
                 {
-                    GLint loc = -1;
-                    switch ((ShaderUniTex)i)
-                    {
-                    case ShaderUniTex::Tex0:
-                        loc = glGetUniformLocation(programObject, "uTex0");
-                        break;
-                    case ShaderUniTex::Tex1:
-                        loc = glGetUniformLocation(programObject, "uTex1");
-                        break;
-                    case ShaderUniTex::Cube:
-                        loc = glGetUniformLocation(programObject, "uCube");
-                        break;
-                    default:
-                        break;
-                    }
+                    GLint loc = glGetUniformLocation(programObject, strShaderUniTex(j));
                     if (loc != -1)
                     {
-                        glUniform1i(loc, i);
+                        glUniform1i(loc, j);
                     }
                 }
-                shaders[i].program = programObject;
+                sh.program = programObject;
             }
         }
     }
@@ -715,6 +288,7 @@ void ShaderMng::set(ShaderUniMat4 id, glm::mat4 m)
         mat3norm = glm::transpose(glm::inverse(m));
         updatedNorm = true;
     }
+    // if the following condition is commented out, then the ProjMat must be set before corresponding ModelViewMat
     /*if (id == ShaderUniMat4::ProjMat)
     {
         mat4pmv = m * mat4s[(int)ShaderUniMat4::ModelViewMat];

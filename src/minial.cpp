@@ -27,6 +27,13 @@
 #define MA_FREQ 22050
 #define MA_SAMPLES 256
 
+//#define STREAM_TO_FILE 1
+
+#if STREAM_TO_FILE
+#define STREAM_FILE "minial.raw"
+FILE* minialStreamFile = nullptr;
+#endif
+
 struct ALCdevice
 {
     SDL_AudioDeviceID id;
@@ -192,6 +199,10 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
             }
         }
     }
+
+#if STREAM_TO_FILE
+    if (minialStreamFile) fwrite(floatBuff, sizeof(float), count, minialStreamFile);
+#endif
 }
 
 ////////////////
@@ -200,6 +211,9 @@ static bool isSdlAudioInit = false;
 
 static void sdlAudioInit(void)
 {
+#if STREAM_TO_FILE
+    minialStreamFile = fopen(STREAM_FILE, "wb");
+#endif
     if (!isSdlAudioInit)
     {
         SDL_InitSubSystem(SDL_INIT_AUDIO);
@@ -294,6 +308,9 @@ ALCboolean alcMakeContextCurrent(ALCcontext *context)
 
 void alcDestroyContext(ALCcontext *context)
 {
+#if STREAM_TO_FILE
+    if (minialStreamFile) fclose(minialStreamFile);
+#endif
     (void)context;
     return;
 }

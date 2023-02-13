@@ -478,6 +478,10 @@ void Mat::load(const char* fname)
         gbuff_in.fclose();
         return;
     }
+    /*if (bsunken)
+    {
+        bmipmap = false;
+    }*/
     if (gbuff_in.fgets(buff, 1024))
     {
         uncomment(buff);

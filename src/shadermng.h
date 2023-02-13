@@ -19,7 +19,7 @@ enum class ShaderId {
 };
 
 enum class ShaderAttrib {
-    Pos = 0,
+    Pos,
     Color,
     Tex,
     Normal,
