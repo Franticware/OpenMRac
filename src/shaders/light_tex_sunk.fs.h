@@ -3,9 +3,6 @@ uniform vec4 uLightPos;
 uniform vec4 uLightAmbient;
 uniform vec4 uLightDiffuse;
 
-uniform int uAlphaDiscard;
-uniform int uHalftone;
-
 uniform sampler2D uTex0;
 uniform sampler2D uTex1;
 
@@ -18,8 +15,6 @@ varying mat3 vTBN;
 
 void main()
 {
-    if (uHalftone != 0 && mod(gl_FragCoord.x+gl_FragCoord.y+0.5, 2.0) < 1.0)
-        discard;
     vec3 normal = vNormal;
     if (!gl_FrontFacing)
     {
@@ -31,30 +26,20 @@ void main()
     color.g = clamp(color.g, 0.0, 1.0);
     color.b = clamp(color.b, 0.0, 1.0);
     color.a = 1.0;
-    vec4 texColor = vec4(1.0, 0.0, 1.0, 1.0); // debug magenta
+    vec4 texColorTop = texture2D(uTex0, vTex);
     vec4 colorSunk = texture2D(uTex1, vTex);
-    if (colorSunk.a != 0.0)
-    {
-        vec3 eyeDir = normalize(vEyePos);
-        vec3 tbnTrans = vTBN * eyeDir;
-        vec2 offset = tbnTrans.xy / tbnTrans.z * (colorSunk.a * 0.04);
-        vec2 texc = vTex - offset;
-        float sunk = texture2D(uTex1, texc).a;
-        if (sunk != 0.0)
-        {
-            texColor = texture2D(uTex0, texc);
-        }
-        else
-        {
-            texColor = colorSunk;
-        }
-    }
-    else
-    {
-        texColor = texture2D(uTex0, vTex);
-    }
-    gl_FragColor = texColor * color;
-    if (uAlphaDiscard != 0 && gl_FragColor.a < 0.5)
-        discard;
+    vec3 eyeDir = normalize(vEyePos);
+    vec3 tbnTrans = vTBN * eyeDir;
+    vec2 offset = tbnTrans.xy / tbnTrans.z * (colorSunk.a * 0.04);
+    vec2 texc = vTex - offset;
+    float hiA = colorSunk.a;
+    if (hiA == 0.0) hiA = 1.0;
+    float frameMid = texture2D(uTex1, vTex - offset * 0.5).a;
+    vec4 texColorFrame = texture2D(uTex1, texc);
+    float frameA = min(texColorFrame.a, frameMid);
+    float hiFrameA = frameA;
+    if (hiFrameA == 0.0) hiFrameA = 1.0;
+    vec4 texColorBtm = mix(colorSunk, texture2D(uTex0, texc), frameA/hiFrameA);
+    gl_FragColor = mix(texColorTop, texColorBtm, colorSunk.a/hiA) * color;
 }
 )GLSL";
