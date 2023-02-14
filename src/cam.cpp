@@ -24,9 +24,11 @@
 //    fclose(fin);
 //}
 
-void Cam::init(const float* pos, float ax, float ay, float speed_transf, float speed_rot)
+void Cam::init(float x, float y, float z, float ax, float ay, float speed_transf, float speed_rot)
 {
-    memcpy(p_pos, pos, sizeof(float)*3);
+    p_pos[0] = x;
+    p_pos[1] = y;
+    p_pos[2] = z;
     p_ax = ax;
     p_ay = ay;
     p_vx = speed_transf;
@@ -91,6 +93,7 @@ void Cam::turn_u(float T)
 
 glm::mat4 Cam::transform() const
 {
+    //printf("%f, %f, %f, %f, %f\n", p_pos[0], p_pos[1], p_pos[2], p_ax, p_ay); fflush(stdout);
     glm::mat4 ret(1);
     ret = glm::rotate(ret, -p_ax, glm::vec3(1.f, 0.f, 0.f));
     ret = glm::rotate(ret, -p_ay, glm::vec3(0.f, 1.f, 0.f));

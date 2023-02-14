@@ -23,6 +23,12 @@
 //#define FREE_CAMERA 1
 //#define TESTING_SLOWDOWN 1
 
+#ifdef TEST_SCRSHOT // some test screenshots require free camera
+#ifndef FREE_CAMERA
+#define FREE_CAMERA 1
+#endif
+#endif
+
 #if FREE_CAMERA
 #include "cam.h"
 #endif
@@ -443,8 +449,14 @@ int my_main (int argc, char** argv)
 
 #if FREE_CAMERA
     Cam kamera;
-    float pos[3] = {0,0,0};
-    kamera.init(pos, 0,0,50/**0.2*/,M_PI/**0.2*/);
+    kamera.init(0,0,0, 0,0,50/**0.2*/,M_PI/**0.2*/);
+#ifdef TEST_SCRSHOT
+    if (TEST_SCRSHOT == 4)
+    {
+        kamera.init(-17.057034, 3.088659, -22.429945, -0.486319, -1.502288, 50/**0.2*/,M_PI/**0.2*/);
+        g_freecam = true;
+    }
+#endif
 #endif
 
     // program main loop
@@ -508,6 +520,14 @@ int my_main (int argc, char** argv)
             menu.p_track_sel = 0;
             menu.p_sky_sel = 3;
             menu.p_daytime_sel = 1;
+            menu.p_view_dist = 0;
+            break;
+        case 4:
+            menu.p_players = 1;
+            menu.p_direction_sel = 1;
+            menu.p_track_sel = 2;
+            menu.p_sky_sel = 0;
+            menu.p_daytime_sel = 0;
             menu.p_view_dist = 0;
             break;
         }
