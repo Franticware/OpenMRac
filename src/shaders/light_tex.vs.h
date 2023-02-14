@@ -12,8 +12,8 @@ varying vec3 vNormal;
 
 void main()
 {
-vTex = aTex;
-vNormal = uNormMat * aNormal;
-gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
+    vTex = aTex;
+    vNormal = uNormMat * aNormal;
+    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
 }
 )GLSL";

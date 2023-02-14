@@ -14,10 +14,10 @@ varying vec3 vCubeRay;
 
 void main()
 {
-vTex = aTex;
-vNormal = uNormMat * aNormal;
-gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
-vec3 eyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
-vCubeRay = normalize(mat3(uTexMat) * reflect(eyePos, vNormal));
+    vTex = aTex;
+    vNormal = uNormMat * aNormal;
+    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
+    vec3 eyePos = vec3(uModelViewMat * vec4(aPos, 1.0));
+    vCubeRay = normalize(mat3(uTexMat) * reflect(eyePos, vNormal));
 }
 )GLSL";

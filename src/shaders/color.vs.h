@@ -8,7 +8,7 @@ varying vec4 vColor;
 
 void main()
 {
-vColor = aColor;
-gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
+    vColor = aColor;
+    gl_Position = uProjModelViewMat * vec4(aPos, 1.0);
 }
 )GLSL";
