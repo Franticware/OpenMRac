@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include <tuple>
 
 struct GUI_Surface
 {
@@ -92,12 +93,45 @@ struct GuiItem
     {
         //assert(type != COMBO);
     }
+    GuiItem(EType type, std::tuple<int, int> xw, std::tuple<int, int> yh, const std::string& text = std::string()) :
+        type(type),
+        x(std::get<0>(xw)),
+        y(std::get<0>(yh)),
+        width(std::get<1>(xw)),
+        height(std::get<1>(yh)),
+        text(text),
+        checked(false),
+        items(std::vector<std::string>()),
+        currentItem(0),
+        itemHeight(20),
+        visibleItemCount(2),
+        pressedByKey(false)
+    {
+        //assert(type != COMBO);
+    }
     GuiItem(EType type, int x, int y, int width, int height, const std::vector<std::string>& items, int currentItem, int itemHeight, int visibleItemCount) :
         type(type),
         x(x),
         y(y),
         width(width),
         height(height),
+        text(""),
+        checked(false),
+        items(items),
+        currentItem(currentItem),
+        itemHeight(itemHeight),
+        visibleItemCount(visibleItemCount),
+        pressedByKey(false)
+    {
+        //assert(type == COMBO);
+        //assert(visibleItemCount >= 2);
+    }
+    GuiItem(EType type, std::tuple<int, int> xw, std::tuple<int, int> yh, const std::vector<std::string>& items, int currentItem, int itemHeight, int visibleItemCount) :
+        type(type),
+        x(std::get<0>(xw)),
+        y(std::get<0>(yh)),
+        width(std::get<1>(xw)),
+        height(std::get<1>(yh)),
         text(""),
         checked(false),
         items(items),

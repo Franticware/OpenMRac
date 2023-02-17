@@ -123,3 +123,13 @@ int GridLayout::getCellHeight(int row, int rows) const
     }
     return cellHeight;
 }
+
+std::tuple<int, int> GridLayout::getCellXW(int column, int columns) const
+{
+    return std::make_tuple(getCellX(column), getCellWidth(column, columns));
+}
+
+std::tuple<int, int> GridLayout::getCellYH(int row, int rows) const
+{
+    return std::make_tuple(getCellY(row), getCellHeight(row, rows));
+}

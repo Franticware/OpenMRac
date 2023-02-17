@@ -219,6 +219,7 @@ const char* time_m_s(float time);
 class Gamemng {
 public:
     Gamemng() :
+        p_whitetex(0), p_smoketex(0), p_skycmtex(0),
         p_rbos(0), p_reverse(false), p_players(0),
         p_wide169(false), p_far(0), p_car2do(0), p_car2dp(0), p_cartransf(0), p_carrendermng(0),
         p_ghostmodel(0), p_ghostmatmng(0), p_ghostrendermng(0), p_ghosttransf(0),
@@ -268,9 +269,7 @@ public:
     Skysph p_skysph;
 
     GLuint p_whitetex;
-
     GLuint p_smoketex; // přenosná textura - z init, zrušit v destruktoru
-
     GLuint p_skycmtex; // cube map or sphere map
 
     // skytex spravuje p_skysph

@@ -2,6 +2,7 @@
 #define GRIDLAYOUT_H
 
 #include <vector>
+#include <tuple>
 
 class GridLayout
 {
@@ -17,6 +18,8 @@ public:
     int getCellY(int row) const;
     int getCellWidth(int column, int columns) const;
     int getCellHeight(int row, int rows) const;
+    std::tuple<int, int> getCellXW(int column, int columns) const;
+    std::tuple<int, int> getCellYH(int column, int columns) const;
 
 private:
     int m_boxX;
