@@ -65,7 +65,7 @@ inline const char* strShaderUniTex(int a)
 
 #undef STR_SWCASE
 
-ShaderMng::ShaderMng()
+ShaderMng::ShaderMng() : ints()
 {
     currentShader = ShaderId::None;
 }
