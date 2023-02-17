@@ -1,4 +1,4 @@
-CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC -std=c++20
+CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC -std=c++20 -DNDEBUG
 LFLAGS = -lSDL2 -lGL -lopenal -ljpeg -lpng -lm -s
 
 # Uncomment the following two lines to use MiniAL instead of OpenAL:

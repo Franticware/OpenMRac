@@ -1,32 +1,44 @@
 #ifndef GL1_H
 #define GL1_H
 
+#define PROFILE_COMPAT 0
+#define PROFILE_CORE 1
+#define PROFILE_ES2 2
+
+#define PROFILE_MIN PROFILE_COMPAT
+#define PROFILE_MAX PROFILE_ES2
+
 #if defined(__WIN32__)
 
 #include <GL/GLee.h>
 
-#define USE_GL_COMPAT 1
-#define USE_GL_CORE3 0
-#define USE_GL_ES2 0 // does not work on windows
+// GLES2 did not work on windows
+#define DEFAULT_PROFILE PROFILE_COMPAT
+
 
 #else
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glcorearb.h>
 
-#define USE_GL_COMPAT 0
-#define USE_GL_CORE3 0
-#define USE_GL_ES2 1
+#define DEFAULT_PROFILE PROFILE_ES2
 
 #endif
 
-#if USE_GL_ES2
-// f is important! glDepthRange with double parameters does not work in GLES2!
-inline void glDepthRange1(float a, float b) { glDepthRangef(a, b); }
-#else
-// Older OpenGL versions do not have glDepthRangef. What a pain.
-inline void glDepthRange1(float a, float b) { glDepthRange(a, b); }
-#endif
+extern int g_opengl_profile;
+
+inline void glDepthRange1(float a, float b)
+{
+    if (g_opengl_profile == PROFILE_ES2)
+        glDepthRangef(a, b);
+    else
+        glDepthRange(a, b);
+}
+
+#undef glDepthRangef
+#define glDepthRangef use_glDepthRange1_instead_of_glDepthRangef
+#undef glDepthRange
+#define glDepthRange use_glDepthRange1_instead_of_glDepthRange
 
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
@@ -36,10 +48,6 @@ inline void glDepthRange1(float a, float b) { glDepthRange(a, b); }
 #endif
 
 #define ASSERT_ANISOTROPY
-
-#ifndef ENABLE_CHECKGL
-#define ENABLE_CHECKGL 0
-#endif
 
 #if ENABLE_CHECKGL
 #include <cassert>
@@ -56,7 +64,7 @@ inline void checkGL()
     }
 }
 #else
-#define checkGL() ;
+inline void checkGL() { }
 #endif
 
 extern int g_multisampleMode;

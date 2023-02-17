@@ -165,13 +165,17 @@ TEST_STR_EC_COMPLETE(ShaderUniTex);
 
         if (!vs.empty() && !fs.empty())
         {
-#if USE_GL_ES2
-            fs = "precision mediump float;"+fs;
-#else
-            static const char* version120line = "#version 120";
-            vs = version120line+vs;
-            fs = version120line+fs;
-#endif
+
+            if (g_opengl_profile == PROFILE_ES2)
+            {
+                fs = "precision mediump float;"+fs;
+            }
+            else
+            {
+                static const char* version120line = "#version 120";
+                vs = version120line+vs;
+                fs = version120line+fs;
+            }
             GLuint programObject = glCreateProgram();
             for (int i = 0; i != (GLuint)ShaderAttrib::Count; ++i)
             {

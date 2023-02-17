@@ -9,7 +9,14 @@ QMAKE_CXXFLAGS += -fno-exceptions
 
 QMAKE_CXXFLAGS += -DDIR_OPENMRAC_DAT=/usr/share/openmrac/
 
+# disable assert
+#QMAKE_CXXFLAGS += -DNDEBUG
+
+# output test screenshot
 #QMAKE_CXXFLAGS += -DTEST_SCRSHOT=0
+
+# opengl error log
+#QMAKE_CXXFLAGS += -DENABLE_CHECKGL=1
 
 QMAKE_CXXFLAGS += -DUSE_MINIAL
 #LIBS += -lopenal

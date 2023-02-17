@@ -1,12 +1,20 @@
 #include "settingsdialog.h"
 #include "gl1.h"
 
-SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, ScreenMode currentScreenMode, ScreenMode defaultScreenMode, bool currentVsyncState,
+SettingsDialog::SettingsDialog(
+    int renderer,
+    const std::vector<ScreenMode>& screenModes,
+    ScreenMode currentScreenMode,
+    ScreenMode defaultScreenMode,
+    bool currentVsyncState,
     int currentAntialiasingMode,
     int currentTextureFilter,
     bool currentFpsState,
     //
-    const std::vector<std::string>& openalDevices, const char* currentOpenalDevice
+    const std::vector<std::string>& openalDevices,
+    const char* currentOpenalDevice,
+    int currentRateIndex,
+    bool lowLatency
     ) :
     m_layout(0, 0, 8, 8, 0, 0)
 {
@@ -24,7 +32,9 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     m_layout.addColumn(1);
     m_layout.addColumn(FRAME_MARGIN);
     m_layout.addColumn(105);
-    m_layout.addColumn(300);
+    m_layout.addColumn(110);
+    m_layout.addColumn(2+28);
+    m_layout.addColumn(188-28);
     m_layout.addColumn(FRAME_MARGIN);
     m_layout.addColumn(1);
 
@@ -32,17 +42,18 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     m_layout.addRow(2);
     m_layout.addRow(1);
     m_layout.addRow(FRAME_MARGIN);
+    m_layout.addRow(CHECK_COMBO_HEIGHT); // Renderer
+    m_layout.addRow(2);
     m_layout.addRow(CHECK_COMBO_HEIGHT); // Resolution
     m_layout.addRow(2);
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Enable VSync
+    m_layout.addRow(CHECK_COMBO_HEIGHT); // Enable VSync, Show Framerate
     m_layout.addRow(2);
 
     m_layout.addRow(CHECK_COMBO_HEIGHT); // Antialiasing
     m_layout.addRow(2);
     m_layout.addRow(CHECK_COMBO_HEIGHT); // Texture Filter
-    m_layout.addRow(2);
-
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Show Framerate
+    m_layout.addRow(0);
+    m_layout.addRow(0);
     m_layout.addRow(FRAME_MARGIN);
     m_layout.addRow(1);
     m_layout.addRow(8);
@@ -51,6 +62,8 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     m_layout.addRow(1);
     m_layout.addRow(FRAME_MARGIN);
     m_layout.addRow(CHECK_COMBO_HEIGHT); // Device
+    m_layout.addRow(2);
+    m_layout.addRow(CHECK_COMBO_HEIGHT); // Low Latency
     m_layout.addRow(FRAME_MARGIN);
     m_layout.addRow(1);
     m_layout.addRow(16);
@@ -61,15 +74,15 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     init(m_layout.getBoxWidth(), m_layout.getBoxHeight(), windowTitle);
 
     m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(0), m_layout.getCellY(0), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(0, 1), "Video"));
-    m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellX(0), m_layout.getCellY(2), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(2, 9+4)));
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(0), m_layout.getCellY(12+4), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(12+4, 1),
+    m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellX(0), m_layout.getCellY(2), m_layout.getCellWidth(0, 6+2), m_layout.getCellHeight(2, 9+4+2)));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(0), m_layout.getCellY(12+4+2), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(12+4+2, 1),
                           #ifdef USE_MINIAL
                               "Audio (SDL)"
                           #else
                               "Audio (OpenAL)"
                           #endif
                               ));
-    m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellX(0), m_layout.getCellY(14+4), m_layout.getCellWidth(0, 6), m_layout.getCellHeight(14+4, 5)));
+    m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellX(0), m_layout.getCellY(14+4+2), m_layout.getCellWidth(0, 6+2), m_layout.getCellHeight(14+4+2, 6)));
 
     std::vector<std::string> resolutions;
     for (int i = 0; i != static_cast<int>(screenModes.size()); ++i)
@@ -89,23 +102,32 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     int currentScreenModeIndex = std::find(screenModes.begin(), screenModes.end(), currentScreenMode) - screenModes.begin();
     m_defaultScreenModeIndex = std::find(screenModes.begin(), screenModes.end(), defaultScreenMode) - screenModes.begin();
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(4), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(4, 1), "Mode"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(4), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(4, 1), "Renderer"));
+
+    std::vector<std::string> renderers;
+    renderers.push_back("OpenGL Compat. profile");
+    renderers.push_back("OpenGL Core profile");
+    renderers.push_back("OpenGL ES 2");
+
+    m_rendererComboIndex = m_items.size();
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(4), m_layout.getCellWidth(3, 1+2), m_layout.getCellHeight(4, 1), renderers, renderer, 20, 6));
+
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(4+2), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(4+2, 1), "Mode"));
     m_resolutionsComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(4), m_layout.getCellWidth(3, 1), m_layout.getCellHeight(4, 1), resolutions, currentScreenModeIndex, 20, 7));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(4+2), m_layout.getCellWidth(3, 1+2), m_layout.getCellHeight(4+2, 1), resolutions, currentScreenModeIndex, 20, 7));
     m_vsyncIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellX(2), m_layout.getCellY(6), m_layout.getCellWidth(2, 2), m_layout.getCellHeight(6, 1), "Enable VSync"));
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellX(2), m_layout.getCellY(6+2), m_layout.getCellWidth(2, 2), m_layout.getCellHeight(6+2, 1), "Enable VSync"));
     m_items[m_vsyncIndex].checked = currentVsyncState;
 
-
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(8), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(8, 1), "Antialiasing"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(8+2), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(8+2, 1), "Antialiasing"));
     std::vector<std::string> antialiasingModes;
     antialiasingModes.push_back("Off");
     antialiasingModes.push_back("2x");
     antialiasingModes.push_back("4x");
     m_antialiasingIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(8), /*m_layout.getCellWidth(3, 1)*/50, m_layout.getCellHeight(8, 1), antialiasingModes, currentAntialiasingMode, 20, 3));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(8+2), /*m_layout.getCellWidth(3, 1)*/50, m_layout.getCellHeight(8+2, 1), antialiasingModes, currentAntialiasingMode, 20, 3));
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(10), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(10, 1), "Texture Filter"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(10+2), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(10+2, 1), "Texture Filter"));
     std::vector<std::string> textureFilters;
     textureFilters.push_back("Bilinear");
     textureFilters.push_back("Trilinear");
@@ -116,13 +138,27 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     #endif
 
     m_textureFilterIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(10), /*m_layout.getCellWidth(3, 1)*/110, m_layout.getCellHeight(10, 1), textureFilters, currentTextureFilter, 20, 3));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(10+2), /*m_layout.getCellWidth(3, 1)*/110, m_layout.getCellHeight(10+2, 1), textureFilters, currentTextureFilter, 20, 3));
 
 
     m_showFpsIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellX(2), m_layout.getCellY(8+4), m_layout.getCellWidth(2, 2), m_layout.getCellHeight(8+4, 1), "Show Framerate"));
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellX(5), m_layout.getCellY(8), m_layout.getCellWidth(2, 2), m_layout.getCellHeight(8, 1), "Show Framerate"));
     m_items[m_showFpsIndex].checked = currentFpsState;
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(16+4), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(16+4, 1), "Device"));
+
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(16+4+2), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(16+4+2, 1), "Device"));
+
+    m_lowLatencyIndex = m_items.size();
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellX(5), m_layout.getCellY(18+4+2), m_layout.getCellWidth(5, 1), m_layout.getCellHeight(18+4+2, 1), "Low Latency"));
+    m_items[m_lowLatencyIndex].checked = lowLatency;
+
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellX(2), m_layout.getCellY(18+4+2), m_layout.getCellWidth(2, 1), m_layout.getCellHeight(18+4+2, 1), "Rate"));
+
+    std::vector<std::string> rateVec;
+    rateVec.push_back("22050 kHz");
+    rateVec.push_back("44100 kHz");
+    rateVec.push_back("48000 kHz");
+    m_freqComboIndex = m_items.size();
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(18+4+2), m_layout.getCellWidth(3, 1), m_layout.getCellHeight(18+4+2, 1), rateVec, currentRateIndex, 20, 2));
 
     std::vector<std::string> comboOalDevices;
     comboOalDevices.push_back("Default");
@@ -141,21 +177,21 @@ SettingsDialog::SettingsDialog(const std::vector<ScreenMode>& screenModes, Scree
     }
 
     m_audioDevicesComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(16+4), m_layout.getCellWidth(3, 1), m_layout.getCellHeight(16+4, 1), comboOalDevices, currentOpenalDeviceIndex, 20, 2));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellX(3), m_layout.getCellY(16+4+2), m_layout.getCellWidth(3, 1+2), m_layout.getCellHeight(16+4+2, 1), comboOalDevices, currentOpenalDeviceIndex, 20, 3));
 
     const int BUTTON_SPACING = 8;
 
-    int widthOfButtons = m_layout.getCellWidth(1, 4);
+    int widthOfButtons = m_layout.getCellWidth(1, 4+2);
     int widthOfButtonOk = 95;
     int widthOfButtonCancel = widthOfButtonOk;
     int widthOfButtonDefaults = widthOfButtons - BUTTON_SPACING * 2 - widthOfButtonOk - widthOfButtonCancel;
 
     m_okButtonIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1), m_layout.getCellY(20+4), widthOfButtonOk, m_layout.getCellHeight(20+4, 1), "OK"));
+    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1),                                                                           m_layout.getCellY(20+4+4), widthOfButtonOk,       m_layout.getCellHeight(20+4+4, 1), "OK"));
     m_cancelButtonIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1) + widthOfButtonOk + BUTTON_SPACING, m_layout.getCellY(20+4), widthOfButtonCancel, m_layout.getCellHeight(20+4, 1), "Cancel"));
+    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1) + widthOfButtonOk + BUTTON_SPACING,                                        m_layout.getCellY(20+4+4), widthOfButtonCancel,   m_layout.getCellHeight(20+4+4, 1), "Cancel"));
     m_defaultsButtonIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1) + widthOfButtonOk + BUTTON_SPACING + widthOfButtonCancel + BUTTON_SPACING, m_layout.getCellY(20+4), widthOfButtonDefaults, m_layout.getCellHeight(20+4, 1), "Set to Defaults"));
+    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1) + widthOfButtonOk + BUTTON_SPACING + widthOfButtonCancel + BUTTON_SPACING, m_layout.getCellY(20+4+4), widthOfButtonDefaults, m_layout.getCellHeight(20+4+4, 1), "Set to Defaults"));
 
     m_returnPressed = false;
     m_enterPressed = false;
@@ -182,6 +218,7 @@ void SettingsDialog::onButton(int itemIndex)
     }
     else if (itemIndex == m_defaultsButtonIndex)
     {
+        m_items[m_rendererComboIndex].currentItem = DEFAULT_PROFILE;
         m_items[m_resolutionsComboIndex].currentItem = m_defaultScreenModeIndex;
         m_items[m_vsyncIndex].checked = false;
 
@@ -190,6 +227,8 @@ void SettingsDialog::onButton(int itemIndex)
 
         m_items[m_showFpsIndex].checked = false;
         m_items[m_audioDevicesComboIndex].currentItem = 0;
+        m_items[m_freqComboIndex].currentItem = 0;
+        m_items[m_lowLatencyIndex].checked = true;
     }
 }
 
@@ -243,6 +282,12 @@ void SettingsDialog::onKeyUp(SDL_Keycode k)
     }
 }
 
+int SettingsDialog::getRenderer()
+{
+    const GuiItem& item = m_items[m_rendererComboIndex];
+    return item.currentItem;
+}
+
 int SettingsDialog::getSelectedScreenMode() const
 {
     const GuiItem& item = m_items[m_resolutionsComboIndex];
@@ -282,4 +327,15 @@ const char* SettingsDialog::getOpenalDevice() const
     {
         return m_openalDevices[item.currentItem - 1].c_str();
     }
+}
+
+int SettingsDialog::getFreqIndex() const
+{
+    const GuiItem& item = m_items[m_freqComboIndex];
+    return item.currentItem;
+}
+
+bool SettingsDialog::getLowLatencyChecked() const
+{
+    return m_items[m_lowLatencyIndex].checked;
 }

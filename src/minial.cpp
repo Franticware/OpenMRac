@@ -24,8 +24,14 @@
 #define MA_INTERP MA_INTERP_CUBIC_SPLINE
 //#define MA_INTERP MA_INTERP_LINEAR
 //#define MA_INTERP MA_INTERP_NONE
-#define MA_FREQ 22050
-#define MA_SAMPLES 256
+
+#define MA_DEFAULT_FREQ 22050
+
+int MA_lowLatency = 1;
+int MA_frequency = MA_DEFAULT_FREQ;
+
+#define MA_SAMPLES_LOW_LATENCY 256
+#define MA_SAMPLES_NORMAL_LATENCY 1024
 
 //#define STREAM_TO_FILE 1
 
@@ -125,7 +131,7 @@ static ALCcontext alcContext;
 
 static std::map<ALuint, MA_Source> sourceMap;
 static std::map<ALuint, MA_Buffer> bufferMap;
-static ALsizei maObtainedFreq = MA_FREQ;
+static int maObtainedFreq = MA_DEFAULT_FREQ;
 
 static void ma_callback(void *userdata, Uint8 *stream, int len)
 {
@@ -271,12 +277,13 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     sourceMap.clear();
     bufferMap.clear();
     SDL_AudioSpec as;
-    as.freq = MA_FREQ;
+    as.freq = MA_frequency;
     as.format = AUDIO_F32SYS;
     as.channels = 1;
-    as.samples = MA_SAMPLES;
+    as.samples = (as.freq < 30000) ? 256 : 512;
+    if (MA_lowLatency == 0) as.samples *= 4;
     as.callback = ma_callback;
-    as.userdata = /*nullptr*/0;
+    as.userdata = nullptr;
     SDL_AudioSpec obtained;
     SDL_AudioDeviceID id = SDL_OpenAudioDevice(devicename, 0, &as, &obtained, SDL_AUDIO_ALLOW_SAMPLES_CHANGE | SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
     if (id > 0)

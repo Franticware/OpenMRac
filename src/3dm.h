@@ -28,22 +28,10 @@ enum class T3dmA {
     Bitan0,
     Bitan1,
     Bitan2,
-    Dummy0,
-    Dummy1,
+    //Dummy0,
+    //Dummy1,
     Count
 };
-
-/*enum class T3dmA {
-    Pos0 = 0,
-    Pos1,
-    Pos2,
-    Norm0,
-    Norm1,
-    Norm2,
-    Tex0,
-    Tex1,
-    Count
-};*/
 
 class T3dm {
 public:

@@ -96,6 +96,7 @@ int g_ghost_h = 0;
 
 int g_multisampleMode = 2; // 0 - 0ff, 1 - 2x, 2 - 4x
 int g_textureFiltering = 2; // 0 - bilinear, 1 - trilinear, 2 - aniso
+int g_opengl_profile = DEFAULT_PROFILE;
 
 void saveTgaScreenshot(const char* filenamePrm = nullptr)
 {
@@ -290,12 +291,16 @@ int my_main (int argc, char** argv)
             alDevices += strlen(alDevices)+1;
         }
 
-        SettingsDialog settingsDialog(screenModesVector, currentScreenMode, defaultScreenMode,
+        SettingsDialog settingsDialog(
+            settings.get("renderer"),
+            screenModesVector, currentScreenMode, defaultScreenMode,
             settings.get("vsync"),
             settings.get("antialiasing"),
             settings.get("texture_filter"),
             settings.get("show_fps"),
-            alDevicesVector, settings.getOpenalDevice());
+            alDevicesVector, settings.getOpenalDevice(),
+            settings.get("freq"),
+            settings.get("low_latency"));
 
         settingsDialog.execute();
 
@@ -306,6 +311,7 @@ int my_main (int argc, char** argv)
 
         ScreenMode selectedScreenMode = screenModesVector[settingsDialog.getSelectedScreenMode()];
 
+        settings.set("renderer", settingsDialog.getRenderer());
         settings.set("screen_x", selectedScreenMode.width);
         settings.set("screen_y", selectedScreenMode.height);
         settings.set("fullscreen", selectedScreenMode.fullscreen);
@@ -314,6 +320,8 @@ int my_main (int argc, char** argv)
         settings.set("texture_filter", settingsDialog.getTextureFilter());
         settings.set("antialiasing", settingsDialog.getAntialiasingMode());
         settings.setOpenalDevice(settingsDialog.getOpenalDevice());
+        settings.set("freq", settingsDialog.getFreqIndex());
+        settings.set("low_latency", settingsDialog.getLowLatencyChecked());
 
         settings.save();
     }
@@ -326,9 +334,22 @@ int my_main (int argc, char** argv)
     getdeltaT_init();
 
     unsigned int isfullscreen = settings.get("fullscreen");
-
+    g_opengl_profile = settings.get("renderer");
     g_multisampleMode = settings.get("antialiasing");
     g_textureFiltering = settings.get("texture_filter");
+    MA_lowLatency = settings.get("low_latency");
+    switch (settings.get("freq"))
+    {
+    case 0:
+        MA_frequency = 22050;
+        break;
+    case 1:
+        MA_frequency = 44100;
+        break;
+    case 2:
+        MA_frequency = 48000;
+        break;
+    }
 
     int enableOpenGLResult = EnableOpenGL(isfullscreen, settings.get("vsync"),
         settings.get("screen_x"), settings.get("screen_y"));
@@ -937,19 +958,24 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
     // Request OpenGL context
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-#if USE_GL_ES2
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#elif USE_GL_COMPAT
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-#elif USE_GL_CORE3
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#else
-    #error "USE_GL_... not set"
-#endif
+    switch (g_opengl_profile)
+    {
+    case PROFILE_COMPAT:
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+        break;
+    case PROFILE_CORE:
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        break;
+    case PROFILE_ES2:
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        break;
+    default:
+        return 1;
+    }
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -1000,4 +1026,3 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
     glViewport(0, 0, actualWidth, actualHeight); checkGL();
     return 0;
 }
-

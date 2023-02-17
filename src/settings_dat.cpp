@@ -3,6 +3,7 @@
 #include <cstring>
 #include "cstring1.h"
 #include <cstdio>
+#include <cassert>
 #include <algorithm>
 #include "fopendir.h"
 #include "appdefs.h"
@@ -10,6 +11,7 @@
 
     // name,     default, min, max, comment
 const Sett_entry_base entry_base[] = {
+    {"renderer", DEFAULT_PROFILE, PROFILE_MIN, PROFILE_MAX, "0 - GL Compatibility, 1 - GL Core 3, 2 - GLES2"},
     {"fullscreen", 0, 0, 1, "0 - windowed, 1 - fullscreen"},
     {"screen_x", 1280, 0, UINT_MAX, "screen resolution"},
     {"screen_y", 720, 0, UINT_MAX, ""},
@@ -27,6 +29,8 @@ ASSERT_ANISOTROPY
     ,"0 - bilinear, 1 - trilinear, 2 - anisotropic"},
     {"view_distance", 10, 0, 10, "10 - far (best), 0 - near"},
     {"show_fps", 0, 0, 1, "0 - fps counter off, 1 - fps counter on"},
+    {"freq", 2, 0, 2, "0 - 22050, 1 - 44100, 2 - 48000"},
+    {"low_latency", 1, 0, 1, ""},
     {"sound_volume", 100, 0, 100, "0 - 100"},
     {"last_laps", 3, 1, 50, "last session"},
     {"last_daytime", 0, 0, 1, "0 - day, 1 - evening"},
@@ -382,7 +386,7 @@ unsigned int Settings::get(const char* key)
             return entry[i].val;
         }
     }
-    //assert(0);
+    assert(false && "unknown key");
     return 0;
 }
 

@@ -58,8 +58,19 @@ struct ScreenMode
 class SettingsDialog : public GuiDialog
 {
 public:
-    SettingsDialog(const std::vector<ScreenMode>& screenModes, ScreenMode currentScreenModeIndex, ScreenMode defaultScreenModeIndex, bool currentVsyncState, int currentAntialiasingMode, int currentTextureFilter, bool currentFpsState,
-        const std::vector<std::string>& openalDevices, const char* currentOpenalDevice
+    SettingsDialog(
+        int renderer,
+        const std::vector<ScreenMode>& screenModes,
+        ScreenMode currentScreenModeIndex,
+        ScreenMode defaultScreenModeIndex,
+        bool currentVsyncState,
+        int currentAntialiasingMode,
+        int currentTextureFilter,
+        bool currentFpsState,
+        const std::vector<std::string>& openalDevices,
+        const char* currentOpenalDevice,
+        int currentRateIndex,
+        bool lowLatency
         );
 
     virtual void onQuit();
@@ -69,6 +80,8 @@ public:
     virtual void onKeyDown(SDL_Keycode k);
 
     virtual void onKeyUp(SDL_Keycode k);
+
+    int getRenderer();
 
     int getSelectedScreenMode() const;
     bool getVsyncChecked() const;
@@ -80,12 +93,18 @@ public:
 
     const char* getOpenalDevice() const;
 
+    int getFreqIndex() const;
+
+    bool getLowLatencyChecked() const;
+
     bool m_continue; // pokračovat v programu?
 
 private:
     GridLayout m_layout;
 
     std::vector<std::string> m_openalDevices;
+
+    int m_rendererComboIndex;
 
     int m_defaultScreenModeIndex;
 
@@ -98,6 +117,8 @@ private:
 
     int m_showFpsIndex;
     int m_audioDevicesComboIndex;
+    int m_freqComboIndex;
+    int m_lowLatencyIndex;
 
     int m_okButtonIndex;
     int m_cancelButtonIndex;
