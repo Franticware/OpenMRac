@@ -1,17 +1,8 @@
-#include "platform.h"
-
 #include "cam.h"
 #include <cstring>
 #include <cmath>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
-#include "glhelpers1.h"
+#include "gl1.h"
 #include <cstdio>
-
-// komentář
 
 //void Cam::save()
 //{
@@ -33,9 +24,11 @@
 //    fclose(fin);
 //}
 
-void Cam::init(const float* pos, float ax, float ay, float speed_transf, float speed_rot)
+void Cam::init(float x, float y, float z, float ax, float ay, float speed_transf, float speed_rot)
 {
-    memcpy(p_pos, pos, sizeof(float)*3);
+    p_pos[0] = x;
+    p_pos[1] = y;
+    p_pos[2] = z;
     p_ax = ax;
     p_ay = ay;
     p_vx = speed_transf;
@@ -98,10 +91,12 @@ void Cam::turn_u(float T)
     p_ax += p_va*T;
 }
 
-void Cam::transform()
+glm::mat4 Cam::transform() const
 {
-    static const float convdeg = 57.2957795130823;
-    glRotatef(-p_ax*convdeg, 1.f, 0.f, 0.f); checkGL();
-    glRotatef(-p_ay*convdeg, 0.f, 1.f, 0.f); checkGL();
-    glTranslatef(-p_pos[0], -p_pos[1], -p_pos[2]); checkGL();
+    //printf("%f, %f, %f, %f, %f\n", p_pos[0], p_pos[1], p_pos[2], p_ax, p_ay); fflush(stdout);
+    glm::mat4 ret(1);
+    ret = glm::rotate(ret, -p_ax, glm::vec3(1.f, 0.f, 0.f));
+    ret = glm::rotate(ret, -p_ay, glm::vec3(0.f, 1.f, 0.f));
+    ret = glm::translate(ret, glm::vec3(-p_pos[0], -p_pos[1], -p_pos[2]));
+    return ret;
 }

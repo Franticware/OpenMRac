@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include <cstring>
 
 bool isSpace(int c)
@@ -49,9 +47,6 @@ void uncomment(char* str)
             }
         }
     }
-    /*char* str_pom = strstr(str, "//");
-    if (str_pom != NULL)
-        *str_pom = '\0';*/
 }
 
 void strncat1(char* str_o, const char* str1_i, const char* str2_i, size_t num)

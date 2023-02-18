@@ -3,28 +3,34 @@
 #include <cstring>
 #include "cstring1.h"
 #include <cstdio>
+#include <cassert>
 #include <algorithm>
-#include "glext1.h"
 #include "fopendir.h"
 #include "appdefs.h"
+#include "gl1.h"
 
     // name,     default, min, max, comment
 const Sett_entry_base entry_base[] = {
+    {"renderer", DEFAULT_PROFILE, PROFILE_MIN, PROFILE_MAX, "0 - GL Compatibility, 1 - GL Core 3, 2 - GLES2"},
     {"fullscreen", 0, 0, 1, "0 - windowed, 1 - fullscreen"},
-    {"screen_x", 800, 0, UINT_MAX, "screen resolution"},
-    {"screen_y", 600, 0, UINT_MAX, ""},
-    {"vsync", 0, 0, 1, "0 - vsync off, 1 - vsync on"},
+    {"screen_x", 1280, 0, UINT_MAX, "screen resolution"},
+    {"screen_y", 720, 0, UINT_MAX, ""},
+    {"vsync", 1, 0, 1, "0 - vsync off, 1 - vsync on"},
     {"antialiasing", 0, 0, 2, "0 - off, 1 - 2x, 2 - 4x"},
     {"texture_filter", 1, 0,
+
 #ifdef DISABLE_ANISOTROPY
     1
 #else
 ASSERT_ANISOTROPY
     2
 #endif
-    , "0 - bilinear, 1 - trilinear, 2 - anisotropic"},
+
+    ,"0 - bilinear, 1 - trilinear, 2 - anisotropic"},
     {"view_distance", 10, 0, 10, "10 - far (best), 0 - near"},
     {"show_fps", 0, 0, 1, "0 - fps counter off, 1 - fps counter on"},
+    {"freq", 2, 0, 2, "0 - 22050, 1 - 44100, 2 - 48000"},
+    {"low_latency", 1, 0, 1, ""},
     {"sound_volume", 100, 0, 100, "0 - 100"},
     {"last_laps", 3, 1, 50, "last session"},
     {"last_daytime", 0, 0, 1, "0 - day, 1 - evening"},
@@ -66,7 +72,7 @@ const char* Settings::controlNames[16] = {
 Settings::Settings(const char* filename, std::vector<JoystickDevice>* joystickDevices, std::vector<JoystickIdentifier>* joystickNotConnectedDevices, Control* controls)
 {
     entry_size = sizeof(entry_base)/sizeof(*entry_base);
-    entry = new Sett_entry[entry_size];
+    entry.resize(entry_size);
     for (unsigned int i = 0; i != entry_size; ++i)
     {
         entry[i].defaultVal = entry[i].val = entry_base[i].val;
@@ -81,9 +87,7 @@ Settings::Settings(const char* filename, std::vector<JoystickDevice>* joystickDe
 int Settings::load()
 {
     // záznamy se předem nastaví na defaultní hodnoty
-    //FILE* fin = fopen(filename, "r");
     FILE* fin = fopenDir(filename, "r", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (!fin) return 1;
     char buff[1024]; // buffer pro načtení řádků
     char controlTypeBuff[1024]; // buffer pro načtení typu control
@@ -282,9 +286,7 @@ player4_brake n
 
 int Settings::save()
 {
-    //FILE* fout = fopen(filename, "w");
     FILE* fout = fopenDir(filename, "w", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (!fout) return 1;
     for (unsigned int i = 0; i != entry_size; ++i)
     {
@@ -384,7 +386,7 @@ unsigned int Settings::get(const char* key)
             return entry[i].val;
         }
     }
-    //assert(0);
+    assert(false && "unknown key");
     return 0;
 }
 
@@ -410,7 +412,6 @@ unsigned int Settings::getDefault(const char* key)
             return entry[i].defaultVal;
         }
     }
-    //assert(0);
     return 0;
 }
 
@@ -452,7 +453,7 @@ void Settings::getControlName(char* buff, unsigned n, unsigned i, bool joystickN
 {
     if (controls[i].type == Control::E_KEYBOARD)
     {
-        snprintf(buff, n, "%s", SDL_GetKeyName(static_cast<SDLKey>(controls[i].i)));
+        snprintf(buff, n, "%s", SDL_GetKeyName(static_cast<SDL_Keycode>(controls[i].i)));
     }
     else if (controls[i].type == Control::E_MBUTTON)
     {

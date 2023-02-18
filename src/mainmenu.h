@@ -5,7 +5,7 @@
 #include "gltext.h"
 #include "settings_dat.h"
 
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 enum MainMenu_states {
     STATE_RACE = 0, STATE_CONTROLS, STATE_OPTIONS, STATE_BEST_LAPS, STATE_QUIT, STATE_Q,
@@ -41,9 +41,8 @@ class Gamemng;
 
 class MainMenu {
 public:
-    MainMenu() : p_bactive(false), p_state(0), p_car_i(0), p_gamemng(0), p_settings(0), p_controlsChanged(false), p_players(0), p_laps(0),
+    MainMenu() : p_bactive(false), p_state(0), p_car_i(0), p_gamemng(nullptr), p_settings(nullptr), p_controlsChanged(false), p_players(0), p_laps(0),
         p_direction_sel(false), p_sky_sel(0), p_sound_vol(0), p_view_dist(0), p_track_sel(0), p_testKeysCount(0), p_enterMode(false) { }
-    ~MainMenu() { }
     void init(Gamemng* gamemng, Settings* settings);
     void menu(); // nahrát textury a změnit stav
     void game(); // uvolnit textury a změnit stav
@@ -106,8 +105,8 @@ public:
     int p_track_sel;
 
     int p_testKeysCount;
-    SDLKey p_testKeysLastKeyDown;
-    SDLKey p_testKeysLastKeyUp;
+    SDL_Keycode p_testKeysLastKeyDown;
+    SDL_Keycode p_testKeysLastKeyUp;
 
     bool p_enterMode;
 

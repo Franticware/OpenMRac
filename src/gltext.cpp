@@ -1,11 +1,10 @@
-#include "platform.h"
 #include "load_texture.h"
 #include "gltext.h"
 #include "pict2.h"
 #include "gbuff_in.h"
 #include "matmng.h"
-#include "glhelpers1.h"
 #include <algorithm>
+#include "shadermng.h"
 
 void Glfont::set_texture(GLuint texture)
 {
@@ -14,102 +13,45 @@ void Glfont::set_texture(GLuint texture)
 
 void Gltext::set_pos(float x, float y)
 {
-    p_pos[0] = x;
-    p_pos[1] = y;
+    static const float scaletext = 0.319f;
+    mtrx = glm::scale(glm::mat4(1), glm::vec3(scaletext, scaletext, 1.f));
+    mtrx = glm::translate(mtrx, glm::vec3(x, y, 0.f));
 }
 
-void Gltext::render(GLuint texture)
+void Gltext::render(GLuint texture, ShaderMng* shadermng, bool useColor, float scale)
 {
-    float scaletext = 0.319f;
-    glLoadIdentity(); checkGL();
-
-    glScalef(scaletext, scaletext, 1.0); checkGL();
-
-    glTranslatef(p_pos[0], p_pos[1], 0.f); checkGL();
-
+    glm::mat4 m = glm::scale(mtrx, glm::vec3(scale, scale, 1.f));
+    shadermng->set(ShaderUniMat4::ModelViewMat, m);
+    shadermng->use(ShaderId::ColorTex);
+    shadermng->set(ShaderUniInt::AlphaDiscard, (GLint)0);
     glBindTexture(GL_TEXTURE_2D, texture); checkGL();
-
     glEnable(GL_BLEND); checkGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
     for (unsigned int i = 0; i != p_h; ++i)
     {
-        glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
+        if (useColor)
+        {
+            glVertexAttrib4fv((GLuint)ShaderAttrib::Color, p_lines[i].color_b);
+        }
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, p_lines[i].vert.data());
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, p_lines[i].vert.data() + 3);
+        glDrawElements(GL_TRIANGLES, p_lines[i].isize, GL_UNSIGNED_SHORT, indices.data()); checkGL();
     }
-
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
     glDisable(GL_BLEND); checkGL();
 }
 
-void Gltext::render_c(GLuint texture)
+void Gltext::render_c(GLuint texture, ShaderMng* shadermng)
 {
-    float scaletext = 0.319f;
-    glLoadIdentity(); checkGL();
-
-    glScalef(scaletext, scaletext, 1.0); checkGL();
-
-    glTranslatef(p_pos[0], p_pos[1], 0.f); checkGL();
-
-    glBindTexture(GL_TEXTURE_2D, texture); checkGL();
-
-    glEnable(GL_BLEND); checkGL();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    for (unsigned int i = 0; i != p_h; ++i)
-    {
-        glColor4fv(p_lines[i].color_b); checkGL();
-        glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
-    }
-
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    glDisable(GL_BLEND); checkGL();
-    glLoadIdentity(); checkGL();
+    render(texture, shadermng, true);
 }
 
-void Gltext::renderscale(float scale, GLuint texture)
+void Gltext::renderscale(float scale, GLuint texture, ShaderMng* shadermng)
 {
-    float scaletext = 0.319f;
-    glLoadIdentity(); checkGL();
-
-    glScalef(scaletext, scaletext, 1.0); checkGL();
-
-    glTranslatef(p_pos[0], p_pos[1], 0.f); checkGL();
-
-    glScalef(scale, scale, 1.0); checkGL();
-
-    glBindTexture(GL_TEXTURE_2D, texture); checkGL();
-
-    glEnable(GL_BLEND); checkGL();
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    for (unsigned int i = 0; i != p_h; ++i)
-    {
-        glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
-        glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
-    }
-
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-
-    glDisable(GL_BLEND); checkGL();
+    render(texture, shadermng, false, scale);
 }
 
 unsigned int Glfont::get_char_i(char c) const
@@ -136,6 +78,7 @@ void Gltext::puts(unsigned int i/*číslo řádku*/, const char* text)
         // délka textu se omezí délkou alokovaného pole pro výpis textu
         unsigned int textsz1 = std::min(utextsz, p_w); // použitá délka řádku
         p_lines[i].size = textsz1*4; // počet vrcholů na řádku pro render
+        p_lines[i].isize = textsz1*6; // počet vrcholů na řádku pro render
         float line_w = 0.f; // délka řádku je součet délek všech znaků a mezer mezi nimi, mezera je i za posledním znakem
         for (unsigned int i0 = 0; i0 != textsz1; ++i0)
             line_w += p_font->p_charmap[p_font->get_char_i(text[i0])].vertw + p_font->p_dist;
@@ -159,22 +102,22 @@ void Gltext::puts(unsigned int i/*číslo řádku*/, const char* text)
         {
             // x-ová souřadnice textu, ostatní byly nastaveny při inicializaci
             char_right = char_left + (p_font->p_charmap[p_font->get_char_i(text[j])].vertw)*p_fontsize;
-            p_lines[i].vert[(j*4+0)*3+0] = line_left+char_left;
-            p_lines[i].vert[(j*4+1)*3+0] = line_left+char_right;
-            p_lines[i].vert[(j*4+2)*3+0] = line_left+char_right;
-            p_lines[i].vert[(j*4+3)*3+0] = line_left+char_left;
+            p_lines[i].vert[(j*4+0)*5+0] = line_left+char_left;
+            p_lines[i].vert[(j*4+1)*5+0] = line_left+char_right;
+            p_lines[i].vert[(j*4+2)*5+0] = line_left+char_right;
+            p_lines[i].vert[(j*4+3)*5+0] = line_left+char_left;
             char_left = char_right + p_font->p_dist*p_fontsize;
 
             // texturové souřadnice
-            p_lines[i].texc[(j*4+0)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
-            p_lines[i].texc[(j*4+1)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
-            p_lines[i].texc[(j*4+2)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
-            p_lines[i].texc[(j*4+3)*2+0] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
+            p_lines[i].vert[(j*4+0)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
+            p_lines[i].vert[(j*4+1)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
+            p_lines[i].vert[(j*4+2)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[1];
+            p_lines[i].vert[(j*4+3)*5+3] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[0];
 
-            p_lines[i].texc[(j*4+0)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
-            p_lines[i].texc[(j*4+1)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
-            p_lines[i].texc[(j*4+2)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
-            p_lines[i].texc[(j*4+3)*2+1] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
+            p_lines[i].vert[(j*4+0)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
+            p_lines[i].vert[(j*4+1)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
+            p_lines[i].vert[(j*4+2)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
+            p_lines[i].vert[(j*4+3)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
         }
         // přechod na další řádek
         if (text[utextsz] == '\n')
@@ -194,20 +137,20 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
 {
     p_h = h;
     p_w = w;
-    p_lines = new Gltline[p_h];
+    p_lines.resize(p_h);
     p_fontsize = fontsize;
     p_cen_x = cen_x;
     p_cen_y = cen_y;
     p_font = font;
-    p_pos[0] = 0;
-    p_pos[1] = 0;
     for (unsigned int i = 0; i != p_h; ++i)
     {
         memcpy(p_lines[i].color_b, color_b, sizeof(float)*4);
         p_lines[i].size = 0; // max p_w*4
-        p_lines[i].vert = new float[p_w*4*3];
-        p_lines[i].texc = new float[p_w*4*2];
+        p_lines[i].vert.clear();
+        p_lines[i].vert.resize(p_w*4*5);
     }
+    indices.clear();
+    indices.resize(p_w*6);
     float text_h = float(p_h)*p_fontsize;
     float text_top = 0.f;
     if (p_cen_y == 0)
@@ -226,23 +169,33 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
         for (unsigned int j = 0; j != p_w; ++j)
         {
             // z-ové souřadnice textu jsou napevno -10
-            p_lines[i].vert[(j*4+0)*3+2] = -10.f;
-            p_lines[i].vert[(j*4+1)*3+2] = -10.f;
-            p_lines[i].vert[(j*4+2)*3+2] = -10.f;
-            p_lines[i].vert[(j*4+3)*3+2] = -10.f;
+            p_lines[i].vert[(j*4+0)*5+2] = -10.f;
+            p_lines[i].vert[(j*4+1)*5+2] = -10.f;
+            p_lines[i].vert[(j*4+2)*5+2] = -10.f;
+            p_lines[i].vert[(j*4+3)*5+2] = -10.f;
 
             // x-ové souřadnice se inicializují na 0
-            p_lines[i].vert[(j*4+0)*3+0] = 0.f;
-            p_lines[i].vert[(j*4+1)*3+0] = 0.f;
-            p_lines[i].vert[(j*4+2)*3+0] = 0.f;
-            p_lines[i].vert[(j*4+3)*3+0] = 0.f;
+            p_lines[i].vert[(j*4+0)*5+0] = 0.f;
+            p_lines[i].vert[(j*4+1)*5+0] = 0.f;
+            p_lines[i].vert[(j*4+2)*5+0] = 0.f;
+            p_lines[i].vert[(j*4+3)*5+0] = 0.f;
 
             // souřadnice se odečítají, protože pozice se počítá odspodu
-            p_lines[i].vert[(j*4+0)*3+1] = text_top-(float(i)+1.f)*p_fontsize;
-            p_lines[i].vert[(j*4+1)*3+1] = text_top-(float(i)+1.f)*p_fontsize;
-            p_lines[i].vert[(j*4+2)*3+1] = text_top-(float(i))*p_fontsize;
-            p_lines[i].vert[(j*4+3)*3+1] = text_top-(float(i))*p_fontsize;
+            p_lines[i].vert[(j*4+0)*5+1] = text_top-(float(i)+1.f)*p_fontsize;
+            p_lines[i].vert[(j*4+1)*5+1] = text_top-(float(i)+1.f)*p_fontsize;
+            p_lines[i].vert[(j*4+2)*5+1] = text_top-(float(i))*p_fontsize;
+            p_lines[i].vert[(j*4+3)*5+1] = text_top-(float(i))*p_fontsize;
         }
+    }
+
+    for (unsigned int j = 0; j != p_w; ++j)
+    {
+        indices[j * 6 + 0] = j * 4 + 0;
+        indices[j * 6 + 1] = j * 4 + 1;
+        indices[j * 6 + 2] = j * 4 + 2;
+        indices[j * 6 + 3] = j * 4 + 0;
+        indices[j * 6 + 4] = j * 4 + 2;
+        indices[j * 6 + 5] = j * 4 + 3;
     }
 }
 
@@ -255,7 +208,7 @@ void Glfont::init(const unsigned int mapsize[2]/*počet znaků*/, const unsigned
 
     Pict2 pict;
     gbuff_in.f_open(mapfname, "rb");
-    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
     //
 

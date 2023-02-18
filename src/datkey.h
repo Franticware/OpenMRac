@@ -13,10 +13,9 @@ struct Datfile {
 
 class Datdec { // tar file reader
 public:
-    Datdec() { }
-    ~Datdec() { }
     bool init(const char* fname);
     bool load(const char* fname);
+    bool exists(const char* fname) const;
     char p_fname[1024];
     std::vector<Datfile> p_files;
     std::vector<unsigned char> p_buff;

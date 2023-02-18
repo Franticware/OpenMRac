@@ -1,34 +1,13 @@
-#include "platform.h"
-
 #include "matmng.h"
 #include "cstring1.h"
-
 #include "pict2.h"
-
-#include "glhelpers1.h"
-#include "glext1.h"
-
 #include "bits.h"
-
 #include "gbuff_in.h"
 #include "load_texture.h"
+#include "gamemng.h"
 
 #include <algorithm>
 #include <cmath>
-
-#ifdef __MACOSX__
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#endif
-
-#ifndef __MACOSX__
-#ifndef GL_POLYGON_OFFSET
-#define GL_POLYGON_OFFSET GL_POLYGON_OFFSET_EXT
-#endif
-#endif
-
-//static const float g_envmap_shininess = 0.3f;//0.3f;
-static const float g_envmap_shininess = 1.f;//0.3f;
 
 void Rendermng::set_oc(const float frustum[6], const T3dm& t3dm)
 {
@@ -37,25 +16,25 @@ void Rendermng::set_oc(const float frustum[6], const T3dm& t3dm)
     float bbox_y[2] = {0.f, 0.f};
     float bbox_z[2] = {0.f, 0.f};
     bool bfirst = true;
-    for (unsigned int i = 0; i != t3dm.p_sz; ++i)
+    for (unsigned int i = 0; i != t3dm.p_o.size(); ++i)
     {
-        for (unsigned int j = 0; j != t3dm.p_o[i].p_sz; ++j)
+        for (unsigned int j = 0; j != t3dm.p_o[i].p_i.size(); ++j)
         {
             if (t3dm.p_o[i].p_gi != 1)
             {
                 if (bfirst)
                 {
-                    bbox_x[0] = bbox_x[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*3+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0];
-                    bbox_y[0] = bbox_y[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*3+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1];
-                    bbox_z[0] = bbox_z[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*3+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2];
+                    bbox_x[0] = bbox_x[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0];
+                    bbox_y[0] = bbox_y[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1];
+                    bbox_z[0] = bbox_z[1] = t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2];
                     bfirst = false;
                 } else {
-                    bbox_x[0] = std::min(bbox_x[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
-                    bbox_x[1] = std::max(bbox_x[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
-                    bbox_y[0] = std::min(bbox_y[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
-                    bbox_y[1] = std::max(bbox_y[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
-                    bbox_z[0] = std::min(bbox_z[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
-                    bbox_z[1] = std::max(bbox_z[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*3+2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
+                    bbox_x[0] = std::min(bbox_x[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
+                    bbox_x[1] = std::max(bbox_x[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos0]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+0]);
+                    bbox_y[0] = std::min(bbox_y[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
+                    bbox_y[1] = std::max(bbox_y[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos1]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+1]);
+                    bbox_z[0] = std::min(bbox_z[0], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
+                    bbox_z[1] = std::max(bbox_z[1], t3dm.p_v[t3dm.p_o[i].p_i[j]*(size_t)T3dmA::Count+(size_t)T3dmA::Pos2]+t3dm.p_cen[t3dm.p_o[i].p_gi*3+2]);
                 }
             }
         }
@@ -77,11 +56,12 @@ void Rendermng::set_oc(const float frustum[6], const T3dm& t3dm)
     p_octocube_base.init_frustum(frustum);
 }
 
-void Rendermng::init(const T3dm* t3dm, const Matmng* matmng, Octopus* octopus)
+void Rendermng::init(Gamemng* gamemng, const T3dm* t3dm, const Matmng* matmng, Octopus* octopus)
 {
     p_t3dm = t3dm;
     p_matmng = matmng;
     p_octopus = octopus;
+    p_gamemng = gamemng;
 }
 
 void Rendermng::render_o_pass1(const float* modelview_matrix)
@@ -100,212 +80,132 @@ void Rendermng::render_o_pass1_lim(const float* modelview_matrix, unsigned int f
         b_visible = p_octocube.test(modelview_matrix);
 }
 
-void Rendermng::render_o_pass3()
-{
-    if (!isVisible())
-        return;
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glEnableClientState(GL_NORMAL_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT, 0, p_t3dm->p_n); checkGL();
-    unsigned int k = 0;
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
-    {
-        Mat& material = p_matmng->p_mat[i];
-
-        if (material.special == 1)
-        {
-            glDisable(GL_LIGHTING); checkGL();
-            glDisable(GL_TEXTURE_2D); checkGL();
-            setStandardAlphaTest(false);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-            glEnable(GL_BLEND); checkGL();
-            glColor4f(0, 0, 0, 0.6); checkGL();
-
-            unsigned int l = k;
-
-            while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
-            {
-                // sem přidat transformace
-                if (p_t3dm->p_o[l].p_gi != 1)
-                {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
-                }
-                ++l;
-            }
-            glDisable(GL_BLEND); checkGL();
-            glEnable(GL_TEXTURE_2D); checkGL();
-            glEnable(GL_LIGHTING); checkGL();
-        }
-
-        if (material.benv_map)
-        {
-#if USE_CUBEMAP
-            glColor3f(g_envmap_shininess, g_envmap_shininess, g_envmap_shininess); checkGL();
-            glEnable(GL_BLEND); checkGL();
-            glBlendFunc(GL_ONE, GL_ONE); checkGL();
-            glDisable(GL_LIGHTING); checkGL();
-            glDisable(GL_TEXTURE_2D); checkGL();
-            glEnable(GL_TEXTURE_CUBE_MAP_ARB); checkGL();
-            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, p_skycmtex); checkGL();
-            glDepthFunc(GL_EQUAL); checkGL();
-            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB); checkGL();
-            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB); checkGL();
-            glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_ARB); checkGL();
-            glEnable(GL_TEXTURE_GEN_S); checkGL();
-            glEnable(GL_TEXTURE_GEN_T); checkGL();
-            glEnable(GL_TEXTURE_GEN_R); checkGL();
-            while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
-            {
-                // sem přidat transformace
-                if (p_t3dm->p_o[k].p_gi != 1)
-                {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL();
-                }
-                ++k;
-            }
-            glDepthFunc(GL_LESS); checkGL();
-            glEnable(GL_TEXTURE_2D); checkGL();
-            glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0); checkGL();
-            glDisable(GL_TEXTURE_CUBE_MAP_ARB); checkGL();
-            glEnable(GL_LIGHTING); checkGL();
-            glDisable(GL_BLEND); checkGL();
-            glDisable(GL_TEXTURE_GEN_S); checkGL();
-            glDisable(GL_TEXTURE_GEN_T); checkGL();
-            glDisable(GL_TEXTURE_GEN_R); checkGL();
-#else
-            glColor3f(g_envmap_shininess, g_envmap_shininess, g_envmap_shininess); checkGL();
-            glEnable(GL_BLEND); checkGL();
-            glBlendFunc(GL_ONE, GL_ONE); checkGL();
-            glDisable(GL_LIGHTING); checkGL();
-            glEnable(GL_TEXTURE_2D); checkGL();
-            glBindTexture(GL_TEXTURE_2D, p_skycmtex); checkGL();
-            glDepthFunc(GL_EQUAL); checkGL();
-            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-            glEnable(GL_TEXTURE_GEN_S); checkGL();
-            glEnable(GL_TEXTURE_GEN_T); checkGL();
-            while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
-            {
-                // sem přidat transformace
-                if (p_t3dm->p_o[k].p_gi != 1)
-                {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL();
-                }
-                ++k;
-            }
-            glDepthFunc(GL_LESS); checkGL();
-            glBindTexture(GL_TEXTURE_2D, 0); checkGL();
-            glEnable(GL_LIGHTING); checkGL();
-            glDisable(GL_BLEND); checkGL();
-            glDisable(GL_TEXTURE_GEN_S); checkGL();
-            glDisable(GL_TEXTURE_GEN_T); checkGL();
-#endif
-        }
-        else
-        {
-            while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
-                ++k;
-        }
-    }
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_NORMAL_ARRAY); checkGL();
-}
-
 void Rendermng::render_o_pass_s3()
 {
     if (!isVisible())
         return;
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
-    unsigned int l = 0;
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
-    {
-        Mat& material = p_matmng->p_mat[i];
 
-        glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
+    p_gamemng->p_shadermng.use(ShaderId::ColorTex);
+    p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
+
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+
+    unsigned int l = 0;
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
+    {
+        const Mat& material = p_matmng->p_mat[i];
+
+        if (material.texture)
+        {
+            glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, p_gamemng->p_whitetex); checkGL();
+        }
 
         if (material.special == 3)
         {
-#ifndef __MACOSX__
-            glEnable(GL_POLYGON_OFFSET);
-#else
-            glEnable(GL_POLYGON_OFFSET_FILL); 
-#endif
+            glEnable(GL_POLYGON_OFFSET_FILL);
+
             checkGL();
             glPolygonOffset(-2.f, -2.f); checkGL();
 
-            glDisable(GL_LIGHTING); checkGL();
-            setStandardAlphaTest(false);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
             glEnable(GL_BLEND); checkGL();
             glDepthMask(GL_FALSE); checkGL();
-            glColor4f(0, 0, 0, 0.7f); checkGL();
+            glVertexAttrib4f((GLuint)ShaderAttrib::Color, 0, 0, 0, 0.7f); checkGL();
 
-            while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+            while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
             {
                 // sem přidat transformace
                 if (p_t3dm->p_o[l].p_gi != 1)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
                 }
                 ++l;
             }
 
             glDisable(GL_BLEND); checkGL();
             glDisable(GL_POLYGON_OFFSET_FILL); checkGL();
-            glEnable(GL_LIGHTING); checkGL();
             glDepthMask(GL_TRUE); checkGL();
         } else {
-            while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+            while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 ++l;
         }
 
     }
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
 }
 
-void Rendermng::render_o_pass2()
+void Rendermng::render_o_pass2(const glm::mat4& m)
 {
     if (!isVisible())
         return;
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    if (p_matmng->p_bstatic_light)
-    {
-        glDisable(GL_LIGHTING); checkGL();
-        glEnableClientState(GL_COLOR_ARRAY); checkGL();
-        glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor); checkGL();
-    } else {
-        glEnable(GL_LIGHTING); checkGL();
-        glEnableClientState(GL_NORMAL_ARRAY); checkGL();
-    }
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT, 0, p_t3dm->p_n); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tan);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Bitan);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tan0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Bitan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Bitan0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
     unsigned int k = 0;
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
-        Mat& material = p_matmng->p_mat[i];
-        glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
-        if (material.balpha_test)
-            setStandardAlphaTest(true);
+        const Mat& material = p_matmng->p_mat[i];
+
+        if (material.bsunken)
+        {
+            glActiveTexture(GL_TEXTURE0 + (int)ShaderUniTex::Tex1);
+            glBindTexture(GL_TEXTURE_2D, material.texsunk); checkGL();
+            glActiveTexture(GL_TEXTURE0);
+        }
+
+        if (material.texture)
+        {
+            glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, p_gamemng->p_whitetex); checkGL();
+        }
+
+        //if (material.balpha_test) setStandardAlphaTest(true);
         if (!material.blighting)
         {
-            if (p_matmng->p_bstatic_light)
-            {
-                glDisableClientState(GL_COLOR_ARRAY); checkGL();
-            } else {
-                glDisable(GL_LIGHTING); checkGL();
-            }
-            glColor4fv(material.color); checkGL();
+            glVertexAttrib4fv((GLuint)ShaderAttrib::Color, material.color);
+            p_gamemng->p_shadermng.use(ShaderId::ColorTex);
+            p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)material.balpha_test);
         }
-        if (material.bboth_side && !p_matmng->p_bstatic_light)
+        else
         {
-            glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE); checkGL();
+            if (material.benv_map)
+            {
+                p_gamemng->p_shadermng.use(ShaderId::Car);
+            }
+            else
+            {
+                if (material.bsunken)
+                {
+                    p_gamemng->p_shadermng.use(ShaderId::LightTexSunk);
+                }
+                else
+                {
+                    p_gamemng->p_shadermng.use(ShaderId::LightTex);
+                }
+                p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)material.balpha_test);
+            }
+        }
+        if (material.bboth_side)
+        {
             glDisable(GL_CULL_FACE); checkGL();
         }
 
@@ -316,152 +216,204 @@ void Rendermng::render_o_pass2()
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
                 }
             }
         } else { // vykreslování objektu bez octopusu
             if (material.special == 0)
             {
-                while (k != p_t3dm->p_sz && p_t3dm->p_o[k].p_m == i)
+                while (k != p_t3dm->p_o.size() && p_t3dm->p_o[k].p_m == i)
                 {
                     // sem přidat transformace
-
                     if (p_t3dm->p_o[k].p_gi != 1)
                     {
                         if (p_transf)
                         {
-                            glPushMatrix(); checkGL();
-                            p_transf->mult_mwmx(p_t3dm->p_o[k].p_gi);
+                            glm::mat4 m2 = m * p_transf->mult_mwmx(p_t3dm->p_o[k].p_gi);
+                            p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m2);
                         }
-                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL();
+                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i.data()); checkGL();
                         if (p_transf)
                         {
-                            glPopMatrix(); checkGL();
+                            p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
                         }
                     }
                     ++k;
                 }
-            } else if (material.special == 1) { // if material.special == 1
+            } else if (material.special == 1) {
+
+                p_gamemng->p_shadermng.use(ShaderId::CarTop);
+
                 unsigned int l = k;
-                while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+                glDisable(GL_CULL_FACE);
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
                     ++l;
                 }
-                l = k;
-                //if (!material.blighting) // disable lighting
-                {
-                    if (p_matmng->p_bstatic_light)
-                    {
-                        glDisableClientState(GL_COLOR_ARRAY); checkGL();
-                    } else {
-                        glDisable(GL_LIGHTING); checkGL();
-                    }
-                }
-                glFrontFace(GL_CW); checkGL();
-                glColor4f(0, 0, 0, 1); checkGL();
-                while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
-                {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
-                    ++l;
-                }
-                glFrontFace(GL_CCW); checkGL();
-
-                if (p_matmng->p_bstatic_light)
-                {
-                    glEnableClientState(GL_COLOR_ARRAY); checkGL();
-                } else {
-                    glEnable(GL_LIGHTING); checkGL();
-                }
-
+                glEnable(GL_CULL_FACE);
                 k = l;
             } else { // přeskočení jiných typů materiálů než 0 a 1
                 unsigned int l = k;
-                while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
                     ++l;
                 }
-
                 k = l;
             }
         }
-
-        if (material.bboth_side && !p_matmng->p_bstatic_light)
+        if (material.bboth_side)
         {
-            glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE); checkGL();
             glEnable(GL_CULL_FACE); checkGL();
         }
-        if (material.bboth_side && p_matmng->p_bstatic_light)
-        {
-                glFrontFace(GL_CW); checkGL();
-                glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor_back); checkGL();
-                for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
-                {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
-                }
-                glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor); checkGL();
-                glFrontFace(GL_CCW); checkGL();
-        }
+    }
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tan);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Bitan);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+}
 
-        if (material.balpha_test)
-            setStandardAlphaTest(false);
-        if (!material.blighting)
+void Rendermng::render_o_pass_glassTint(const glm::mat4& m)
+{
+    if (!isVisible())
+        return;
+    p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    unsigned int k = 0;
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
+    {
+        const Mat& material = p_matmng->p_mat[i];
+        if (material.texture)
         {
-            if (p_matmng->p_bstatic_light)
-            {
-                glEnableClientState(GL_COLOR_ARRAY); checkGL();
-            } else {
-                glEnable(GL_LIGHTING); checkGL();
+            glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, p_gamemng->p_whitetex); checkGL();
+        }
+        if (p_octopus == NULL)
+        {
+            if (material.special == 1) {
+                p_gamemng->p_shadermng.use(ShaderId::GlassTint);
+                unsigned int l = k;
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
+                {
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
+                    ++l;
+                }
+                k = l;
+            } else { // přeskočení jiných typů materiálů než 0 a 1
+                unsigned int l = k;
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
+                {
+                    ++l;
+                }
+                k = l;
             }
         }
     }
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    if (p_matmng->p_bstatic_light)
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+}
+
+void Rendermng::render_o_pass_glassReflection(const glm::mat4& m)
+{
+    if (!isVisible())
+        return;
+    p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    unsigned int k = 0;
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
-        glDisableClientState(GL_COLOR_ARRAY); checkGL();
+        const Mat& material = p_matmng->p_mat[i];
+        if (material.texture)
+        {
+            glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, p_gamemng->p_whitetex); checkGL();
+        }
+        if (p_octopus == NULL)
+        {
+            if (material.special == 1) {
+                p_gamemng->p_shadermng.use(ShaderId::GlassReflection);
+                unsigned int l = k;
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
+                {
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
+                    ++l;
+                }
+                k = l;
+            } else { // přeskočení jiných typů materiálů než 0 a 1
+                unsigned int l = k;
+                while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
+                {
+                    ++l;
+                }
+                k = l;
+            }
+        }
     }
-    else
-    {
-        glDisableClientState(GL_NORMAL_ARRAY); checkGL();
-    }
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glDisable(GL_BLEND);
 }
 
 void Rendermng::render_o_pass_s2()
 {
-    if (p_boctocube && !b_visible)
-        return;
-    glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-    if (p_matmng->p_bstatic_light)
-    {
-        glDisable(GL_LIGHTING); checkGL();
-        glEnableClientState(GL_COLOR_ARRAY); checkGL();
-        glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor); checkGL();
-    } else {
-        glEnable(GL_LIGHTING); checkGL();
-        glEnableClientState(GL_NORMAL_ARRAY); checkGL();
-    }
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
-    glVertexPointer(3,GL_FLOAT,0,p_t3dm->p_v); checkGL();
-    glNormalPointer(GL_FLOAT, 0, p_t3dm->p_n); checkGL();
-    glTexCoordPointer(2,GL_FLOAT,0,p_t3dm->p_t); checkGL();
-
     glEnable(GL_BLEND); checkGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
 
-    for (unsigned int i = 0; i != p_matmng->p_m_sz; ++i)
+    if (p_boctocube && !b_visible)
+        return;
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count,p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count,p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
-        Mat& material = p_matmng->p_mat[i];
-        glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
+        const Mat& material = p_matmng->p_mat[i];
+        if (material.texture)
+        {
+            glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, p_gamemng->p_whitetex); checkGL();
+        }
         if (!material.blighting)
         {
-            if (p_matmng->p_bstatic_light)
-            {
-                glDisableClientState(GL_COLOR_ARRAY); checkGL();
-            } else {
-                glDisable(GL_LIGHTING); checkGL();
-            }
-            glColor4fv(material.color); checkGL();
+            p_gamemng->p_shadermng.use(ShaderId::ColorTex);
+            p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
+            glVertexAttrib4fv((GLuint)ShaderAttrib::Color, material.color); checkGL();
+        }
+        else
+        {
+            p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
+            p_gamemng->p_shadermng.use(ShaderId::LightTex);
         }
 
         // TADY JE TO GRÓ
@@ -471,33 +423,15 @@ void Rendermng::render_o_pass_s2()
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
                 }
-            }
-        }
-
-        if (!material.blighting)
-        {
-            if (p_matmng->p_bstatic_light)
-            {
-                glEnableClientState(GL_COLOR_ARRAY); checkGL();
-            } else {
-                glEnable(GL_LIGHTING); checkGL();
             }
         }
     }
     glDisable(GL_BLEND); checkGL();
-
-    glDisableClientState(GL_VERTEX_ARRAY); checkGL();
-    if (p_matmng->p_bstatic_light)
-    {
-        glDisableClientState(GL_COLOR_ARRAY); checkGL();
-    }
-    else
-    {
-        glDisableClientState(GL_NORMAL_ARRAY); checkGL();
-    }
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
 }
 
 void Mat::default_mat()
@@ -516,6 +450,21 @@ void Mat::load(const char* fname)
 
     if (!gbuff_in.f_open(fname, "r"))
         return;
+
+    if (strSuff(fname, ".3mt"))
+    {
+        strncpy(suna_name, fname, sizeof(suna_name)-1);
+        suna_name[strlen(suna_name)-7] = 0;
+        strncat1(suna_name, suna_name, "sunk.png", sizeof(suna_name));
+        strncpy(sund_name, fname, sizeof(sund_name)-1);
+        sund_name[strlen(sund_name)-7] = 0;
+        strncat1(sund_name, sund_name, "sunkc.png", sizeof(sund_name));
+        if (gbuff_in.exists(suna_name) && gbuff_in.exists(sund_name))
+        {
+            bsunken = true;
+        }
+    }
+
     char buff[1024];
     if (gbuff_in.fgets(buff, 1024))
     {
@@ -529,6 +478,10 @@ void Mat::load(const char* fname)
         gbuff_in.fclose();
         return;
     }
+    /*if (bsunken)
+    {
+        bmipmap = false;
+    }*/
     if (gbuff_in.fgets(buff, 1024))
     {
         uncomment(buff);
@@ -593,47 +546,24 @@ inline float minfloat(float f1, float f2)
     return (f1 < f2) ? f1 : f2;
 }
 
-void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolor, const float* lightpos)
+void Matmng::load(const T3dm* t3dm)
 {
     p_t3dm = t3dm;
-    p_m_sz = p_t3dm->p_m_sz;
-    p_mat = new Mat[p_m_sz];
+    //p_m_sz = p_t3dm->p_m.size();
+    p_mat.resize(p_t3dm->p_m.size());
     char buff[256] = {0};
-    for (unsigned int i = 0; i != p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_mat.size(); ++i)
     {
-        if (*(p_t3dm->p_m[i]))
+        if (!p_t3dm->p_m[i].empty())
         {
-            strncat1(buff, p_t3dm->p_m[i], ".3mt", 256);
+            strncat1(buff, p_t3dm->p_m[i].c_str(), ".3mt", 256);
             p_mat[i].load(buff);
         } else {
             p_mat[i].load("");
         }
     }
-    if (diffcolor && ambcolor && lightpos) // je zadáno světlo pro výpočet osvětlení
-    {
-        p_bstatic_light = true;
-        p_vcolor = new float[p_t3dm->p_v_sz*4];
-        p_vcolor_back = new float[p_t3dm->p_v_sz*4];
-        for (unsigned int i = 0; i != p_t3dm->p_v_sz; ++i)
-        {
-            float nl = lightpos[0]*p_t3dm->p_n[i*3]+lightpos[1]*p_t3dm->p_n[i*3+1]+lightpos[2]*p_t3dm->p_n[i*3+2];
-            for (unsigned int j = 0; j != 3; ++j)
-            {
-                p_vcolor[i*4+j] = minfloat(maxfloat(ambcolor[j]+maxfloat(diffcolor[j]*nl, 0.f), 0.f), 1.f);
-            }
-            p_vcolor[i*4+3] = 1.f;
-            for (unsigned int j = 0; j != 3; ++j)
-            {
-                p_vcolor_back[i*4+j] = minfloat(maxfloat(ambcolor[j]+maxfloat(diffcolor[j]*(-nl), 0.f), 0.f), 1.f);
-            }
-            p_vcolor_back[i*4+3] = 1.f;
-        }
-        //I=c_a I_a +c_d I_d (NL) // +c_s I_s (VR)^n // specular u statického osvětlení nebude
-    } else {
-        p_bstatic_light = false;
-    }
     // načíst textury
-    for (unsigned int i = 0; i != p_m_sz; ++i)
+    for (unsigned int i = 0; i != p_mat.size(); ++i)
     {
         bool bsame = false;
         for (unsigned int j = 0; j != i; ++j)
@@ -647,7 +577,7 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 break;
             }
         }
-        
+
         if (*(p_mat[i].texd_name) && !bsame)
         {
             if (*(p_mat[i].texa_name)) // 32 bit
@@ -656,13 +586,13 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 if (strSuff(p_mat[i].texd_name, ".jpg"))
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 else
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 Pict2 picta;
@@ -670,19 +600,18 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 if (strSuff(p_mat[i].texa_name, ".jpg"))
                 {
                     gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                    picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                    picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 else
                 {
                     gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                    picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                    picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
-#if !defined(__MACOSX__) && !defined(__MORPHOS__) && !defined(__amigaos4__)
                     if (g_multisampleMode && strcmp(p_mat[i].texa_name, "stromy0a.png") == 0)
                     {
                         forceMipmap = true;
-                        for (int i = 0; i != picta.w() * picta.h() * picta.d(); ++i)
+                        for (int i = 0; i != picta.w() * picta.h() * 4; ++i)
                         {
                             float oldValue = picta.px()[i] / 255.f;
                             float newValue = ((oldValue - 0.5) * 1.4 + 0.5) * 255.f;
@@ -691,28 +620,21 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                             picta.px()[i] = newValue;
                         }
                     }
-#endif
                 }
-                //bool alphaReplaced =
-                pict.replace_alpha(picta);
-                //assert(alphaReplaced);
-                //if (!alphaReplaced)
-                //{
-                //    fprintf(stderr, "%s %d %d; %s %d %d\n", p_mat[i].texd_name, pict.w(), pict.h(), p_mat[i].texa_name, picta.w(), picta.h());
-                //}
+                pict.r2a(picta);
                 p_mat[i].texture = load_texture(pict, p_mat[i].bmipmap || forceMipmap);
             } else { // 24 bit
                 Pict2 pict;
                 if (strSuff(p_mat[i].texd_name, ".jpg"))
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+                    pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 else
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+                    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
                 p_mat[i].texture = load_texture(pict, p_mat[i].bmipmap);
@@ -724,16 +646,38 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
             if (strSuff(p_mat[i].texa_name, ".jpg"))
             {
                 gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                 gbuff_in.fclose();
             }
             else
             {
                 gbuff_in.f_open(p_mat[i].texa_name, "rb");
-                picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+                picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                 gbuff_in.fclose();
             }
-            p_mat[i].texture = load_texture_alpha(picta, p_mat[i].bmipmap);
+            picta.r2a();
+            p_mat[i].texture = load_texture(picta, p_mat[i].bmipmap);
+        }
+        if (p_mat[i].bsunken)
+        {
+            Pict2 pict;
+            {
+                gbuff_in.f_open(p_mat[i].sund_name, "rb");
+                pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+                gbuff_in.fclose();
+            }
+            Pict2 picta;
+            {
+                gbuff_in.f_open(p_mat[i].suna_name, "rb");
+                picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+                gbuff_in.fclose();
+            }
+            pict.r2a(picta);
+            p_mat[i].texsunk = load_texture(pict, false);
+            glBindTexture(GL_TEXTURE_2D, p_mat[i].texsunk); checkGL();
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); checkGL();
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); checkGL();
+            glBindTexture(GL_TEXTURE_2D, 0); checkGL();
         }
     }
 }

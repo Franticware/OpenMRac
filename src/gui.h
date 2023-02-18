@@ -1,18 +1,24 @@
 #ifndef GUI_H
 #define GUI_H
 
+#include <SDL2/SDL.h>
+
 #include <string>
 #include <vector>
+#include <tuple>
 
-//#include <cassert>
+struct GUI_Surface
+{
+    Uint32 w, h;
+    std::vector<Uint32> pixels;
+};
 
-#include <SDL/SDL.h>
+int GUI_BlitSurface(const GUI_Surface&    src,
+                    const SDL_Rect* srcrect,
+                    GUI_Surface&    dst,
+                    const SDL_Rect*       dstrect);
 
-#ifdef SURFACE_MASK
-#error SURFACE_MASK already defined
-#endif
-
-#define SURFACE_MASK 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000
+int GUI_FillRect(GUI_Surface& dst, const SDL_Rect* rect, Uint32 color);
 
 struct GuiFont
 {
@@ -26,19 +32,17 @@ struct GuiFont
 
 struct GuiData
 {
-    GuiData();
-    ~GuiData();
     void initData();
 
     std::vector<Uint32> m_whiteFontPixels;
-    SDL_Surface* m_whiteFontSurface;
+    GUI_Surface m_whiteFontSurface;
 
     std::vector<Uint32> m_blackFontPixels;
-    SDL_Surface* m_blackFontSurface;
+    GUI_Surface m_blackFontSurface;
 
-    SDL_Surface* m_guiComboSurface;
-    SDL_Surface* m_guiCornersSurface;
-    SDL_Surface* m_guiTickSurface;
+    GUI_Surface m_guiComboSurface;
+    GUI_Surface m_guiCornersSurface;
+    GUI_Surface m_guiTickSurface;
 
     static const Uint32 COLOR_BACKGROUND1;
     static const Uint32 COLOR_BUTTON;
@@ -89,12 +93,45 @@ struct GuiItem
     {
         //assert(type != COMBO);
     }
+    GuiItem(EType type, std::tuple<int, int> xw, std::tuple<int, int> yh, const std::string& text = std::string()) :
+        type(type),
+        x(std::get<0>(xw)),
+        y(std::get<0>(yh)),
+        width(std::get<1>(xw)),
+        height(std::get<1>(yh)),
+        text(text),
+        checked(false),
+        items(std::vector<std::string>()),
+        currentItem(0),
+        itemHeight(20),
+        visibleItemCount(2),
+        pressedByKey(false)
+    {
+        //assert(type != COMBO);
+    }
     GuiItem(EType type, int x, int y, int width, int height, const std::vector<std::string>& items, int currentItem, int itemHeight, int visibleItemCount) :
         type(type),
         x(x),
         y(y),
         width(width),
         height(height),
+        text(""),
+        checked(false),
+        items(items),
+        currentItem(currentItem),
+        itemHeight(itemHeight),
+        visibleItemCount(visibleItemCount),
+        pressedByKey(false)
+    {
+        //assert(type == COMBO);
+        //assert(visibleItemCount >= 2);
+    }
+    GuiItem(EType type, std::tuple<int, int> xw, std::tuple<int, int> yh, const std::vector<std::string>& items, int currentItem, int itemHeight, int visibleItemCount) :
+        type(type),
+        x(std::get<0>(xw)),
+        y(std::get<0>(yh)),
+        width(std::get<1>(xw)),
+        height(std::get<1>(yh)),
         text(""),
         checked(false),
         items(items),
@@ -128,7 +165,6 @@ class GuiDialog
 {
 public:
     GuiDialog();
-    ~GuiDialog();
 
     void init(int width, int height, const char* caption);
 
@@ -144,15 +180,18 @@ public:
 
     virtual void onButton(int itemIndex);
 
-    virtual void onKeyDown(SDLKey k);
+    virtual void onKeyDown(SDL_Keycode k);
 
-    virtual void onKeyUp(SDLKey k);
+    virtual void onKeyUp(SDL_Keycode k);
 
     int m_width, m_height;
     std::string m_caption;
 
-    SDL_Surface* m_windowSurface;
-    SDL_Surface* m_backSurface;
+    SDL_Window* m_guiWindow;
+    SDL_Renderer* m_renderer;
+    SDL_Texture* m_texture;
+
+    GUI_Surface m_backSurface;
 
     std::vector<GuiItem> m_items;
 
@@ -164,6 +203,10 @@ public:
     int m_state; // 0 - none, 1 - mouseOver, 2 - mouseDown
     int m_stateItem;
     int m_stateExpandedComboItem;
+
+    int m_lastMouseX;
+    int m_lastMouseY;
+
 
     bool m_paint;
 

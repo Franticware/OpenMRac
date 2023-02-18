@@ -1,27 +1,107 @@
 #include "gui.h"
 
+inline Uint32 GUI_BlendChan(Uint8 s, Uint8 d, Uint8 a)
+{
+    Uint32 alpha = a;
+    Uint32 reva = 255 - alpha;
+    Uint32 sc = s;
+    Uint32 dc = d;
+    return (sc * alpha + dc * reva) / 255;
+}
+
+inline void GUI_Blend(Uint32 src, Uint32& dst)
+{
+    Uint8 alpha = src >> 24;
+
+    Uint8 sr = src >> 16;
+    Uint8 sg = src >> 8;
+    Uint8 sb = src;
+
+    Uint8 dr = dst >> 16;
+    Uint8 dg = dst >> 8;
+    Uint8 db = dst;
+
+    dst = 0xff000000 | (GUI_BlendChan(sr, dr, alpha) << 16) | (GUI_BlendChan(sg, dg, alpha) << 8) | (GUI_BlendChan(sb, db, alpha));
+}
+
+/* The width and height in srcrect determine the size of the copied rectangle. Only the position is used in the dstrect (the width and height are ignored). Blits with negative dstrect coordinates will be clipped properly.
+If srcrect is NULL, the entire surface is copied. If dstrect is NULL, then the destination position (upper left corner) is (0, 0). */
+int GUI_BlitSurface(const GUI_Surface&    src,
+                    const SDL_Rect* srcrect,
+                    GUI_Surface&    dst,
+                    const SDL_Rect*       dstrect)
+{
+    SDL_Rect srcaux;
+    if (srcrect == 0)
+    {
+        srcaux.x = 0;
+        srcaux.y = 0;
+        srcaux.w = src.w;
+        srcaux.h = src.h;
+        srcrect = &srcaux;
+    }
+
+    SDL_Rect dstaux;
+    if (dstrect == 0)
+    {
+        dstaux.x = 0;
+        dstaux.y = 0;
+        dstrect = &dstaux;
+    }
+
+    for (int y = 0; y != srcrect->h; ++y)
+    {
+        int yi = y + srcrect->y;
+        int yo = y + dstrect->y;
+        if (yi >= 0 && yi < int(src.h) && yo >= 0 && yo < int(dst.h))
+        {
+            for (int x = 0; x != srcrect->w; ++x)
+            {
+                int xi = x + srcrect->x;
+                int xo = x + dstrect->x;
+                if (xi >= 0 && xi < int(src.w) && xo >= 0 && xo < int(dst.w))
+                {
+                    //dst.pixels[xo + yo * dst.w] = src.pixels[xi + yi * src.w];
+                    GUI_Blend(src.pixels[xi + yi * src.w], dst.pixels[xo + yo * dst.w]);
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+int GUI_FillRect(GUI_Surface& dst, const SDL_Rect* rect, Uint32 color)
+{
+    SDL_Rect aux;
+    if (rect == 0)
+    {
+        aux.x = 0;
+        aux.y = 0;
+        aux.w = dst.w;
+        aux.h = dst.h;
+        rect = &aux;
+    }
+
+    for (int y = 0; y < int(rect->h); ++y)
+    {
+        int y1 = y + rect->y;
+        if (y1 >= 0 && y1 < int(dst.h))
+        {
+            for (int x = 0; x != rect->w; ++x)
+            {
+                int x1 = x + rect->x;
+                if (x1 >= 0 && x1 < int(dst.w))
+                {
+                    dst.pixels[x1 + y1 * dst.w] = color;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+
 /// GuiData ///
-
-GuiData::GuiData()
-{
-    m_whiteFontSurface = 0;
-    m_blackFontSurface = 0;
-    m_guiComboSurface = 0;
-    m_guiCornersSurface = 0;
-    m_guiTickSurface = 0;
-}
-
-GuiData::~GuiData()
-{
-    if (m_whiteFontSurface)
-    {
-        SDL_FreeSurface(m_whiteFontSurface);
-    }
-    if (m_blackFontSurface)
-    {
-        SDL_FreeSurface(m_blackFontSurface);
-    }
-}
 
 void GuiData::initData()
 {
@@ -33,7 +113,9 @@ void GuiData::initData()
         pixel |= 0x00ffffff;
         m_whiteFontPixels[i] = pixel;
     }
-    m_whiteFontSurface = SDL_CreateRGBSurfaceFrom(&(m_whiteFontPixels[0]), GuiFont::WIDTH, GuiFont::HEIGHT, 32, GuiFont::WIDTH * 4, SURFACE_MASK);
+    m_whiteFontSurface.w = GuiFont::WIDTH;
+    m_whiteFontSurface.h = GuiFont::HEIGHT;
+    m_whiteFontSurface.pixels = m_whiteFontPixels;
 
     m_blackFontPixels.resize(GuiFont::WIDTH * GuiFont::HEIGHT);
     for (int i = 0; i != GuiFont::WIDTH * GuiFont::HEIGHT; ++i)
@@ -43,11 +125,21 @@ void GuiData::initData()
         pixel |= 0x00000000;
         m_blackFontPixels[i] = pixel;
     }
-    m_blackFontSurface = SDL_CreateRGBSurfaceFrom(&(m_blackFontPixels[0]), GuiFont::WIDTH, GuiFont::HEIGHT, 32, GuiFont::WIDTH * 4, SURFACE_MASK);
+    m_blackFontSurface.w = GuiFont::WIDTH;
+    m_blackFontSurface.h = GuiFont::HEIGHT;
+    m_blackFontSurface.pixels = m_blackFontPixels;
 
-    m_guiComboSurface = SDL_CreateRGBSurfaceFrom(COMBO_SURFACE_DATA, COMBO_SURFACE_WIDTH, COMBO_SURFACE_HEIGHT, 32, COMBO_SURFACE_WIDTH * 4, SURFACE_MASK);
-    m_guiCornersSurface = SDL_CreateRGBSurfaceFrom(CORNERS_SURFACE_DATA, CORNERS_SURFACE_WIDTH, CORNERS_SURFACE_HEIGHT, 32, CORNERS_SURFACE_WIDTH * 4, SURFACE_MASK);
-    m_guiTickSurface = SDL_CreateRGBSurfaceFrom(TICK_SURFACE_DATA, TICK_SURFACE_WIDTH, TICK_SURFACE_HEIGHT, 32, TICK_SURFACE_WIDTH * 4, SURFACE_MASK);
+    m_guiComboSurface.w = COMBO_SURFACE_WIDTH;
+    m_guiComboSurface.h = COMBO_SURFACE_HEIGHT;
+    m_guiComboSurface.pixels.assign(COMBO_SURFACE_DATA, COMBO_SURFACE_DATA + m_guiComboSurface.w * m_guiComboSurface.h);
+
+    m_guiCornersSurface.w = CORNERS_SURFACE_WIDTH;
+    m_guiCornersSurface.h = CORNERS_SURFACE_HEIGHT;
+    m_guiCornersSurface.pixels.assign(CORNERS_SURFACE_DATA, CORNERS_SURFACE_DATA + m_guiCornersSurface.w * m_guiCornersSurface.h);
+
+    m_guiTickSurface.w = TICK_SURFACE_WIDTH;
+    m_guiTickSurface.h = TICK_SURFACE_HEIGHT;
+    m_guiTickSurface.pixels.assign(TICK_SURFACE_DATA, TICK_SURFACE_DATA + TICK_SURFACE_WIDTH * TICK_SURFACE_HEIGHT);
 }
 
 /*static*/ const Uint32 GuiData::COLOR_BACKGROUND1 = 0xff2c2c2c;
@@ -118,8 +210,6 @@ GuiDialog::GuiDialog()
 
     m_guiData.initData();
 
-    m_backSurface = 0;
-
     m_whiteFont = true;
 
     m_expandedItem = -1;
@@ -132,14 +222,9 @@ GuiDialog::GuiDialog()
 
     m_eventLoopDone = false;
 
-}
+    m_lastMouseX = 0;
+    m_lastMouseY = 0;
 
-GuiDialog::~GuiDialog()
-{
-    if (m_backSurface)
-    {
-        SDL_FreeSurface(m_backSurface);
-    }
 }
 
 void GuiDialog::init(int width, int height, const char* caption)
@@ -183,7 +268,7 @@ void GuiDialog::drawText(const char* text, int x, int y, int width)
             dstRect.y = y + 1;
             dstRect.w = w;
             dstRect.h = GuiFont::HEIGHT;
-            SDL_BlitSurface(m_whiteFont ? m_guiData.m_whiteFontSurface : m_guiData.m_blackFontSurface, &srcRect, m_backSurface, &dstRect);
+            GUI_BlitSurface(m_whiteFont ? m_guiData.m_whiteFontSurface : m_guiData.m_blackFontSurface, &srcRect, m_backSurface, &dstRect);
         }
         left += GuiFont::CHARACTER_WIDTHS[u];
     }
@@ -238,16 +323,14 @@ void GuiDialog::drawCenteredText(const char* text, int x, int y)
         dstRect.y = y + 1;
         dstRect.w = GuiFont::CHARACTER_WIDTHS[u];
         dstRect.h = GuiFont::HEIGHT;
-        SDL_BlitSurface(m_guiData.m_whiteFontSurface, &srcRect, m_backSurface, &dstRect);
+        GUI_BlitSurface(m_guiData.m_whiteFontSurface, &srcRect, m_backSurface, &dstRect);
         left += GuiFont::CHARACTER_WIDTHS[u];
     }
 }
 
 void GuiDialog::paint()
 {
-    SDL_FillRect(m_backSurface, 0, GuiData::COLOR_BACKGROUND1);
-
-
+    GUI_FillRect(m_backSurface, 0, GuiData::COLOR_BACKGROUND1);
     for (int i = 0; i != static_cast<int>(m_items.size()); ++i)
     {
         GuiItem& item = m_items[i];
@@ -258,14 +341,14 @@ void GuiDialog::paint()
             rectQuadOuter.y = item.y;
             rectQuadOuter.w = item.width;
             rectQuadOuter.h = item.height;
-            SDL_FillRect(m_backSurface, &rectQuadOuter, GuiData::COLOR_FRAME);
+            GUI_FillRect(m_backSurface, &rectQuadOuter, GuiData::COLOR_FRAME);
 
             SDL_Rect rectQuadInner;
             rectQuadInner.x = item.x+1;
             rectQuadInner.y = item.y+1;
             rectQuadInner.w = item.width-2;
             rectQuadInner.h = item.height-2;
-            SDL_FillRect(m_backSurface, &rectQuadInner, GuiData::COLOR_BACKGROUND1);
+            GUI_FillRect(m_backSurface, &rectQuadInner, GuiData::COLOR_BACKGROUND1);
         }
         else if (item.type == GuiItem::COMBO)
         {
@@ -274,13 +357,13 @@ void GuiDialog::paint()
             rectA.y = item.y;
             rectA.w = item.width;
             rectA.h = item.height;
-            SDL_FillRect(m_backSurface, &rectA, GuiData::COLOR_EDGE);
+            GUI_FillRect(m_backSurface, &rectA, GuiData::COLOR_EDGE);
             SDL_Rect rectB;
             rectB.x = item.x+1;
             rectB.y = item.y+1;
             rectB.w = item.width-2;
             rectB.h = item.height-2;
-            SDL_FillRect(m_backSurface, &rectB, (m_state != 0 && m_stateItem == i && m_expandedItem == -1) ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
+            GUI_FillRect(m_backSurface, &rectB, (m_state != 0 && m_stateItem == i && m_expandedItem == -1) ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
 
             SDL_Rect rectSrc;
             SDL_Rect rectDst;
@@ -294,7 +377,7 @@ void GuiDialog::paint()
             rectDst.y = item.y;
             rectDst.w = 3;
             rectDst.h = 3;
-            SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+            GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
 
             // top right
             rectSrc.x = 3;
@@ -305,7 +388,7 @@ void GuiDialog::paint()
             rectDst.y = item.y;
             rectDst.w = 3;
             rectDst.h = 3;
-            SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+            GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
 
             //if (i != m_expandedItem)
             {
@@ -318,7 +401,7 @@ void GuiDialog::paint()
                 rectDst.y = item.y+item.height-3;
                 rectDst.w = 3;
                 rectDst.h = 3;
-                SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+                GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
 
                 // bottom left
                 rectSrc.x = 3;
@@ -329,7 +412,7 @@ void GuiDialog::paint()
                 rectDst.y = item.y+item.height-3;
                 rectDst.w = 3;
                 rectDst.h = 3;
-                SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+                GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
             }
 
             if (item.currentItem >= 0 && item.currentItem < static_cast<int>(item.items.size()))
@@ -345,7 +428,7 @@ void GuiDialog::paint()
             rectDst.y = item.y + (item.height - 4) / 2;
             rectDst.w = 8;
             rectDst.h = 4;
-            SDL_BlitSurface(m_guiData.m_guiComboSurface, &rectSrc, m_backSurface, &rectDst);
+            GUI_BlitSurface(m_guiData.m_guiComboSurface, &rectSrc, m_backSurface, &rectDst);
         }
         else if (item.type == GuiItem::BUTTON)
         {
@@ -354,14 +437,14 @@ void GuiDialog::paint()
             rectQuadOuter.y = item.y;
             rectQuadOuter.w = item.width;
             rectQuadOuter.h = item.height;
-            SDL_FillRect(m_backSurface, &rectQuadOuter, GuiData::COLOR_EDGE);
+            GUI_FillRect(m_backSurface, &rectQuadOuter, GuiData::COLOR_EDGE);
 
             SDL_Rect rectQuadInner;
             rectQuadInner.x = item.x+1;
             rectQuadInner.y = item.y+1;
             rectQuadInner.w = item.width-2;
             rectQuadInner.h = item.height-2;
-            SDL_FillRect(m_backSurface, &rectQuadInner, item.pressedByKey ? GuiData::COLOR_CLICKED : ((m_state != 0 && m_stateItem == i && m_expandedItem == -1) ? stateToColor(m_state) : GuiData::COLOR_BUTTON));
+            GUI_FillRect(m_backSurface, &rectQuadInner, item.pressedByKey ? GuiData::COLOR_CLICKED : ((m_state != 0 && m_stateItem == i && m_expandedItem == -1) ? stateToColor(m_state) : GuiData::COLOR_BUTTON));
 
             SDL_Rect rectSrc;
             SDL_Rect rectDst;
@@ -375,7 +458,7 @@ void GuiDialog::paint()
             rectDst.y = item.y;
             rectDst.w = 3;
             rectDst.h = 3;
-            SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+            GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
 
             // top right
             rectSrc.x = 3;
@@ -386,7 +469,7 @@ void GuiDialog::paint()
             rectDst.y = item.y;
             rectDst.w = 3;
             rectDst.h = 3;
-            SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+            GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
 
             // bottom left
             rectSrc.x = 0;
@@ -397,7 +480,7 @@ void GuiDialog::paint()
             rectDst.y = item.y+item.height-3;
             rectDst.w = 3;
             rectDst.h = 3;
-            SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+            GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
 
             // bottom left
             rectSrc.x = 3;
@@ -408,7 +491,7 @@ void GuiDialog::paint()
             rectDst.y = item.y+item.height-3;
             rectDst.w = 3;
             rectDst.h = 3;
-            SDL_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
+            GUI_BlitSurface(m_guiData.m_guiCornersSurface, &rectSrc, m_backSurface, &rectDst);
 
             drawCenteredText(item.text.c_str(), item.x + item.width / 2, item.y + (item.height - 18) / 2);
 
@@ -424,21 +507,21 @@ void GuiDialog::paint()
             rectDst.y = item.y + (item.height - 14) / 2;
             rectDst.w = 14;
             rectDst.h = 14;
-            SDL_FillRect(m_backSurface, &rectDst, GuiData::COLOR_EDGE);
+            GUI_FillRect(m_backSurface, &rectDst, GuiData::COLOR_EDGE);
 
             rectDst.x = item.x + 1;
             rectDst.y = item.y + (item.height - 14) / 2 + 1;
             rectDst.w = 12;
             rectDst.h = 12;
-            SDL_FillRect(m_backSurface, &rectDst, (m_state != 0 && m_stateItem == i && m_expandedItem == -1) ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
+            GUI_FillRect(m_backSurface, &rectDst, (m_state != 0 && m_stateItem == i && m_expandedItem == -1) ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
 
             if (item.checked)
             {
                 rectDst.x = item.x + 2;
                 rectDst.y = item.y + (item.height - 14) / 2 + 3;
-                rectDst.w = m_guiData.m_guiTickSurface->w;
-                rectDst.h = m_guiData.m_guiTickSurface->h;
-                SDL_BlitSurface(m_guiData.m_guiTickSurface, 0, m_backSurface, &rectDst);
+                rectDst.w = m_guiData.m_guiTickSurface.w;
+                rectDst.h = m_guiData.m_guiTickSurface.h;
+                GUI_BlitSurface(m_guiData.m_guiTickSurface, 0, m_backSurface, &rectDst);
             }
 
             drawText(item.text.c_str(), item.x + 18, item.y + (item.height - 18) / 2, item.width - 18);
@@ -462,13 +545,13 @@ void GuiDialog::paint()
                 rectDst.y = item.y + item.height - 1;
                 rectDst.w = item.width;
                 rectDst.h = item.itemHeight * fields + 2;
-                SDL_FillRect(m_backSurface, &rectDst, GuiData::COLOR_EDGE);
+                GUI_FillRect(m_backSurface, &rectDst, GuiData::COLOR_EDGE);
 
                 rectDst.x = item.x + 1;
                 rectDst.y = item.y + 1 + item.height - 1;
                 rectDst.w = item.width - 2;
                 rectDst.h = item.itemHeight * fields + 2 - 2;
-                SDL_FillRect(m_backSurface, &rectDst, GuiData::COLOR_BUTTON);
+                GUI_FillRect(m_backSurface, &rectDst, GuiData::COLOR_BUTTON);
 
                 for (int j = 0; j != fields; ++j)
                 {
@@ -480,7 +563,7 @@ void GuiDialog::paint()
                         rectDst.y = item.y + item.height + item.itemHeight * j;
                         rectDst.w = item.width - 2;
                         rectDst.h = item.itemHeight;
-                        SDL_FillRect(m_backSurface, &rectDst, GuiData::COLOR_SELECTED);
+                        GUI_FillRect(m_backSurface, &rectDst, GuiData::COLOR_SELECTED);
                     }
                     else if (j + m_expandedComboScroll == m_stateExpandedComboItem)
                     {
@@ -488,7 +571,7 @@ void GuiDialog::paint()
                         rectDst.y = item.y + item.height + item.itemHeight * j;
                         rectDst.w = item.width - 2;
                         rectDst.h = item.itemHeight;
-                        SDL_FillRect(m_backSurface, &rectDst, stateToColor(m_state));
+                        GUI_FillRect(m_backSurface, &rectDst, stateToColor(m_state));
                     }
                     drawText(item.items[j + m_expandedComboScroll].c_str(), item.x + 3, item.y + 1 + item.height + (item.itemHeight - 18) / 2 + item.itemHeight * j, item.width - 7);
                     if (currentSelected)
@@ -506,7 +589,7 @@ void GuiDialog::paint()
                     rectDst.y = item.y + item.height;
                     rectDst.w = arrowWidth;
                     rectDst.h = item.itemHeight;
-                    SDL_FillRect(m_backSurface, &rectDst, m_stateExpandedComboItem == -2 ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
+                    GUI_FillRect(m_backSurface, &rectDst, m_stateExpandedComboItem == -2 ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
 
                     rectSrc.x = 0;
                     rectSrc.y = 0;
@@ -516,7 +599,7 @@ void GuiDialog::paint()
                     rectDst.y = item.y + item.height + (item.itemHeight - 4) / 2;
                     rectDst.w = 8;
                     rectDst.h = 4;
-                    SDL_BlitSurface(m_guiData.m_guiComboSurface, &rectSrc, m_backSurface, &rectDst);
+                    GUI_BlitSurface(m_guiData.m_guiComboSurface, &rectSrc, m_backSurface, &rectDst);
                 }
 
                 if (m_expandedComboScroll + fields < static_cast<int>(item.items.size()))
@@ -525,7 +608,7 @@ void GuiDialog::paint()
                     rectDst.y = item.y + item.height + item.itemHeight * (fields - 1);
                     rectDst.w = arrowWidth;
                     rectDst.h = item.itemHeight;
-                    SDL_FillRect(m_backSurface, &rectDst, m_stateExpandedComboItem == -3 ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
+                    GUI_FillRect(m_backSurface, &rectDst, m_stateExpandedComboItem == -3 ? stateToColor(m_state) : GuiData::COLOR_BUTTON);
 
                     rectSrc.x = 0;
                     rectSrc.y = 4;
@@ -535,15 +618,15 @@ void GuiDialog::paint()
                     rectDst.y = item.y + item.height + item.itemHeight * (fields - 1) + (item.itemHeight - 4) / 2;
                     rectDst.w = 8;
                     rectDst.h = 4;
-                    SDL_BlitSurface(m_guiData.m_guiComboSurface, &rectSrc, m_backSurface, &rectDst);
+                    GUI_BlitSurface(m_guiData.m_guiComboSurface, &rectSrc, m_backSurface, &rectDst);
                 }
             }
         }
     }
 
-    //cout << "blit" << endl;
-    SDL_BlitSurface(m_backSurface, 0, m_windowSurface, 0);
-    SDL_UpdateRect(m_windowSurface, 0, 0, 0, 0);
+    SDL_UpdateTexture(m_texture, NULL, &m_backSurface.pixels[0], m_width * sizeof(Uint32));
+    SDL_RenderCopy(m_renderer, m_texture, NULL, NULL);
+    SDL_RenderPresent(m_renderer);
 }
 
 /*static*/ const int GuiDialog::COMBO_ARROW_WIDTH = 14;
@@ -582,6 +665,8 @@ void GuiDialog::mouseStateChanged(int x, int y, bool leftButton)
         m_stateExpandedComboItem = newStateExpandedComboItem;
         m_paint = true;
     }
+    m_lastMouseX = x;
+    m_lastMouseY = y;
 }
 
 int GuiDialog::getItem(int x, int y)
@@ -679,9 +764,19 @@ int GuiDialog::getExpandedComboItem(int x, int y)
 
 void GuiDialog::execute()
 {
-    m_windowSurface = SDL_SetVideoMode(m_width, m_height, 0, SDL_SWSURFACE);
-    SDL_WM_SetCaption(m_caption.c_str(), NULL);
-    m_backSurface = SDL_CreateRGBSurface(SDL_SWSURFACE, m_width, m_height, 32, SURFACE_MASK);
+    m_guiWindow = SDL_CreateWindow(m_caption.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m_width, m_height, 0);
+
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+
+    m_renderer =
+            SDL_CreateRenderer(m_guiWindow, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC);
+
+    m_texture = SDL_CreateTexture(m_renderer,
+        SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, m_width, m_height);
+
+    m_backSurface.w = m_width;
+    m_backSurface.h = m_height;
+    m_backSurface.pixels.resize(m_width * m_height);
 
     paint();
 
@@ -695,48 +790,53 @@ void GuiDialog::execute()
         case SDL_QUIT: // exit if the window is closed
             onQuit();
             break;
-        case SDL_VIDEOEXPOSE:
-        case SDL_VIDEORESIZE:
-            SDL_BlitSurface(m_backSurface, 0, m_windowSurface, 0);
-            SDL_UpdateRect(m_windowSurface, 0, 0, 0, 0);
+
+        case SDL_WINDOWEVENT:
+            switch (event.window.event)
+            {
+            case SDL_WINDOWEVENT_EXPOSED:
+            case SDL_WINDOWEVENT_RESIZED:
+                SDL_RenderCopy(m_renderer, m_texture, NULL, NULL);
+                SDL_RenderPresent(m_renderer);
+                break;
+
+            }
             break;
+
         case SDL_MOUSEMOTION:
             mouseStateChanged(event.motion.x, event.motion.y, event.motion.state & SDL_BUTTON_LMASK);
             break;
-        case SDL_ACTIVEEVENT:
-            if (event.active.gain == 0 && event.active.state == SDL_APPMOUSEFOCUS)
-            {
-                mouseStateChanged(-1, -1, false);
-            }
-            break;
+
         case SDL_KEYDOWN:
-            #if defined(__WIN32__)
-            if (event.key.keysym.sym == SDLK_F4 && (event.key.keysym.mod & (KMOD_LALT | KMOD_RALT)))
-            {
-                onQuit();
-            }
-            #endif
             onKeyDown(event.key.keysym.sym);
             break;
+
         case SDL_KEYUP:
             onKeyUp(event.key.keysym.sym);
             break;
-        case SDL_MOUSEBUTTONDOWN:
-            if (event.button.button == SDL_BUTTON_LEFT)
+
+        case SDL_MOUSEWHEEL:
+        {
+            int delta = 0;
+            if (event.wheel.y < 0)
             {
-                mouseStateChanged(event.button.x, event.button.y, true);
+                delta = 1;
             }
-            else if (event.button.button == SDL_BUTTON_WHEELUP || event.button.button == SDL_BUTTON_WHEELDOWN)
+            else if (event.wheel.y > 0)
+            {
+                delta = -1;
+            }
+            if (delta)
             {
                 if (m_expandedItem == -1)
                 {
-                    int itemIndex = getItem(event.button.x, event.button.y);
+                    int itemIndex = getItem(m_lastMouseX, m_lastMouseY);
                     if (itemIndex != -1)
                     {
                         GuiItem& item = m_items[itemIndex];
                         if (item.type == GuiItem::COMBO)
                         {
-                            int currentItemDelta = event.button.button == SDL_BUTTON_WHEELUP ? -1 : 1;
+                            int currentItemDelta = delta;
                             item.currentItem += currentItemDelta;
                             if (item.currentItem < 0)
                             {
@@ -755,11 +855,11 @@ void GuiDialog::execute()
                     GuiItem& item = m_items[m_expandedItem];
                     if (item.type == GuiItem::COMBO)
                     {
-                        int expandedComboIndex = getExpandedComboItem(event.button.x, event.button.y);
+                        int expandedComboIndex = getExpandedComboItem(m_lastMouseX, m_lastMouseY);
                         if (expandedComboIndex != -1)
                         {
                             int fields = item.getComboFields();
-                            int scrollDelta = event.button.button == SDL_BUTTON_WHEELUP ? -1 : 1;
+                            int scrollDelta = delta;
                             m_expandedComboScroll += scrollDelta;
                             if (m_expandedComboScroll < 0)
                             {
@@ -773,8 +873,13 @@ void GuiDialog::execute()
                     }
                     m_paint = true;
                 }
-
-                mouseStateChanged(event.button.x, event.button.y, false);
+            }
+        }
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            if (event.button.button == SDL_BUTTON_LEFT)
+            {
+                mouseStateChanged(event.button.x, event.button.y, true);
             }
             break;
         case SDL_MOUSEBUTTONUP:
@@ -870,6 +975,8 @@ void GuiDialog::execute()
             m_paint = false;
         }
     }
+
+    SDL_DestroyWindow(m_guiWindow);
 }
 
 void GuiDialog::onQuit()
@@ -881,10 +988,10 @@ void GuiDialog::onButton(int /*itemIndex*/)
 {
 }
 
-void GuiDialog::onKeyDown(SDLKey /*k*/)
+void GuiDialog::onKeyDown(SDL_Keycode /*k*/)
 {
 }
 
-void GuiDialog::onKeyUp(SDLKey /*k*/)
+void GuiDialog::onKeyUp(SDL_Keycode /*k*/)
 {
 }

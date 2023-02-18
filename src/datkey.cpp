@@ -1,8 +1,6 @@
-#include "platform.h"
-
 #include "datkey.h"
 
-#include <SDL/SDL_endian.h>
+#include <SDL2/SDL_endian.h>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
@@ -28,6 +26,18 @@ bool Datdec::load(const char* fname)
     p_buff.resize(newSize);
     fclose(fin);
     return true;
+}
+
+bool Datdec::exists(const char* fname) const
+{
+    unsigned int i = 0;
+    while (i != p_files.size())
+    {
+        if (strcmp(p_files[i].p_fname, fname) == 0)
+            break;
+        ++i;
+    }
+    return i != p_files.size();
 }
 
 struct TarHeader

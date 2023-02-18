@@ -1,8 +1,8 @@
 #include <cstring>
+#include <vector>
 
 struct Ghost {
     Ghost(bool frames = true);
-    ~Ghost();
     bool load(int track, int reverse);
     void save();
     void copyFrom(const Ghost& gnew);
@@ -15,7 +15,7 @@ struct Ghost {
     float m_seconds;
     int m_maxnum;
     int m_num; // počet uložených snímků při 10 fps
-    float* m_frames;
+    std::vector<float> m_frames;
     
     void getfname(char* buff); // 1024 bajtů
 };

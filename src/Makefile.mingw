@@ -1,0 +1,54 @@
+LIBSDL2_INCLUDEPATH =mingw32/SDL2/i686-w64-mingw32/include
+LIBSDL2_LIB_PATH =mingw32/SDL2/i686-w64-mingw32/lib
+LIBSDL2_LIB =libSDL2.dll.a
+
+LIBGLM_INCLUDEPATH =mingw32/glm/
+
+LIBGLEE_INCLUDEPATH =mingw32/glee/include
+LIBGLEE_LIB_PATH =mingw32/glee
+LIBGLEE_LIB =libglee.a
+
+LIBZLIB_LIB_PATH =mingw32/zlib
+LIBZLIB_LIB =libzlibstatic.a
+
+LIBPNG_INCLUDEPATH =mingw32/libpng
+LIBPNG_LIB_PATH =mingw32/libpng
+LIBPNG_LIB =libpng.a
+
+LIBJPEG_INCLUDEPATH =mingw32/libjpeg-turbo
+LIBJPEG_LIB_PATH =mingw32/libjpeg-turbo
+LIBJPEG_LIB =libjpeg.a
+LIBJPEG_DEF =
+
+#LIBJPEG_INCLUDEPATH =jpeg
+#LIBJPEG_LIB_PATH =jpeg/.libs
+#LIBJPEG_LIB =libjpeg.a
+#LIBJPEG_DEF =-DJPEG_NOT_TURBO
+
+CFLAGS = -O2 -Wall -Wextra -Wno-cast-function-type -DUSE_MINIAL -DSDL_MAIN_HANDLED -fno-exceptions -fPIC -std=c++20 -I$(LIBSDL2_INCLUDEPATH) -I$(LIBJPEG_INCLUDEPATH) -I$(LIBPNG_INCLUDEPATH) -I$(LIBGLM_INCLUDEPATH) -I$(LIBGLEE_INCLUDEPATH) -DM_PI=3.14159265358979323846 -DM_PIf=3.14159265358979323846f $(LIBJPEG_DEF) -DNDEBUG
+LFLAGS = $(LIBSDL2_LIB_PATH)/$(LIBSDL2_LIB) $(LIBGLEE_LIB_PATH)/$(LIBGLEE_LIB) -lopengl32 $(LIBJPEG_LIB_PATH)/$(LIBJPEG_LIB) $(LIBPNG_LIB_PATH)/$(LIBPNG_LIB) $(LIBZLIB_LIB_PATH)/$(LIBZLIB_LIB) -lm -s -static-libstdc++ -static-libgcc -static -mwindows
+
+CXX    = i686-w64-mingw32-g++
+LINK   = i686-w64-mingw32-g++
+WINDRES= i686-w64-mingw32-windres
+
+TARGET = openmrac.exe
+RES    = omicon.res
+# echo -n "OBJS   = "; ls *.cpp | sed 's/.cpp$/.o/g' | tr '\n' ' ' ; echo
+OBJS   = 3dm.o cam.o car2d.o collider.o controls.o cstring1.o datkey.o dpiaware_win32.o fopendir.o gameaux.o gamemenu.o gamemng.o gamemng_frame.o gamemng_load.o gbuff_in.o ghost.o gltext.o gui.o guifont.o load_texture.o main.o mainmenu.o matmng.o minial.o octopus.o onelayout.o particles.o pict2.o pict2_jpeg.o pict2_png.o rand1.o rbsolver.o settings_dat.o settingsdialog.o shadermng.o skysph.o soundmng.o triboxint.o 
+
+.PHONY: all clean install uninstall deb
+
+all: $(TARGET)
+
+clean:
+	rm -f *.o $(RES) $(TARGET)
+
+%.o: %.cpp *.h
+	$(CXX) -c $(CFLAGS) $<
+
+%.res: %.rc
+	$(WINDRES) $< -O coff -o $@
+
+$(TARGET): $(RES) $(OBJS)
+	$(LINK) -o $(TARGET) $(OBJS) $(RES) $(LFLAGS)

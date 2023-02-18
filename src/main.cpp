@@ -1,4 +1,3 @@
-#include "platform.h"
 #include "appdefs.h"
 
 #include <cstdio> // ve windows výstup na konzoli funguje až po zavolání ActivateConsole
@@ -6,71 +5,47 @@
 #include <vector>
 #include <set>
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_endian.h>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_endian.h>
+#include "gl1.h"
 
 #ifdef USE_MINIAL
 #include "minial.h"
 #else
-#ifndef __MACOSX__
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <AL/alext.h>
-#else
-#include <OpenAL/al.h>
-#include <OpenAL/alc.h>
-#endif
+
+// dummy variables replacing MiniAL ones
+static int MA_lowLatency = 1;
+static int MA_frequency = 48000;
+
 #endif
 
 #include "gltext.h"
 
-#include "glext1.h"
-
-#include "octopus.h"
-
-#include "skysph.h"
-
-#define NO_CAMERA
-//#undef NO_CAMERA
-
+// for testing
+//#define FREE_CAMERA 1
 //#define TESTING_SLOWDOWN 1
 
-#ifndef NO_CAMERA
+#ifdef TEST_SCRSHOT // some test screenshots require free camera
+#ifndef FREE_CAMERA
+#define FREE_CAMERA 1
+#endif
+#endif
+
+#if FREE_CAMERA
 #include "cam.h"
 #endif
 
 #include "gameaux.h"
-#include "pict2.h"
-
-#include "matmng.h"
-
-#include "datkey.h"
-
-#include "cstring1.h"
-
 #include "gamemng.h"
-
 #include "rand1.h"
-
-#include "mtrxinv.h"
-
 #include "gbuff_in.h"
-
-#include "load_texture.h"
-
 #include "settings_dat.h"
-
 #include "controls.h"
-
 #include "mainmenu.h"
-
 #include "settingsdialog.h"
-
 #include "fopendir.h"
 
 #ifdef __MACOSX__
@@ -86,25 +61,22 @@ std::vector<ALuint> global_al_buffers;
 // magický vzorec pro výpočet útlumu při nárazu
 // další věci k časům na kolo
 
-int g_mipmaps_available = 0;
-
-/* This is our SDL surface */
-SDL_Surface* surface = 0;
-
-int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int height/*, unsigned int depth = 0*/);
+int EnableOpenGL(bool fullscreen, bool vsync, int width, int height);
 
 std::vector<JoystickDevice>* g_joystickDevices = 0;
 
+SDL_GLContext maincontext; // Our opengl context handle
 
 void my_exit(int ret, bool callExit)
 {
     for (unsigned int i = 0; i < g_joystickDevices->size(); ++i)
     {
-        if (SDL_JoystickOpened(i))
-            (*g_joystickDevices)[i].close();
+        /*if (SDL_JoystickOpened(i))
+            (*g_joystickDevices)[i].close();*/
     }
+    SDL_GL_DeleteContext(maincontext);
     SDL_Quit();
-    
+
 #ifndef __MACOSX__
     if (callExit)
     {
@@ -118,9 +90,7 @@ void my_exit(int ret, bool callExit)
 int n_klavesy = 0; // počet stisknutých kláves
 
 extern int ge_bpass1; // globální vypnutí aktualizace pohledu
-
 extern int g_freecam;
-
 extern int g_sound_on;
 
 GLuint g_ghost_tex = 0;
@@ -129,35 +99,52 @@ int g_ghost_h = 0;
 
 int g_multisampleMode = 2; // 0 - 0ff, 1 - 2x, 2 - 4x
 int g_textureFiltering = 2; // 0 - bilinear, 1 - trilinear, 2 - aniso
+int g_opengl_profile = DEFAULT_PROFILE;
 
-void saveTgaScreenshot()
+void saveTgaScreenshot(const char* filenamePrm = nullptr)
 {
     static int screenshotNumber = 0;
     static std::vector<unsigned char> pixelbuffer;
     GLint okno_rozmery[4];
     glGetIntegerv(GL_VIEWPORT, okno_rozmery); checkGL();
-    pixelbuffer.resize(okno_rozmery[2]*okno_rozmery[3]*3);
+    //pixelbuffer.resize(okno_rozmery[2]*okno_rozmery[3]*3);
+    pixelbuffer.resize(okno_rozmery[2]*okno_rozmery[3]*4+8);
     //okno_rozmery[2] = (okno_rozmery[2] / 4) * 4; // fix for a 4-byte padding issue // better fix is a 1-byte pixel packing
     if (okno_rozmery[2]*okno_rozmery[3] == 0)
         return;
-    glReadPixels(0,  0,  okno_rozmery[2], okno_rozmery[3], GL_BGR, GL_UNSIGNED_BYTE, &(pixelbuffer[0])); checkGL();
+    glReadPixels(0,  0,  okno_rozmery[2], okno_rozmery[3], GL_RGBA, GL_UNSIGNED_BYTE, pixelbuffer.data() + 8); checkGL();
+
+    for (int i = 0; i < okno_rozmery[2]*okno_rozmery[3]; ++i)
+    {
+        pixelbuffer[i * 3 + 0] = pixelbuffer[i * 4 + 2 + 8];
+        pixelbuffer[i * 3 + 1] = pixelbuffer[i * 4 + 1 + 8];
+        pixelbuffer[i * 3 + 2] = pixelbuffer[i * 4 + 0 + 8];
+    }
+
     char filename[256] = {0};
-    snprintf(filename, 255, "openmrac-scr%.3d.tga", screenshotNumber);
+    if (filenamePrm)
+    {
+        snprintf(filename, 255, "%s", filenamePrm);
+    }
+    else
+    {
+        snprintf(filename, 255, "openmrac-scr%.3d.tga", screenshotNumber);
+    }
     //FILE* fout = fopen(filename, "wb");
-    FILE* fout = fopenDir(filename, "wb");
+    FILE* fout = fopenDir(filename, "wb", OPENMRAC_ORG, OPENMRAC_APP);
     //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (fout != NULL) {
-        unsigned char tgaheader[] = {    
+        unsigned char tgaheader[] = {
             0, //0  1 byte  IDLength    velikost obrazového identifikátoru
             0, //1  1 byte  ColorMapType    typ barevné mapy
             2, //2  1 byte  ImageType   typ obrázku
             0,0, //3    2 byte  CMapStart   počátek barevné palety
             0,0, //5    2 byte  CMapLength  délka barevné palety
-            0, //7  1 byte  CMapDepth   bitová hloubka položek barevné palety
-            0,0, //8    2 byte  XOffset     X-ová souřadnice počátku obrázku
-            0,0 //10    2 byte  YOffset     Y-ová souřadnice počátku obrázku
+            0 //7  1 byte  CMapDepth   bitová hloubka položek barevné palety
             };
         unsigned short tgaheader2[] = {
+            SDL_SwapLE16(0), // 8    2 byte  XOffset     X-ová souřadnice počátku obrázku
+            SDL_SwapLE16(0), //10    2 byte  YOffset     Y-ová souřadnice počátku obrázku
             SDL_SwapLE16(static_cast<unsigned short>(okno_rozmery[2])),//12     2 byte  Width   šířka obrázku uvedená v pixelech
             SDL_SwapLE16(static_cast<unsigned short>(okno_rozmery[3]))//14  2 byte  Height  výška obrázku uvedená v pixelech
             };
@@ -169,7 +156,7 @@ void saveTgaScreenshot()
         fwrite(tgaheader2, 1, sizeof(tgaheader2), fout);
         fwrite(tgaheader3, 1, sizeof(tgaheader3), fout);
         fwrite(&(pixelbuffer[0]), 1, okno_rozmery[2]*okno_rozmery[3]*3, fout);
-        
+
         fclose(fout);
     }
     ++screenshotNumber;
@@ -178,25 +165,6 @@ void saveTgaScreenshot()
 void initScreenModesVector(std::vector<ScreenMode>& screenModesVector, ScreenMode& currentScreenMode, ScreenMode defaultScreenMode)
 {
     std::set<ScreenMode> screenModesSet;
-
-    SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN | SDL_HWSURFACE);
-
-    if (modes != (SDL_Rect **)0 && modes != (SDL_Rect **)-1)
-    {
-        for (unsigned i = 0; modes[i]; ++i)
-        {
-            screenModesSet.insert(ScreenMode(modes[i]->w, modes[i]->h, 0));
-            screenModesSet.insert(ScreenMode(modes[i]->w, modes[i]->h, 1));
-        }
-    }
-
-    if (currentScreenMode.fullscreen == 1)
-    {
-        if (!screenModesSet.count(currentScreenMode))
-        {
-            currentScreenMode = defaultScreenMode;
-        }
-    }
 
     screenModesSet.insert(currentScreenMode);
     screenModesSet.insert(defaultScreenMode);
@@ -221,14 +189,22 @@ void initScreenModesVector(std::vector<ScreenMode>& screenModesVector, ScreenMod
     screenModesSet.insert(ScreenMode(1600, 1200, 0));
     screenModesSet.insert(ScreenMode(1920, 1080, 0));
     screenModesSet.insert(ScreenMode(1920, 1200, 0));
-
+    screenModesSet.insert(ScreenMode(2560, 1440, 0));
+    screenModesSet.insert(ScreenMode(0, 0, 1));
+    {
+        SDL_DisplayMode dm;
+        if (SDL_GetDesktopDisplayMode(0, &dm) == 0)
+        {
+            screenModesSet.insert(ScreenMode(dm.w, dm.h, 0));
+        }
+    }
     std::copy(screenModesSet.begin(), screenModesSet.end(), std::back_inserter(screenModesVector));
 }
 
 #define CAMERA_KEY_COUNT 10
 
 int my_main (int argc, char** argv)
-{   
+{
     bool skipSettings = false;
     for (int i = 1; i < argc; ++i)
     {
@@ -246,12 +222,6 @@ int my_main (int argc, char** argv)
     static std::vector<JoystickDevice> joystickDevices;
     g_joystickDevices = &joystickDevices;
     std::vector<JoystickIdentifier> joystickNotConnectedDevices;
-
-#ifndef __MORPHOS__
-    char SDL_VIDEO_CENTERED_EQUALS_CENTER[] = "SDL_VIDEO_CENTERED=center";
-    SDL_putenv(SDL_VIDEO_CENTERED_EQUALS_CENTER);
-#endif
-
 
     // initialize SDL video
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
@@ -295,7 +265,8 @@ int my_main (int argc, char** argv)
         Control(),
         };
 
-    Settings settings("settings.dat", &joystickDevices, &joystickNotConnectedDevices, controls);
+    // SDL2 key codes differ from SDL1.2 ones, so the settings file cannnot be shared
+    Settings settings("settings-sdl2.dat", &joystickDevices, &joystickNotConnectedDevices, controls);
     settings.load();
 
     if (!skipSettings)
@@ -323,12 +294,16 @@ int my_main (int argc, char** argv)
             alDevices += strlen(alDevices)+1;
         }
 
-        SettingsDialog settingsDialog(screenModesVector, currentScreenMode, defaultScreenMode,
+        SettingsDialog settingsDialog(
+            settings.get("renderer"),
+            screenModesVector, currentScreenMode, defaultScreenMode,
             settings.get("vsync"),
             settings.get("antialiasing"),
             settings.get("texture_filter"),
             settings.get("show_fps"),
-            alDevicesVector, settings.getOpenalDevice());
+            alDevicesVector, settings.getOpenalDevice(),
+            settings.get("freq"),
+            settings.get("low_latency"));
 
         settingsDialog.execute();
 
@@ -339,6 +314,7 @@ int my_main (int argc, char** argv)
 
         ScreenMode selectedScreenMode = screenModesVector[settingsDialog.getSelectedScreenMode()];
 
+        settings.set("renderer", settingsDialog.getRenderer());
         settings.set("screen_x", selectedScreenMode.width);
         settings.set("screen_y", selectedScreenMode.height);
         settings.set("fullscreen", selectedScreenMode.fullscreen);
@@ -347,21 +323,36 @@ int my_main (int argc, char** argv)
         settings.set("texture_filter", settingsDialog.getTextureFilter());
         settings.set("antialiasing", settingsDialog.getAntialiasingMode());
         settings.setOpenalDevice(settingsDialog.getOpenalDevice());
+        settings.set("freq", settingsDialog.getFreqIndex());
+        settings.set("low_latency", settingsDialog.getLowLatencyChecked());
 
         settings.save();
     }
 
-    SDL_WM_SetCaption("", NULL);
+    if (gameWindow)
+    {
+        SDL_SetWindowTitle(gameWindow, "");
+    }
 
     getdeltaT_init();
 
     unsigned int isfullscreen = settings.get("fullscreen");
-
+    g_opengl_profile = settings.get("renderer");
     g_multisampleMode = settings.get("antialiasing");
     g_textureFiltering = settings.get("texture_filter");
-
-    if (isfullscreen)
-        SDL_ShowCursor(SDL_DISABLE);
+    MA_lowLatency = settings.get("low_latency");
+    switch (settings.get("freq"))
+    {
+    case 0:
+        MA_frequency = 22050;
+        break;
+    case 1:
+        MA_frequency = 44100;
+        break;
+    case 2:
+        MA_frequency = 48000;
+        break;
+    }
 
     int enableOpenGLResult = EnableOpenGL(isfullscreen, settings.get("vsync"),
         settings.get("screen_x"), settings.get("screen_y"));
@@ -369,25 +360,19 @@ int my_main (int argc, char** argv)
     {
         return enableOpenGLResult; // error
     }
-    
+
+    SDL_ShowCursor(SDL_DISABLE);
+
     //GLfloat textureSize;
     //glGetFloatv(GL_MAX_TEXTURE_SIZE, &textureSize); checkGL();
     //fprintf(stderr, "max texture size %f\n", textureSize);
     //fflush(stderr);
 
-#if !USE_VSYNC
-    bool limitFramerate = settings.get("vsync");
-#endif
+    if (gameWindow)
+    {
+        SDL_SetWindowTitle(gameWindow, "OpenMRac " OPENMRAC_VERSION);
+    }
 
-    SDL_WM_SetCaption("OpenMRac " OPENMRAC_VERSION, NULL);
-        
-    if (strcmp((const char*)glGetString(GL_VERSION), "1.4") >= 0) {
-        g_mipmaps_available = 1;
-    }   
-#ifdef __MACOSX__
-    g_mipmaps_available = 1;
-#endif
-    
     // Initialize Open AL
 
     const char* aldevicestr = settings.getOpenalDevice();
@@ -407,7 +392,7 @@ int my_main (int argc, char** argv)
         else
             fprintf(stderr, "Error: Can't open OpenAL device \"%s\"\n", aldevicestr);
     }
-    
+
     ALfloat listenerPos[] = { 0.0, 0.0, 0.0 };
     ALfloat listenerVel[] = { 0.0, 0.0, 0.0 };
     ALfloat listenerOri[] = { 0.0, 0.0, -1.0,  0.0, 1.0, 0.0 };
@@ -415,91 +400,25 @@ int my_main (int argc, char** argv)
     alListenerfv(AL_VELOCITY,    listenerVel);
     alListenerfv(AL_ORIENTATION, listenerOri);
 
-#if !defined(__MORPHOS__) && !defined(__amigaos4__)
-    Glext glext;
-    if (!glext.init_ARB_texture_cube_map())
-    {
-        fprintf(stderr, "Error: Unsupported OpenGL extension GL_ARB_texture_cube_map.\n");
-        return 5;
-    }
-
-    if (g_multisampleMode)
-    {
-        if (!glext.init_ARB_multisample())
-        {
-            fprintf(stderr, "Warning: Unsupported OpenGL extension GL_ARB_multisample.\n");
-            g_multisampleMode = 0;
-        }
-    }
-#endif
-
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    //glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     GLint okno_rozmery[4];
     glGetIntegerv(GL_VIEWPORT, okno_rozmery); checkGL();
 
-    /* Make sure we're chaning the model view and not the projection */
-    glMatrixMode( GL_MODELVIEW ); checkGL();
-
-    // nastavení úvodních materiálů a zobrazení
-    float material1[4] = {1, 1, 1, 1};
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, material1); checkGL();
-    float lightspec0[4] = {0, 0, 0, 1};
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightspec0); checkGL();
-    // důležité vypnutí defaultního rozptýleného světla
-    float lightmodelamb0[4] = {0, 0, 0, 1};
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lightmodelamb0); checkGL();
-
-#ifndef __MORPHOS__
-    if (g_multisampleMode)
-    {
-        glEnable(GL_MULTISAMPLE_ARB); checkGL();
-    }
-#endif
-
     glEnable(GL_CULL_FACE); checkGL();
     glEnable(GL_DEPTH_TEST); checkGL();
     glDepthFunc(GL_LESS); checkGL();
-    glAlphaFunc(GL_GREATER, 0.5); checkGL();
-    glEnable(GL_LIGHT0); checkGL();
-    glEnable(GL_LIGHTING); checkGL();
-    
-    glDepthRange(0, 1); checkGL();
-    
-    {
-        char halftonetex_pix[] = {
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-            0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
-            1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
-        };
-        glGenTextures(1, &g_ghost_tex); checkGL();
-        for (int i = 0; i != 256; ++i) halftonetex_pix[i] *= 255;
-        glBindTexture(GL_TEXTURE_2D, g_ghost_tex); checkGL();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 16, 16, 0, GL_ALPHA, GL_UNSIGNED_BYTE, halftonetex_pix); checkGL();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); checkGL();
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); checkGL();
-        glBindTexture(GL_TEXTURE_2D, 0); checkGL();
-    }
-    
+
     g_ghost_w = okno_rozmery[2];
     g_ghost_h = okno_rozmery[3];
 
+#ifdef TEST_SCRSHOT
+    srand0(); // seed = 0
+#else
     srand1(); // defaultní hodnota seed
-    
+#endif
+
     char gameDatPathCstr[1024] = {0};
 #ifdef __MACOSX__
     {
@@ -552,10 +471,16 @@ int my_main (int argc, char** argv)
     gamemng.p_gamemenu.p_menu = &menu;
 
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
     Cam kamera;
-    float pos[3] = {0,0,0};
-    kamera.init(pos, 0,0,50/**0.2*/,M_PI/**0.2*/);
+    kamera.init(0,0,0, 0,0,50/**0.2*/,M_PI/**0.2*/);
+#ifdef TEST_SCRSHOT
+    if (TEST_SCRSHOT == 4)
+    {
+        kamera.init(-17.057034, 3.088659, -22.429945, -0.486319, -1.502288, 50/**0.2*/,M_PI/**0.2*/);
+        g_freecam = true;
+    }
+#endif
 #endif
 
     // program main loop
@@ -564,45 +489,90 @@ int my_main (int argc, char** argv)
 
     unsigned char player_bkeys[16] = {0};
 
-#ifndef NO_CAMERA
-    //SDLKey kamerakeys[8] = {SDLK_LEFT, SDLK_RIGHT, SDLK_DOWN, SDLK_UP, SDLK_w, SDLK_s, SDLK_a, SDLK_d};
-    SDLKey kamerakeys[CAMERA_KEY_COUNT] = {SDLK_DELETE, SDLK_PAGEDOWN, SDLK_END, SDLK_HOME, SDLK_w, SDLK_s, SDLK_a, SDLK_d, SDLK_SPACE, SDLK_c};
+#if FREE_CAMERA
+    static const SDL_Keycode kamerakeys[CAMERA_KEY_COUNT] = {SDLK_DELETE, SDLK_PAGEDOWN, SDLK_END, SDLK_HOME, SDLK_w, SDLK_s, SDLK_a, SDLK_d, SDLK_SPACE, SDLK_c};
     unsigned char kamera_bkeys[CAMERA_KEY_COUNT] = {0};
 #endif
 
-    bool b_test_map = false;
-    if (b_test_map)
+    int testScrshot = -1;
+
+#ifdef TEST_SCRSHOT
     {
-        menu.p_players = 1;
+        testScrshot = 2;
+
         menu.p_cars_sel[0] = 0;
         menu.p_cars_tex_sel[0] = 0;
-        menu.p_track_sel = 0;
-        menu.p_sky_sel = 0;
-        menu.p_direction_sel = 0;
-        menu.p_view_dist = 10;
+
+        menu.p_cars_sel[1] = 1;
+        menu.p_cars_tex_sel[1] = 1;
+
+        menu.p_cars_sel[2] = 2;
+        menu.p_cars_tex_sel[2] = 2;
+
+        menu.p_cars_sel[3] = 0;
+        menu.p_cars_tex_sel[3] = 3;
+
+        switch (TEST_SCRSHOT)
+        {
+        case 0:
+            menu.p_players = 1;
+            menu.p_direction_sel = 1;
+            menu.p_track_sel = 1;
+            menu.p_sky_sel = 0;
+            menu.p_daytime_sel = 0;
+            menu.p_view_dist = 0;
+            break;
+        case 1:
+            menu.p_players = 2;
+            menu.p_direction_sel = 0;
+            menu.p_track_sel = 2;
+            menu.p_sky_sel = 1;
+            menu.p_daytime_sel = 0;
+            menu.p_view_dist = 3;
+            break;
+        case 2:
+            menu.p_players = 3;
+            menu.p_direction_sel = 1;
+            menu.p_track_sel = 3;
+            menu.p_sky_sel = 2;
+            menu.p_daytime_sel = 1;
+            menu.p_view_dist = 10;
+            break;
+        case 3:
+            menu.p_players = 4;
+            menu.p_direction_sel = 0;
+            menu.p_track_sel = 0;
+            menu.p_sky_sel = 3;
+            menu.p_daytime_sel = 1;
+            menu.p_view_dist = 0;
+            break;
+        case 4:
+            menu.p_players = 1;
+            menu.p_direction_sel = 1;
+            menu.p_track_sel = 2;
+            menu.p_sky_sel = 0;
+            menu.p_daytime_sel = 0;
+            menu.p_view_dist = 0;
+            break;
+        }
+
         menu.p_sound_vol = 0;
         menu.p_laps = 20;
         menu.game();
     }
+#endif
+
 #if TESTING_SLOWDOWN
     bool bslowdown = false;
 #endif
     bool f12pressed = false;
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
     bool b_kamera_fast = true;
 #endif
 
     while (!done)
     {
-
-#if !USE_VSYNC
-        Uint32 startFrameTime = 0;
-        if (limitFramerate)
-        {
-            startFrameTime = SDL_GetTicks();
-        }
-#endif
         // message processing loop
         SDL_Event event;
         memset(&event, 0, sizeof(SDL_Event));
@@ -628,22 +598,7 @@ int my_main (int argc, char** argv)
 
             case SDL_KEYDOWN: // check for keypresses
                 {
-                    //#if defined(__WIN32__)
-                    // pro fullscreen to nefunguje ani v linuxu samo
-                    if (event.key.keysym.sym == SDLK_F4 && (event.key.keysym.mod & (KMOD_LALT | KMOD_RALT)))
-                    {
-                        done = true;
-                        break;
-                    }
-                    //#endif
-
-                    if (event.key.keysym.sym == 
-#ifndef __MACOSX__
-                        SDLK_F12
-#else
-                        SDLK_F12
-#endif
-                        ) {
+                    if (event.key.keysym.sym == SDLK_F12) {
                         f12pressed = true;
                     }
 
@@ -659,7 +614,7 @@ int my_main (int argc, char** argv)
                         gamemng.p_gamemenu.keydown(event.key.keysym.sym);
                     }
 
-                    #ifndef NO_CAMERA
+                    #if FREE_CAMERA
                     if (event.key.keysym.sym == SDLK_TAB)
                     {
                         g_freecam = !g_freecam;
@@ -668,7 +623,7 @@ int my_main (int argc, char** argv)
                         b_kamera_fast = false;
                     }
                     #endif
-                    
+
                     #if TESTING_SLOWDOWN
                     if (event.key.keysym.sym == SDLK_RCTRL) {
                         bslowdown = !bslowdown;
@@ -684,7 +639,7 @@ int my_main (int argc, char** argv)
                         /*if ((unsigned int)(event.key.keysym.sym) == player_keys[i])
                             player_bkeys[i] = 1;*/
                     }
-#ifndef NO_CAMERA
+#if FREE_CAMERA
                     // ovládání free kamery - keydown
                     if (g_freecam)
                         for (int i = 0; i != CAMERA_KEY_COUNT; ++i)
@@ -705,7 +660,7 @@ int my_main (int argc, char** argv)
                             player_bkeys[i] = 0;
                         }
                     }
-#ifndef NO_CAMERA
+#if FREE_CAMERA
                     // ovládání free kamery - keyup
                     if (g_freecam)
                         for (int i = 0; i != CAMERA_KEY_COUNT; ++i)
@@ -714,7 +669,7 @@ int my_main (int argc, char** argv)
                     if (event.key.keysym.sym == SDLK_LSHIFT) {
                         b_kamera_fast = true;
                     }
-#endif                    
+#endif
                     --n_klavesy;
                     break;
                 }
@@ -799,7 +754,7 @@ int my_main (int argc, char** argv)
             case SDL_JOYBUTTONDOWN:
                 {
                     for (int i = 0; i != 16; ++i)
-                    {                        
+                    {
                         if (controls[i].type == Control::E_JBUTTON && event.jbutton.which == controls[i].joystickDeviceIndex && event.jbutton.button == controls[i].i)
                         {
                             player_bkeys[i] = 1;
@@ -860,10 +815,10 @@ int my_main (int argc, char** argv)
 
         float deltaT = getdeltaT(); // čas mezi snímky v sekundách
 
-#ifndef NO_CAMERA
+#if FREE_CAMERA
         float cameraDeltaT = deltaT;
 #endif
-        
+
         #if TESTING_SLOWDOWN
             if (bslowdown)
                 deltaT *= 0.01;
@@ -890,83 +845,79 @@ int my_main (int argc, char** argv)
         if (menu.p_bactive)
         {
             menu.render();
-            SDL_GL_SwapBuffers();
+        }
+        else
+        {
+            // smazání depth bufferu každý snímek a color bufferu každý 100. snímek
+            static unsigned int frame_clr_cnt = 0;
+            if (frame_clr_cnt >= 100 || g_freecam)
+            {
+                glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); checkGL();
+                frame_clr_cnt = 0;
+            } else {
+                glClear (GL_DEPTH_BUFFER_BIT); checkGL();
+                ++frame_clr_cnt;
+            }
+
+#if FREE_CAMERA
+            float speed = b_kamera_fast ? 1.f : 0.1f;
+            float rotSpeed = b_kamera_fast ? 1.f : 0.4f;
+            if (kamera_bkeys[0]) kamera.turn_l(cameraDeltaT*rotSpeed);
+            if (kamera_bkeys[1]) kamera.turn_r(cameraDeltaT*rotSpeed);
+            if (kamera_bkeys[2]) kamera.turn_d(cameraDeltaT*rotSpeed);
+            if (kamera_bkeys[3]) kamera.turn_u(cameraDeltaT*rotSpeed);
+
+            if (kamera_bkeys[4]) kamera.move_f(cameraDeltaT*speed);
+            if (kamera_bkeys[5]) kamera.move_b(cameraDeltaT*speed);
+            if (kamera_bkeys[6]) kamera.move_l(cameraDeltaT*speed);
+            if (kamera_bkeys[7]) kamera.move_r(cameraDeltaT*speed);
+
+            if (kamera_bkeys[8]) kamera.move_u(cameraDeltaT*speed);
+            if (kamera_bkeys[9]) kamera.move_d(cameraDeltaT*speed);
+#endif
+
+            glEnable(GL_DEPTH_TEST); checkGL();
+
+            gamemng.input(player_bkeys);
+            float deltaTclamped = std::min(deltaT, 1.f);
+
+            glm::mat4 freecam_mtrx(1);
+
+            // transformace a vykreslení scény
+#if FREE_CAMERA
+            if (g_freecam) freecam_mtrx = kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
+#endif
+            gamemng.frame(deltaTclamped, freecam_mtrx); // ořezání času na maximálně 1 sekundu
+
+            glEnable(GL_DEPTH_TEST); checkGL();
+        }
+
+        {
+            SDL_GL_SwapWindow(gameWindow);
+
+            {
+                if (testScrshot == 0)
+                {
+#define SCRSHOT_FILENAME1(s) #s
+#define SCRSHOT_FILENAME(prm) "test" SCRSHOT_FILENAME1(prm) "-gles2.tga"
+                    saveTgaScreenshot(SCRSHOT_FILENAME(TEST_SCRSHOT));
+                }
+                if (testScrshot > -1)
+                {
+                    --testScrshot;
+                }
+            }
+
             if (f12pressed) {
                 f12pressed = false;
                 saveTgaScreenshot();
             }
+        }
+
+        if (menu.p_bactive)
+        {
             SDL_Delay(10);
-            continue;
         }
-
-        // smazání depth bufferu každý snímek a color bufferu každý 100. snímek
-        static unsigned int frame_clr_cnt = 0;
-        if (frame_clr_cnt >= 100 || g_freecam)
-        {
-            glClear (GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); checkGL();
-            frame_clr_cnt = 0;
-        } else {
-            glClear (GL_DEPTH_BUFFER_BIT); checkGL();
-            ++frame_clr_cnt;
-        }
-
-#ifndef NO_CAMERA
-        float speed = b_kamera_fast ? 1.f : 0.1f;
-        float rotSpeed = b_kamera_fast ? 1.f : 0.4f;
-        if (kamera_bkeys[0]) kamera.turn_l(cameraDeltaT*rotSpeed);
-        if (kamera_bkeys[1]) kamera.turn_r(cameraDeltaT*rotSpeed);
-        if (kamera_bkeys[2]) kamera.turn_d(cameraDeltaT*rotSpeed);
-        if (kamera_bkeys[3]) kamera.turn_u(cameraDeltaT*rotSpeed);
-
-        if (kamera_bkeys[4]) kamera.move_f(cameraDeltaT*speed);
-        if (kamera_bkeys[5]) kamera.move_b(cameraDeltaT*speed);
-        if (kamera_bkeys[6]) kamera.move_l(cameraDeltaT*speed);
-        if (kamera_bkeys[7]) kamera.move_r(cameraDeltaT*speed);
-
-        if (kamera_bkeys[8]) kamera.move_u(cameraDeltaT*speed);
-        if (kamera_bkeys[9]) kamera.move_d(cameraDeltaT*speed);
-#endif
-
-        glEnable(GL_DEPTH_TEST); checkGL();
-        glDisable(GL_LIGHTING); checkGL();
-        glDepthFunc(GL_LESS); checkGL();
-
-        glColor4f(1.f, 1.f, 1.f, 1.f); checkGL();
-        glEnable(GL_TEXTURE_2D); checkGL();
-        gamemng.input(player_bkeys);
-        float deltaTclamped = std::min(deltaT, 1.f);
-
-        // transformace a vykreslení scény
-        glPushMatrix(); checkGL();
-#ifndef NO_CAMERA
-            if (g_freecam) kamera.transform(); // transformace free kamery, pokud se používá, k jiným transformacím nedojde
-#endif
-            gamemng.frame(deltaTclamped); // ořezání času na maximálně 1 sekundu
-        glPopMatrix(); checkGL();
-
-        glEnable(GL_DEPTH_TEST); checkGL();
-
-        SDL_GL_SwapBuffers();
-        
-        if (f12pressed) {
-            f12pressed = false;
-            saveTgaScreenshot();
-        }
-
-
-#if !USE_VSYNC
-        if (limitFramerate)
-        {
-            const Uint32 minFrameTime = 8;
-            Uint32 endFrameTime = SDL_GetTicks();
-            Uint32 frameTime = endFrameTime - startFrameTime; // when the timer overflows, frameTime gets very big, then it is not less then minimum frame time and framerate limiting is skipped; fortunately this happens once in ~49 days ;-)
-            if (frameTime < minFrameTime)
-            {
-                Uint32 frameDelay = minFrameTime - frameTime;
-                SDL_Delay(frameDelay);
-            }
-        }
-#endif
     } // end main loop
 
     // Zapiseme nastaveni
@@ -976,9 +927,11 @@ int my_main (int argc, char** argv)
         settings.set("sound_volume", gamemng.get_global_volume());
         settings.set("view_distance", gamemng.get_far());
     }
-    if (!b_test_map)
-        settings.save();
-        
+
+#ifndef TEST_SCRSHOT
+    settings.save();
+#endif
+
     for (unsigned i = 0; i != global_al_sources.size(); ++i) {
         alDeleteSources(1, &(global_al_sources[i]));
     }
@@ -995,52 +948,6 @@ int my_main (int argc, char** argv)
     return 0;
 }
 
-#if defined(__WIN32__)
-
-#ifndef DPI_ENUMS_DECLARED
-typedef enum PROCESS_DPI_AWARENESS
-{
-    PROCESS_DPI_UNAWARE = 0,
-    PROCESS_SYSTEM_DPI_AWARE = 1,
-    PROCESS_PER_MONITOR_DPI_AWARE = 2
-} PROCESS_DPI_AWARENESS;
-#endif
-
-typedef BOOL (WINAPI * SETPROCESSDPIAWARE_T)(void);
-typedef HRESULT (WINAPI * SETPROCESSDPIAWARENESS_T)(PROCESS_DPI_AWARENESS);
-
-bool win32_SetProcessDpiAware(void) {
-    HMODULE shcore = LoadLibraryA("Shcore.dll");
-    SETPROCESSDPIAWARENESS_T SetProcessDpiAwareness = NULL;
-    if (shcore) {
-        SetProcessDpiAwareness = (SETPROCESSDPIAWARENESS_T) GetProcAddress(shcore, "SetProcessDpiAwareness");
-    }
-    HMODULE user32 = LoadLibraryA("User32.dll");
-    SETPROCESSDPIAWARE_T SetProcessDPIAware = NULL;
-    if (user32) {
-        SetProcessDPIAware = (SETPROCESSDPIAWARE_T) GetProcAddress(user32, "SetProcessDPIAware");
-    }
-
-    bool ret = false;
-    if (SetProcessDpiAwareness) {
-        ret = SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE) == S_OK;
-    } else if (SetProcessDPIAware) {
-        ret = SetProcessDPIAware() != 0;
-    }
-
-    if (user32) {
-        FreeLibrary(user32);
-    }
-    if (shcore) {
-        FreeLibrary(shcore);
-    }
-    return ret;
-}
-
-volatile bool ha = win32_SetProcessDpiAware();
-
-#endif
-
 int main (int argc, char** argv)
 {
     int ret = my_main(argc, argv);
@@ -1049,50 +956,27 @@ int main (int argc, char** argv)
 }
 
 // 0 - success, 1 - error
-int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int height/*, unsigned int depth*/)
+int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
 {
-    const unsigned int depth = 0;
-    /* this holds some info about our display */
-    /* Fetch the video info */
-    const SDL_VideoInfo* videoInfo = SDL_GetVideoInfo( );
+    // Request OpenGL context
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-    if ( !videoInfo )
+    switch (g_opengl_profile)
     {
-        fprintf( stderr, "Video query failed: %s\n",
-             SDL_GetError( ) );
+    case PROFILE_COMPAT:
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+        break;
+    case PROFILE_ES2:
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+        break;
+    default:
         return 1;
     }
 
-    /* Flags to pass to SDL_SetVideoMode */
-    /* the flags to pass to SDL_SetVideoMode */
-    int videoFlags = SDL_OPENGL          /* Enable OpenGL in SDL */
-                  // | SDL_GL_DOUBLEBUF /* Enable double buffering */ // toto je udelane pomoci SDL_GL_SetAttribute
-                   //| SDL_HWPALETTE       /* Store the palette in hardware */
-                   //| SDL_RESIZABLE      /* Enable window resizing */
-                   ;
-    /* This checks to see if surfaces can be stored in memory */
-    /*if (videoInfo->hw_available)
-        videoFlags |= SDL_HWSURFACE;
-    else
-        videoFlags |= SDL_SWSURFACE;*/
-
-    /* This checks if hardware blits can be done */
-    //if (videoInfo->blit_hw)
-    //    videoFlags |= SDL_HWACCEL;
-
-    if (fullscreen)
-        videoFlags |= SDL_FULLSCREEN;
-
-    /* Sets up OpenGL double buffering */
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-#if USE_VSYNC
-    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, vsync ? 1 : 0);
-#else
-    SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 0);
-#endif
-
-    //g_multisampleMode
     if (g_multisampleMode)
     {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -1100,17 +984,43 @@ int EnableOpenGL(bool fullscreen, bool vsync, unsigned int width, unsigned int h
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, samples);
     }
 
-    /* get a SDL surface */
-    surface = SDL_SetVideoMode(width, height, depth, videoFlags);
+    Uint32 flags = 0;
 
-    /* Verify there is a surface */
-    if (!surface)
+    if (fullscreen)
     {
-        fprintf( stderr,  "Video mode set failed: %s\n", SDL_GetError( ) );
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    }
+
+    /*{
+        SDL_DisplayMode dm;
+        if (SDL_GetDesktopDisplayMode(0, &dm) == 0)
+        {
+            if (!fullscreen && dm.w == width && dm.h == height)
+            {
+                flags |= SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
+            }
+        }
+    }*/
+
+    gameWindow = SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            fullscreen ? 0 : width, fullscreen ? 0 : height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | flags);
+
+    if (!gameWindow)
+    {
+        fprintf(stderr, "SDL window not created: %s\n", SDL_GetError()); fflush(stdout);
+        SDL_Quit();
         return 1;
     }
 
-    glViewport(0, 0, width, height); checkGL();
+    // Create our opengl context and attach it to our window
+    maincontext = SDL_GL_CreateContext(gameWindow);
+
+    // This makes our buffer swap syncronized with the monitor's vertical refresh
+    SDL_GL_SetSwapInterval(vsync ? 1 : 0);
+
+    int actualWidth, actualHeight;
+    SDL_GetWindowSize(gameWindow, &actualWidth, &actualHeight);
+
+    glViewport(0, 0, actualWidth, actualHeight); checkGL();
     return 0;
 }
-

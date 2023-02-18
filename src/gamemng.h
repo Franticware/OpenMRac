@@ -1,15 +1,6 @@
 #ifndef HLIDAC_GAMEMNG_H
 #define HLIDAC_GAMEMNG_H
 
-#include "platform.h"
-
-#include <vector>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
-
 #include "3dm.h"
 #include "octopus.h"
 #include "matmng.h"
@@ -20,13 +11,16 @@
 #include "gltext.h"
 #include "soundmng.h"
 #include "settings_dat.h"
-//#include "mainmenu.h"
 #include "ghost.h"
 #include "particles.h"
+#include "shadermng.h"
+
+#include <vector>
+#include <memory>
+#include "gl1.h"
 
 #define STRING_OPTIONS_TITLE   "Options\n\n\n\n"
 #define STRING_OPTIONS_LABELS  "\n\nSound Volume:\nView Distance:"
-//#define STRING_OPTIONS_ARROW "<            >"
 #define STRING_OPTIONS_ARROW "<                      >"
 #define STRING_OPTIONS_ARROWS  "\n\n  " STRING_OPTIONS_ARROW "\n  " STRING_OPTIONS_ARROW "\n"
 
@@ -36,9 +30,10 @@ enum Gamemenu_states {
     GMSTATE_O_SOUNDVOL, GMSTATE_O_VIEWDIST,
 };
 
+extern SDL_Window* gameWindow;
+
 struct Gamemap {
     Gamemap() : light_ah(0), light_av(0), pict_tex(0) { filename[0] = 0; filename_tex[0] = 0; name[0] = 0; }
-	//Gamemap(const Gamemap& gamemap) { memcpy(this, &gamemap, sizeof(Gamemap)); }
     char filename[256];
     float light_ah;
     float light_av;
@@ -50,14 +45,14 @@ struct Gamemap {
 };
 
 struct Gameobj {
-    Gameobj() : m(0), r(0), f(0), t3dm(0), matmng(0) { filename[0] = 0; }
+    Gameobj() : m(0), r(0), f(0) { filename[0] = 0; }
     char filename[256];
     float m; // hmotnost
     float r; // poloměr pro výpočet momentu setrvačnosti a třecí síly
     float f; // tření
     // model a materiály
-    T3dm* t3dm;
-    Matmng* matmng;
+    std::unique_ptr<T3dm> t3dm;
+    std::unique_ptr<Matmng> matmng;
 };
 
 struct Car_th {
@@ -68,16 +63,12 @@ struct Car_th {
 };
 
 struct Gamecar {
-    Gamecar() : names(0), pict_tex(0), sz_mods(0), sz_names(0), engine1_pitch(0) { fname_sample_engine0[0] = 0; fname_sample_engine1[0] = 0; name[0] = 0; }
-    ~Gamecar() { delete[] names; delete[] pict_tex; }
+    Gamecar() : engine1_pitch(0) { fname_sample_engine0[0] = 0; fname_sample_engine1[0] = 0; name[0] = 0; }
     char filename[256];
     char filename_cmo[256];
     // model a materiály
-    typedef char Tfname[256];
-    Tfname* names; // jména pro výměnu původních textur, počet je sz_names*sz_mods
-    //GLuint* pict_tex; // obrázek s texturou do menu, počet je v sz_mods
-    Car_th* pict_tex;
-    unsigned int sz_mods;
+    std::vector<std::string> names; // jména pro výměnu původních textur, počet je sz_names*sz_mods
+    std::vector<Car_th> pict_tex; // obrázek s texturou do menu, počet je v sz_mods
     unsigned int sz_names;
 
     char fname_sample_engine0[256];
@@ -87,8 +78,8 @@ struct Gamecar {
     ALbuffer p_engine0_sample;
     ALbuffer p_engine1_sample;
 
-    float exhaust_position[3];
-    float exhaust_direction[3];
+    glm::vec3 exhaust_position;
+    glm::vec3 exhaust_direction;
 
     char name[256];
 };
@@ -103,15 +94,15 @@ struct Gamesky {
 };
 
 struct Mapobj {
-    Mapobj() : vert_i(0), ang(0), id(0), r(0), f(0), rbo(0), rendermng(0) { pos[0] = 0; pos[1] = 0; }
+    Mapobj() : vert_i(0), ang(0), id(0), r(0), f(0) { pos[0] = 0; pos[1] = 0; }
     unsigned int vert_i;
     float ang;
     float pos[2];
     unsigned int id;
     float r;
     float f;
-    RBSolver* rbo;
-    Rendermng* rendermng;
+    std::unique_ptr<RBSolver> rbo;
+    std::unique_ptr<Rendermng> rendermng;
 };
 
 struct Playerkeys {
@@ -141,7 +132,6 @@ struct Results {
 };
 
 struct Keytest {
-    //unsigned char bkey_prev[4]; // nemá to smysl
     Gltext player, left, right, down, up;
 };
 
@@ -181,12 +171,10 @@ public:
             p_opt_color1[i] = 0;
         }
     }
-    ~Gamemenu() {}
     void sw();
     void keydown(unsigned int sym);
     void render();
     void init();
-
 
     bool bmenu;
     int state;
@@ -202,13 +190,13 @@ public:
     float p_opt_color1[3];
 };
 
-typedef float Gamemtrx[16];
+//typedef float Gamemtrx[16];
 
 class Carcam {
 public:
     void init(float r, float y, float ang, float h_ang, const float* , const float* ang0, const float* pos0, const TimeSync* timesync, const Collider* collider); // úhly jsou v radiánech, h_ang ve stupních
     void update(bool bstep);
-    void transf();
+    glm::mat4 transf();
 
     const float* p_ang_base;
     const float* p_ang0_base;
@@ -230,28 +218,25 @@ const char* time_m_s(float time);
 
 class Gamemng {
 public:
-    Gamemng() : p_map_model(0), p_map_matmng(0), p_map_oct(0), p_map_rendermng(0),
-        p_collider(0), p_rbos(0), p_reverse(false), p_players(0),
+    Gamemng() :
+        p_whitetex(0), p_smoketex(0), p_skycmtex(0),
+        p_rbos(0), p_reverse(false), p_players(0),
         p_wide169(false), p_far(0), p_car2do(0), p_car2dp(0), p_cartransf(0), p_carrendermng(0),
-        p_particles(0), p_ghostmodel(0), p_ghostmatmng(0), p_ghostrendermng(0), p_ghosttransf(0),
-        p_ghostOld(0), p_ghostNew(0), p_isGhost(0), p_ghostUpdated(0), p_ghostAvailable(0),
-        p_ghost_time(0), p_finished(0), p_laps(0), p_sound_crash(0), p_sound_car(0), p_settings(0)
+        p_ghostmodel(0), p_ghostmatmng(0), p_ghostrendermng(0), p_ghosttransf(0),
+        p_isGhost(0), p_ghostUpdated(0), p_ghostAvailable(0),
+        p_ghost_time(0), p_finished(0), p_laps(0), p_settings(0)
     {
         for (int i = 0; i != 4; ++i)
         {
             p_carmodel[i] = 0;
             p_carmatmng[i] = 0;
+            p_ghost_step[i] = 0;
         }
     }
     ~Gamemng()
     {
         unload();
-        delete p_sound_crash;
-        delete p_ghostOld;
-        delete[] p_ghostNew;
-        delete[] p_particles;
-        /*destroy all other: textura slunce*/
-        glDeleteTextures(1, &(p_suntex)); checkGL();
+        /* destroy all other */
         glDeleteTextures(1, &(p_smoketex)); checkGL();
     }
     void unload();
@@ -260,8 +245,8 @@ public:
     bool load(int players_sel, const int* cars_sel/*[4]*/, const int* cars_tex_sel, int map_sel, int sky_sel, bool breverse);
     void restart();
     void input(unsigned char keys[4*4]); // předání pole pravdivostních hodnot stisku kláves
-    void frame(float deltaT);
-    void render_frame();
+    void frame(float deltaT, const glm::mat4& freecam_mtrx);
+    void render_frame(const glm::mat4& m);
 
     void render_black();
     void render_bricks();
@@ -280,16 +265,17 @@ public:
 //////////////////////////////////////////////////////
     Playerkeys p_playerkeys[4];
 
+    ShaderMng p_shadermng;
     Skysph p_skysph;
-    GLuint p_suntex; // přenosná textura - z init, zrušit v destruktoru
-    GLuint p_smoketex; // přenosná textura - z init, zrušit v destruktoru
 
+    GLuint p_whitetex;
+    GLuint p_smoketex; // přenosná textura - z init, zrušit v destruktoru
     GLuint p_skycmtex; // cube map or sphere map
 
     // skytex spravuje p_skysph
     float p_skyang;
 
-    float p_mtrx_texcm[16];
+    glm::mat4 p_mtrx_texcm;
 
     std::vector<Gamemap> p_maps;
     std::vector<Gameobj> p_objs;
@@ -300,28 +286,27 @@ public:
 
     // model a materiály mapy
 
-    T3dm* p_carmodel[4];
-    Matmng* p_carmatmng[4];
-    
-    T3dm* p_map_model;
-    Matmng* p_map_matmng;
-    Octopus* p_map_oct;
-    Rendermng* p_map_rendermng;
+    std::unique_ptr<T3dm> p_carmodel[4];
+    std::unique_ptr<Matmng> p_carmatmng[4];
 
-    Collider* p_collider;
-    RBSolver** p_rbos;
+    std::unique_ptr<T3dm> p_map_model;
+    std::unique_ptr<Matmng> p_map_matmng;
+    std::unique_ptr<Octopus> p_map_oct;
+    std::unique_ptr<Rendermng> p_map_rendermng;
+
+    std::unique_ptr<Collider> p_collider;
+    std::vector<RBSolver*> p_rbos;
 
     float p_finish[2];
     bool p_reverse;
     unsigned int p_players;
 
-    TimeSync p_timesync;    
+    TimeSync p_timesync;
     TimeSync p_particleTimesync;
 
     float p_light_position[4];
     float p_light_ambient[4];
     float p_light_diffuse[4];
-    //float p_light_ambdiff[4];
 
     GLint p_viewport[2];
     GLint p_scissor[2];
@@ -335,19 +320,19 @@ public:
     int get_far() { return p_far; }
 
     int p_cars_sel[4];
-    RBSolver* p_car2do; // pole objektů aut
-    Car2D* p_car2dp;
-    Transf* p_cartransf;
-    Rendermng* p_carrendermng;
-    Particles* p_particles;
-    
-    T3dm* p_ghostmodel; // pole
-    Matmng* p_ghostmatmng; // pole
-    Rendermng* p_ghostrendermng; // pole
-    Transf* p_ghosttransf; // pole
-    
-    Ghost* p_ghostOld;
-    Ghost* p_ghostNew; // pole 4 prvků
+    std::vector<RBSolver> p_car2do; // pole objektů aut
+    std::vector<Car2D> p_car2dp;
+    std::vector<Transf> p_cartransf;
+    std::vector<Rendermng> p_carrendermng;
+    std::vector<Particles> p_particles;
+
+    std::vector<T3dm> p_ghostmodel; // pole
+    std::vector<Matmng> p_ghostmatmng; // pole
+    std::vector<Rendermng> p_ghostrendermng; // pole
+    std::vector<Transf> p_ghosttransf; // pole
+
+    std::unique_ptr<Ghost> p_ghostOld;
+    std::vector<Ghost> p_ghostNew; // pole 4 prvků
     int p_isGhost; // times 1 (now only used for rendering)
     int p_ghostUpdated; // times 1
     int p_ghostAvailable; // times 1
@@ -361,8 +346,9 @@ public:
 
     Carcam p_carcam[4];
 
-    Gamemtrx p_proj_mtrx[4];
-    Gamemtrx p_proj_mtrx0;
+    glm::mat4 p_proj_mtrx[4];
+    glm::mat4 p_proj_mtrx0;
+    glm::mat4 p_proj_mtrx_active;
 
     Glfont p_glfont;
     float p_fpscoord[2];
@@ -385,9 +371,9 @@ public:
     Carcam p_startcam[4];
 
     GLuint p_fonttex;
-    Sound_crash* p_sound_crash;
 
-    Sound_car* p_sound_car;
+    std::unique_ptr<Sound_crash> p_sound_crash;
+    std::vector<Sound_car> p_sound_car;
 
     float p_global_volume;
 
@@ -403,7 +389,6 @@ public:
 
     Results p_results;
 
-    //unsigned int* p_keysym;
     Keytest p_keytest[4];
 
     Sound_game_static p_sound_game_static;

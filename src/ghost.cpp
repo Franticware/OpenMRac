@@ -2,6 +2,7 @@
 #include "fopendir.h"
 #include "appdefs.h"
 #include <cstdio>
+#include <algorithm>
 
 Ghost::Ghost(bool frames) {
     m_version = 104;
@@ -12,11 +13,7 @@ Ghost::Ghost(bool frames) {
     m_seconds = 0;
     m_maxnum = 1800;
     m_num = 0;
-    m_frames = frames ? new float[m_maxnum*4] : 0;
-}
-
-Ghost::~Ghost() {
-    delete[] m_frames;
+    m_frames.resize(frames ? m_maxnum*4 : 0);
 }
 
 bool Ghost::load(int track, int reverse) {
@@ -25,7 +22,6 @@ bool Ghost::load(int track, int reverse) {
     char filename[1024];
     getfname(filename);
     FILE* fin = fopenDir(filename, "rb", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (fin == NULL) return false;
     if (fread(&m_version, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
     if (m_version != 104) {fclose(fin); return false;}
@@ -39,11 +35,11 @@ bool Ghost::load(int track, int reverse) {
     if (m_carcolor < 0 || m_carcolor >= 4) {fclose(fin); return false;}
     if (fread(&m_seconds, sizeof(float), 1, fin) != 1) {fclose(fin); return false;}
     if (m_seconds < 10.0 || m_seconds > 31536000.0) {fclose(fin); return false;}
-    if (m_frames)
+    if (!m_frames.empty())
     {
         if (fread(&m_num, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
         if (m_num < 0 || m_num > m_maxnum) {fclose(fin); return false;}
-        if (static_cast<int>(fread(m_frames, sizeof(float)*4, m_num, fin)) != m_num) {fclose(fin); return false;}
+        if (static_cast<int>(fread(m_frames.data(), sizeof(float)*4, m_num, fin)) != m_num) {fclose(fin); return false;}
     }
     fclose(fin);
     return true;
@@ -52,9 +48,7 @@ bool Ghost::load(int track, int reverse) {
 void Ghost::save() {
     char filename[1024];
     getfname(filename);
-    //FILE* fout = fopen(filename, "wb");
     FILE* fout = fopenDir(filename, "wb", OPENMRAC_ORG, OPENMRAC_APP);
-    //fprintf(stderr, "%s_%s\n", __PRETTY_FUNCTION__, filename);
     if (fout == NULL) return;
     fwrite(&m_version, sizeof(int), 1, fout);
     fwrite(&m_track, sizeof(int), 1, fout);
@@ -62,10 +56,10 @@ void Ghost::save() {
     fwrite(&m_car, sizeof(int), 1, fout);
     fwrite(&m_carcolor, sizeof(int), 1, fout);
     fwrite(&m_seconds, sizeof(float), 1, fout);
-    if (m_frames)
+    if (!m_frames.empty())
     {
         fwrite(&m_num, sizeof(int), 1, fout);
-        fwrite(m_frames, sizeof(float)*4, m_num, fout);
+        fwrite(m_frames.data(), sizeof(float)*4, m_num, fout);
     }
     fclose(fout);
 }
@@ -76,7 +70,7 @@ void Ghost::getfname(char* buff) { // 1024 bajtů
     snprintf(buff, 1023, "%s%s.mrr", filenames[m_track], m_reverse ? "-rev" : "");
 }
 
-void Ghost::copyFrom(const Ghost& gnew) {    
+void Ghost::copyFrom(const Ghost& gnew) {
     m_version = gnew.m_version;
     m_track = gnew.m_track;
     m_reverse = gnew.m_reverse;
@@ -84,13 +78,13 @@ void Ghost::copyFrom(const Ghost& gnew) {
     m_carcolor = gnew.m_carcolor;
     m_seconds = gnew.m_seconds;
     m_maxnum = gnew.m_maxnum;
-    if (m_frames == 0 || gnew.m_frames == 0)
+    if (m_frames.empty() || gnew.m_frames.empty())
     {
         m_num = 0;
     }
     else
     {
         m_num = gnew.m_num;
-        memcpy(m_frames, gnew.m_frames, m_num*sizeof(float)*4);
+        std::copy_n(gnew.m_frames.begin(), m_num * 4, m_frames.begin());
     }
 }

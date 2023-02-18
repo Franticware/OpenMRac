@@ -1,8 +1,8 @@
 #ifndef HLIDAC_RAND1_H
 #define HLIDAC_RAND1_H
 
-void srand1(unsigned int seed);
-void srand1();
+void srand0(); // seed = 0
+void srand1(); // seed from time
 int rand1();
 int randn1(int size);
 

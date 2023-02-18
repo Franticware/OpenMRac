@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "gbuff_in.h"
 
 Gbuff_in gbuff_in;
@@ -64,15 +62,15 @@ char* Gbuff_in::fgets(char* str, int num)
     return 0;
 }
 
-/*const*/ unsigned char* Gbuff_in::fbuffptr()
+/*const*/ uint8_t* Gbuff_in::fbuffptr()
 {
     if (p_bactive && p_bbin)
     {
         if (p_bdat)
         {
-            return &p_datdec.p_buff[0];
+            return p_datdec.p_buff.data();
         } else {
-            return p_stdin_buff_ptr;
+            return p_stdin_buff_ptr.data();
         }
     }
     return 0;
@@ -96,7 +94,7 @@ bool Gbuff_in::f_open(const char* fname, const char* mode) /* "r" nebo "rb" */
 {
     if (p_bactive) // pokud je soubor otevřený, neotevře se jiný a vrátí se false (chyba)
         return false;
-	// parametr mode je "r"
+    // parametr mode je "r"
     if (strlen(mode) == 1 && *mode == 'r')
     {
         if (p_bdat)
@@ -113,7 +111,7 @@ bool Gbuff_in::f_open(const char* fname, const char* mode) /* "r" nebo "rb" */
         p_bbin = false;
         return true;
     }
-	// parametr mode je "rb"
+    // parametr mode je "rb"
     else if (strlen(mode) == 2 && *mode == 'r' && mode[1] == 'b')
     {
         if (p_bdat) // otevření z paku
@@ -128,8 +126,8 @@ bool Gbuff_in::f_open(const char* fname, const char* mode) /* "r" nebo "rb" */
             ::fseek(fin, 0, SEEK_END);
             p_stdin_buff_sz = ::ftell(fin);
             ::rewind(fin);
-            p_stdin_buff_ptr = new unsigned char[p_stdin_buff_sz];
-            ::fread(p_stdin_buff_ptr, 1, p_stdin_buff_sz, fin);
+            p_stdin_buff_ptr.resize(p_stdin_buff_sz);
+            ::fread(p_stdin_buff_ptr.data(), 1, p_stdin_buff_sz, fin);
             ::fclose(fin);
         }
         p_bactive = true;
@@ -146,11 +144,10 @@ void Gbuff_in::fclose()
     {
         if (p_bdat)
         {
-            delete[] p_stdin_buff_ptr;
-            p_stdin_buff_ptr = 0;
+            p_stdin_buff_ptr.clear();
             p_stdin_buff_sz = 0;
         } else { // normální soubor
-            delete[] p_stdin_buff_ptr; p_stdin_buff_ptr = 0;
+           p_stdin_buff_ptr.clear();
             p_stdin_buff_sz = 0;
         }
     } else { // textový soubor

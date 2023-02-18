@@ -1,15 +1,15 @@
-CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC
-LFLAGS = -lSDL -lGL -lopenal -ljpeg -lpng -lm -s
+CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC -std=c++20 -DNDEBUG
+LFLAGS = -lSDL2 -lGL -lopenal -ljpeg -lpng -lm -s
 
 # Uncomment the following two lines to use MiniAL instead of OpenAL:
 #CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -DUSE_MINIAL -fno-exceptions -fPIC
-#LFLAGS = -lSDL -lGL -ljpeg -lpng -lm -s
+#LFLAGS = -lSDL2 -lGL -ljpeg -lpng -lm -s
 
 CXX    = g++
 LINK   = g++
 TARGET = openmrac
 # echo -n "OBJS   = "; ls *.cpp | sed 's/.cpp$/.o/g' | tr '\n' ' ' ; echo
-OBJS   = 3dm.o cam.o car2d.o collider.o controls.o cstring1.o datkey.o fopendir.o gameaux.o gamemenu.o gamemng.o gamemng_frame.o gamemng_load.o gbuff_in.o ghost.o glext1.o glhelpers1.o gltext.o gridlayout.o gui.o guifont.o load_texture.o main.o mainmenu.o matmng.o minial.o mtrxinv.o octopus.o particles.o pict2.o pict2_jpeg.o pict2_png.o rand1.o rbsolver.o settings_dat.o settingsdialog.o skysph.o soundmng.o triboxint.o 
+OBJS   = 3dm.o cam.o car2d.o collider.o controls.o cstring1.o datkey.o dpiaware_win32.o fopendir.o gameaux.o gamemenu.o gamemng.o gamemng_frame.o gamemng_load.o gbuff_in.o ghost.o gltext.o gui.o guifont.o load_texture.o main.o mainmenu.o matmng.o minial.o octopus.o onelayout.o particles.o pict2.o pict2_jpeg.o pict2_png.o rand1.o rbsolver.o settings_dat.o settingsdialog.o shadermng.o skysph.o soundmng.o triboxint.o 
 
 .PHONY: all clean install uninstall deb
 

@@ -55,4 +55,7 @@ void alSourcePlay(ALuint source);
 void alSourceRewind(ALuint source);
 void alSourceStop(ALuint source);
 
+extern int MA_lowLatency;
+extern int MA_frequency;
+
 #endif // MINIAL_H

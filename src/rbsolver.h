@@ -1,10 +1,9 @@
 #ifndef HLIDAC_RBSOLVER_H
 #define HLIDAC_RBSOLVER_H
 
-#include "platform.h"
-
 #include "3dm.h"
 #include <cmath>
+#include <vector>
 
 namespace RBf {
     inline bool equals(const float* u, const float* v)
@@ -124,7 +123,7 @@ namespace RBf {
     }
     inline float safe(float f)
     {
-        if (!isfinite1(f))
+        if (!std::isfinite(f))
             return 0.f;
         return f;
     }
@@ -261,13 +260,10 @@ struct BBox {
     unsigned int bnconv; // je bod nekonvexní (např. roh objektu)
 };
 
-void bbox_create(BBox* &bbox, unsigned int& size, float* center, const T3dm* t3dm);
+void bbox_create(std::vector<BBox> &bbox, unsigned int& size, float* center, const T3dm* t3dm);
 
 class RBSolver {
 public:
-    RBSolver() { p_bbox = 0; p_bbox_rot = 0; }
-    ~RBSolver() { delete[] p_bbox; delete[] p_bbox_rot; }
-
     void init(const float* x, float ax, const float* v, float av, float m, float am, const TimeSync* timesync, const T3dm* t3dm);
     void addF(const float* F, const float* A = 0); // přidání další síly k výslednici, souřadnice světa (0 - síla působí v těžišti)
     void addFb(const float* F, const float* A = 0); // přidání další síly k výslednici, souřadnice objektu (0 - síla působí v těžišti)
@@ -301,8 +297,8 @@ public:
 
     bool p_bupdm;
     float p_tm[2];
-    BBox* p_bbox;
-    BBox* p_bbox_rot;
+    std::vector<BBox> p_bbox;
+    std::vector<BBox> p_bbox_rot;
     unsigned int p_bbox_sz;
 
     bool p_bcolprev; // v předchozím kroku byla kolize

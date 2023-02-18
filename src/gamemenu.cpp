@@ -1,9 +1,7 @@
-#include "platform.h"
 #include "gamemng.h"
 #include "mainmenu.h"
-#include "glhelpers1.h"
 
-#include <SDL/SDL.h>
+#include <SDL2/SDL.h>
 
 /*
 Restart Race
@@ -86,26 +84,33 @@ void Gamemenu::init()
 
 void Gamemenu::render()
 {
+
     if (state >= GMSTATE_RESTART && state <= GMSTATE_QUIT)
     {
-        gltext_menu.render_c();
+        gltext_menu.render_c(&p_gamemng->p_shadermng);
     }
     else if (state >= GMSTATE_O_SOUNDVOL && state <= GMSTATE_O_VIEWDIST)
     {
-        p_text_opt.render_c();
-        p_text_opt2.render_c();
-        p_text_opt3.render_c();
+        p_text_opt.render_c(&p_gamemng->p_shadermng);
+        p_text_opt2.render_c(&p_gamemng->p_shadermng);
+        p_text_opt3.render_c(&p_gamemng->p_shadermng);
 
-        glDisable(GL_TEXTURE_2D); checkGL();
+        p_gamemng->p_shadermng.use(ShaderId::Color);
+        p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
+
+        static const GLushort quad0[6] = { 0, 1, 2, 0, 2, 3 };
+        static const GLushort quad1[6] = { 4, 5, 6, 4, 6, 7 };
+
         glDisable(GL_BLEND); checkGL();
-        glColor4f(1, 1, 1, 1); checkGL();
-        glEnableClientState(GL_VERTEX_ARRAY); checkGL();
-        glVertexPointer(3, GL_FLOAT, 0, p_opt_verts); checkGL();
-        glColor3fv(p_opt_color0); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
-        glColor3fv(p_opt_color1); checkGL();
-        glDrawArrays(GL_QUADS, 4, 4); checkGL();
-        glDisableClientState(GL_VERTEX_ARRAY); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, p_opt_verts);
+
+        glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color0); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad0); checkGL();
+        glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color1); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad1); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     }
 }
 
@@ -268,9 +273,9 @@ void Gamemng::gamemenu_sw(bool b_quit)
         {
             p_sound_car[i].stop();
         }
-        SDL_EnableKeyRepeat(500, 30);
+        //SDL_EnableKeyRepeat(500, 30);
     } else {
         // rozjeď zvuky - to udělá automaticky frame díky chytrému stop();
-        SDL_EnableKeyRepeat(0, 0);
+        //SDL_EnableKeyRepeat(0, 0);
     }
 }

@@ -4,6 +4,8 @@
 
 OpenMRac is a split-screen racing game. It is a tweaked source release of [MultiRacer](https://www.franticware.com/multiracer).
 
+Branch sdl2 contains port from SDL 1.2 to SDL 2. It was tested only in Linux. Additional changes are required for OSX and possibly other plaforms.
+
 Programming was done by Vojtěch Salajka.  
 Porting to big endian architectures for Amiga-like OSes was done by [Szilárd Biró](https://github.com/BSzili).
 
@@ -30,13 +32,13 @@ Install **openmrac** package from AUR
 ### Debian-based (Debian, Raspberry Pi OS, Ubuntu, MX Linux, Mint, ...)
 
 * Install **sox**
-* Install development packages for OpenGL, OpenAL, SDL 1.2, jpeg, png
+* Install development packages for OpenGL, OpenAL, SDL 2, jpeg, png
 * Run the following to generate **openmrac.deb** package:
 
 ```
 mkdir openmrac-deb
 cd openmrac-deb
-git clone https://github.com/Franticware/OpenMRac.git
+git clone -b sdl2 https://github.com/Franticware/OpenMRac.git
 git clone https://github.com/Franticware/OpenMRac-data.git
 cd OpenMRac/src
 make -f Makefile.linux deb
@@ -63,7 +65,7 @@ cd OpenMRac-data
 make install
 cd ..
 
-git clone https://github.com/Franticware/OpenMRac.git
+git clone -b sdl2 https://github.com/Franticware/OpenMRac.git
 cd OpenMRac/src
 make -f Makefile.linux install
 cd ../..

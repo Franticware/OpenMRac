@@ -1,14 +1,12 @@
 #ifndef HLIDAC_GLTEXT_H
 #define HLIDAC_GLTEXT_H
 
-#include "platform.h"
-
 #include <cstring>
-#ifndef __MACOSX__
-#include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
+#include "gl1.h"
+
+#include <vector>
+
+#include "glm1.h"
 
 struct Glfchar {
     float vertw;
@@ -18,7 +16,6 @@ struct Glfchar {
 class Glfont {
 public:
     Glfont() : p_texture(0), p_dist(0), p_charmap_start(0), p_charmap_size(0), p_defaultchar(0) { }
-    ~Glfont() { }
     void init(const unsigned int mapsize[2]/*počet znaků*/, const unsigned int mapsize1[2]/*rozměry jednoho znaku*/, unsigned int mapcharh, const char* mapfname);
     void set_texture(GLuint texture);
     unsigned int get_char_i(char c) const;
@@ -31,23 +28,18 @@ public:
 };
 
 struct Gltline {
-    Gltline() : vert(0), texc(0), size(0), w(0) { }
-    ~Gltline() { delete[] vert; delete[] texc; }
-    float* vert;
-    float* texc;
-    unsigned int size; // počet vrcholů
-    float w; // šířka řádku
+    std::vector<float> vert;
+    unsigned int size = 0, isize = 0; // počet vrcholů
+    float w = 0; // šířka řádku
     float color_b[4]; // barva spodní části písmen
-    float color_t[4]; // barva vrchní části písmen (nepoužito)
-
     float bkgrect[12]; // obdélník na pozadí textu
-
 };
+
+class ShaderMng;
 
 class Gltext {
 public:
-    Gltext() : p_font(0), p_lines(0), p_h(0), p_w(0), p_cen_x(0), p_cen_y(0), p_fontsize(0), p_b_bkgrect(false) { }
-    ~Gltext() { delete[] p_lines; }
+    Gltext() : p_font(0), p_h(0), p_w(0), p_cen_x(0), p_cen_y(0), p_fontsize(0), p_b_bkgrect(false) { }
     void init(unsigned int w, unsigned int h, float fontsize, int cen_x, int cen_y, const Glfont* font,
         const float color_b[4]); // počet písmen na řádku, počet písmen na výšku, výška znaků, zarovnání znaků, , odkaz na font, barvy
     void set_pos(float x, float y);
@@ -55,24 +47,25 @@ public:
     void set_color(unsigned int i/*číslo řádku*/, const float color[4]);
     void set_bkgrect(const float* color = NULL);
     void puts(unsigned int i/*číslo řádku*/, const char* text);
-    void render_();
-    void render(GLuint texture);
-    void render_c(GLuint texture);
-    void render_c() { render_c(p_font->p_texture); }
-    void renderscale_(float scale);
-    void renderscale(float scale, GLuint texture);
+    void render(GLuint texture, ShaderMng* shadermng, bool useColor = false, float scale = 1.f);
+    void render_c(GLuint texture, ShaderMng* shadermng);
+    void render_c(ShaderMng* shadermng) { render_c(p_font->p_texture, shadermng); }
+    void renderscale(float scale, GLuint texture, ShaderMng* shadermng);
+
+    glm::mat4 mtrx;
 
     const Glfont* p_font; // odkaz na font
-    Gltline* p_lines; // řádky
+    std::vector<Gltline> p_lines; // řádky
     unsigned int p_h; // počet řádků
     unsigned int p_w;
     int p_cen_x;
     int p_cen_y;
     float p_fontsize; // výška znaků
-    float p_pos[2];
 
     float p_color_bkgrect[4];
     bool p_b_bkgrect;
+
+    std::vector<GLushort> indices;
 
 };
 
