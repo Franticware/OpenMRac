@@ -2,8 +2,7 @@
 #define GL1_H
 
 #define PROFILE_COMPAT 0
-#define PROFILE_CORE 1
-#define PROFILE_ES2 2
+#define PROFILE_ES2 1
 
 #define PROFILE_MIN PROFILE_COMPAT
 #define PROFILE_MAX PROFILE_ES2

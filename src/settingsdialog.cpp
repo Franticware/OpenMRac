@@ -106,7 +106,7 @@ SettingsDialog::SettingsDialog(
 
     std::vector<std::string> renderers;
     renderers.push_back("OpenGL Compat. profile");
-    renderers.push_back("OpenGL Core profile");
+    //renderers.push_back("OpenGL Core profile");
     renderers.push_back("OpenGL ES 2");
 
     m_rendererComboIndex = m_items.size();
@@ -153,9 +153,9 @@ SettingsDialog::SettingsDialog(
     m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(2, 1), m_layout.getCellYH(24, 1), "Rate"));
 
     std::vector<std::string> rateVec;
-    rateVec.push_back("22050 kHz");
-    rateVec.push_back("44100 kHz");
-    rateVec.push_back("48000 kHz");
+    rateVec.push_back("22050 Hz");
+    rateVec.push_back("44100 Hz");
+    rateVec.push_back("48000 Hz");
     m_freqComboIndex = m_items.size();
     m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellXW(3, 1), m_layout.getCellYH(24, 1), rateVec, currentRateIndex, 20, 2));
 
