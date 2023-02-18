@@ -227,7 +227,7 @@ void SettingsDialog::onButton(int itemIndex)
 
         m_items[m_showFpsIndex].checked = false;
         m_items[m_audioDevicesComboIndex].currentItem = 0;
-        m_items[m_freqComboIndex].currentItem = 0;
+        m_items[m_freqComboIndex].currentItem = 2;
         m_items[m_lowLatencyIndex].checked = true;
     }
 }
