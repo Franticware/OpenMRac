@@ -303,7 +303,13 @@ int my_main (int argc, char** argv)
             settings.get("show_fps"),
             alDevicesVector, settings.getOpenalDevice(),
             settings.get("freq"),
-            settings.get("low_latency"));
+            settings.get("low_latency"),
+#ifdef USE_MINIAL
+            true
+#else
+            false
+#endif
+                    );
 
         settingsDialog.execute();
 

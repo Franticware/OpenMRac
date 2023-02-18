@@ -334,7 +334,10 @@ void GuiDialog::paint()
     for (int i = 0; i != static_cast<int>(m_items.size()); ++i)
     {
         GuiItem& item = m_items[i];
-        if (item.type == GuiItem::FRAME)
+        if (item.hidden)
+        {
+        }
+        else if (item.type == GuiItem::FRAME)
         {
             SDL_Rect rectQuadOuter;
             rectQuadOuter.x = item.x;
@@ -675,7 +678,7 @@ int GuiDialog::getItem(int x, int y)
     for (int i = m_items.size(); i != 0; --i)
     {
         GuiItem& item = m_items[i-1];
-        if (item.type == GuiItem::BUTTON || item.type == GuiItem::CHECK || item.type == GuiItem::COMBO)
+        if (!item.hidden && (item.type == GuiItem::BUTTON || item.type == GuiItem::CHECK || item.type == GuiItem::COMBO))
         {
             if (x >= item.x && x < item.x + item.width && y >= item.y && y < item.y + item.height)
             {

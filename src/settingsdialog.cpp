@@ -14,7 +14,8 @@ SettingsDialog::SettingsDialog(
     const std::vector<std::string>& openalDevices,
     const char* currentOpenalDevice,
     int currentRateIndex,
-    bool lowLatency
+    bool lowLatency,
+    bool minial
     ) :
     m_horLay(0, 8),
     m_horBtnLay(0, 8),
@@ -76,13 +77,7 @@ SettingsDialog::SettingsDialog(
 
     m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(0, 1), "Video"));
     m_items.push_back(GuiItem(GuiItem::FRAME, m_horLay.getCellPS(0, 8), m_verLay.getCellPS(2, 15)));
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(18, 1),
-                          #ifdef USE_MINIAL
-                              "Audio (SDL)"
-                          #else
-                              "Audio (OpenAL)"
-                          #endif
-                              ));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(18, 1), minial ? "Audio (SDL)" :  "Audio (OpenAL)"));
     m_items.push_back(GuiItem(GuiItem::FRAME, m_horLay.getCellPS(0, 8), m_verLay.getCellPS(20, 6)));
 
     std::vector<std::string> resolutions;
@@ -148,17 +143,17 @@ SettingsDialog::SettingsDialog(
     m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(22, 1), "Device"));
 
     m_lowLatencyIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::CHECK, m_horLay.getCellPS(5, 1), m_verLay.getCellPS(24, 1), "Low Latency"));
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_horLay.getCellPS(5, 1), m_verLay.getCellPS(24, 1), "Low Latency", !minial));
     m_items[m_lowLatencyIndex].checked = lowLatency;
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(24, 1), "Rate"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(24, 1), "Rate", !minial));
 
     std::vector<std::string> rateVec;
     rateVec.push_back("22050 Hz");
     rateVec.push_back("44100 Hz");
     rateVec.push_back("48000 Hz");
     m_freqComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 1), m_verLay.getCellPS(24, 1), rateVec, currentRateIndex, 20, 2));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 1), m_verLay.getCellPS(24, 1), rateVec, currentRateIndex, 20, 2, !minial));
 
     std::vector<std::string> comboOalDevices;
     comboOalDevices.push_back("Default");

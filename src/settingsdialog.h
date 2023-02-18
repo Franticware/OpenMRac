@@ -70,7 +70,8 @@ public:
         const std::vector<std::string>& openalDevices,
         const char* currentOpenalDevice,
         int currentRateIndex,
-        bool lowLatency
+        bool lowLatency,
+        bool minial
         );
 
     virtual void onQuit();
