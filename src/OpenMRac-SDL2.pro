@@ -45,7 +45,6 @@ SOURCES += \
     gbuff_in.cpp \
     ghost.cpp \
     gltext.cpp \
-    gridlayout.cpp \
     gui.cpp \
     guifont.cpp \
     load_texture.cpp \
@@ -54,6 +53,7 @@ SOURCES += \
     matmng.cpp \
     minial.cpp \
     octopus.cpp \
+    onelayout.cpp \
     particles.cpp \
     pict2.cpp \
     pict2_jpeg.cpp \
@@ -85,13 +85,13 @@ HEADERS += \
     gl1.h \
     glm1.h \
     gltext.h \
-    gridlayout.h \
     gui.h \
     load_texture.h \
     mainmenu.h \
     matmng.h \
     minial.h \
     octopus.h \
+    onelayout.h \
     particles.h \
     pict2.h \
     rand1.h \

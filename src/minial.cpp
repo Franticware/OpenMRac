@@ -25,7 +25,7 @@
 //#define MA_INTERP MA_INTERP_LINEAR
 //#define MA_INTERP MA_INTERP_NONE
 
-#define MA_DEFAULT_FREQ 22050
+#define MA_DEFAULT_FREQ 48000
 
 int MA_lowLatency = 1;
 int MA_frequency = MA_DEFAULT_FREQ;

@@ -15,6 +15,11 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <AL/alext.h>
+
+// dummy variables replacing MiniAL ones
+static int MA_lowLatency = 1;
+static int MA_frequency = 48000;
+
 #endif
 
 #include "gltext.h"
@@ -85,9 +90,7 @@ void my_exit(int ret, bool callExit)
 int n_klavesy = 0; // počet stisknutých kláves
 
 extern int ge_bpass1; // globální vypnutí aktualizace pohledu
-
 extern int g_freecam;
-
 extern int g_sound_on;
 
 GLuint g_ghost_tex = 0;

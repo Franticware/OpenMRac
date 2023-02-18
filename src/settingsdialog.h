@@ -2,7 +2,7 @@
 #define SETTINGSDIALOG_H
 
 #include "gui.h"
-#include "gridlayout.h"
+#include "onelayout.h"
 
 #include <string>
 #include <vector>
@@ -74,52 +74,40 @@ public:
         );
 
     virtual void onQuit();
-
     virtual void onButton(int itemIndex);
-
     virtual void onKeyDown(SDL_Keycode k);
-
     virtual void onKeyUp(SDL_Keycode k);
 
     int getRenderer();
-
     int getSelectedScreenMode() const;
     bool getVsyncChecked() const;
-
     int getAntialiasingMode() const;
     int getTextureFilter() const;
-
     bool getShowFpsChecked() const;
-
     const char* getOpenalDevice() const;
-
     int getFreqIndex() const;
-
     bool getLowLatencyChecked() const;
 
     bool m_continue; // pokračovat v programu?
 
 private:
-    GridLayout m_layout;
-
-    std::vector<std::string> m_openalDevices;
-
-    int m_rendererComboIndex;
+    OneLayout m_horLay;
+    OneLayout m_horBtnLay;
+    OneLayout m_verLay;
 
     int m_defaultScreenModeIndex;
+    std::vector<std::string> m_openalDevices;
 
     // gui item indices
+    int m_rendererComboIndex;
     int m_resolutionsComboIndex;
     int m_vsyncIndex;
-
     int m_antialiasingIndex;
     int m_textureFilterIndex;
-
     int m_showFpsIndex;
     int m_audioDevicesComboIndex;
     int m_freqComboIndex;
     int m_lowLatencyIndex;
-
     int m_okButtonIndex;
     int m_cancelButtonIndex;
     int m_defaultsButtonIndex;

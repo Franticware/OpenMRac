@@ -16,7 +16,9 @@ SettingsDialog::SettingsDialog(
     int currentRateIndex,
     bool lowLatency
     ) :
-    m_layout(0, 0, 8, 8, 0, 0)
+    m_horLay(0, 8),
+    m_horBtnLay(0, 8),
+    m_verLay(0, 8)
 {
     m_continue = true;
 
@@ -29,60 +31,59 @@ SettingsDialog::SettingsDialog(
     const int LABEL_HEIGHT = 18;
     const int FRAME_MARGIN = 4;
 
-    m_layout.addColumn(1);
-    m_layout.addColumn(FRAME_MARGIN);
-    m_layout.addColumn(105);
-    m_layout.addColumn(110);
-    m_layout.addColumn(2+28);
-    m_layout.addColumn(188-28);
-    m_layout.addColumn(FRAME_MARGIN);
-    m_layout.addColumn(1);
+    m_horLay.add(1);
+    m_horLay.add(FRAME_MARGIN);
+    m_horLay.add(105);
+    m_horLay.add(110);
+    m_horLay.add(30);
+    m_horLay.add(160);
+    m_horLay.add(FRAME_MARGIN);
+    m_horLay.add(1);
 
-    m_layout.addRow(LABEL_HEIGHT); // Video
-    m_layout.addRow(2);
-    m_layout.addRow(1);
-    m_layout.addRow(FRAME_MARGIN);
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Renderer
-    m_layout.addRow(2);
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Resolution
-    m_layout.addRow(2);
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Enable VSync, Show Framerate
-    m_layout.addRow(2);
-
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Antialiasing
-    m_layout.addRow(2);
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Texture Filter
-    m_layout.addRow(0);
-    m_layout.addRow(0);
-    m_layout.addRow(FRAME_MARGIN);
-    m_layout.addRow(1);
-    m_layout.addRow(8);
-    m_layout.addRow(LABEL_HEIGHT); // Audio
-    m_layout.addRow(2);
-    m_layout.addRow(1);
-    m_layout.addRow(FRAME_MARGIN);
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Device
-    m_layout.addRow(2);
-    m_layout.addRow(CHECK_COMBO_HEIGHT); // Low Latency
-    m_layout.addRow(FRAME_MARGIN);
-    m_layout.addRow(1);
-    m_layout.addRow(16);
-    m_layout.addRow(26); // Buttons
+    m_verLay.add(LABEL_HEIGHT); // Video
+    m_verLay.add(2);
+    m_verLay.add(1);
+    m_verLay.add(FRAME_MARGIN);
+    m_verLay.add(CHECK_COMBO_HEIGHT); // Renderer
+    m_verLay.add(2);
+    m_verLay.add(CHECK_COMBO_HEIGHT); // Resolution
+    m_verLay.add(2);
+    m_verLay.add(CHECK_COMBO_HEIGHT); // Enable VSync, Show Framerate
+    m_verLay.add(2);
+    m_verLay.add(CHECK_COMBO_HEIGHT); // Antialiasing
+    m_verLay.add(2);
+    m_verLay.add(CHECK_COMBO_HEIGHT); // Texture Filter
+    m_verLay.add(0);
+    m_verLay.add(0);
+    m_verLay.add(FRAME_MARGIN);
+    m_verLay.add(1);
+    m_verLay.add(8);
+    m_verLay.add(LABEL_HEIGHT); // Audio
+    m_verLay.add(2);
+    m_verLay.add(1);
+    m_verLay.add(FRAME_MARGIN);
+    m_verLay.add(CHECK_COMBO_HEIGHT); // Device
+    m_verLay.add(2);
+    m_verLay.add(CHECK_COMBO_HEIGHT); // Low Latency
+    m_verLay.add(FRAME_MARGIN);
+    m_verLay.add(1);
+    m_verLay.add(16);
+    m_verLay.add(26); // Buttons
 
     static const char* windowTitle = "OpenMRac Settings";
 
-    init(m_layout.getBoxWidth(), m_layout.getBoxHeight(), windowTitle);
+    init(m_horLay.getSize(), m_verLay.getSize(), windowTitle);
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(0, 6), m_layout.getCellYH(0, 1), "Video"));
-    m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellXW(0, 8), m_layout.getCellYH(2, 15)));
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(0, 6), m_layout.getCellYH(18, 1),
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(0, 1), "Video"));
+    m_items.push_back(GuiItem(GuiItem::FRAME, m_horLay.getCellPS(0, 8), m_verLay.getCellPS(2, 15)));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(18, 1),
                           #ifdef USE_MINIAL
                               "Audio (SDL)"
                           #else
                               "Audio (OpenAL)"
                           #endif
                               ));
-    m_items.push_back(GuiItem(GuiItem::FRAME, m_layout.getCellXW(0, 8), m_layout.getCellYH(20, 6)));
+    m_items.push_back(GuiItem(GuiItem::FRAME, m_horLay.getCellPS(0, 8), m_verLay.getCellPS(20, 6)));
 
     std::vector<std::string> resolutions;
     for (int i = 0; i != static_cast<int>(screenModes.size()); ++i)
@@ -102,7 +103,7 @@ SettingsDialog::SettingsDialog(
     int currentScreenModeIndex = std::find(screenModes.begin(), screenModes.end(), currentScreenMode) - screenModes.begin();
     m_defaultScreenModeIndex = std::find(screenModes.begin(), screenModes.end(), defaultScreenMode) - screenModes.begin();
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(2, 1), m_layout.getCellYH(4, 1), "Renderer"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(4, 1), "Renderer"));
 
     std::vector<std::string> renderers;
     renderers.push_back("OpenGL Compat. profile");
@@ -110,24 +111,24 @@ SettingsDialog::SettingsDialog(
     renderers.push_back("OpenGL ES 2");
 
     m_rendererComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellXW(3, 3), m_layout.getCellYH(4, 1), renderers, renderer, 20, 6));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 3), m_verLay.getCellPS(4, 1), renderers, renderer, 20, 6));
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(2, 1), m_layout.getCellYH(6, 1), "Mode"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(6, 1), "Mode"));
     m_resolutionsComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellXW(3, 3), m_layout.getCellYH(6, 1), resolutions, currentScreenModeIndex, 20, 7));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 3), m_verLay.getCellPS(6, 1), resolutions, currentScreenModeIndex, 20, 7));
     m_vsyncIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellXW(2, 2), m_layout.getCellYH(8, 1), "Enable VSync"));
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_horLay.getCellPS(2, 2), m_verLay.getCellPS(8, 1), "Enable VSync"));
     m_items[m_vsyncIndex].checked = currentVsyncState;
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(2, 1), m_layout.getCellYH(10, 1), "Antialiasing"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(10, 1), "Antialiasing"));
     std::vector<std::string> antialiasingModes;
     antialiasingModes.push_back("Off");
     antialiasingModes.push_back("2x");
     antialiasingModes.push_back("4x");
     m_antialiasingIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, std::make_tuple(std::get<0>(m_layout.getCellXW(3, 1)), 50), m_layout.getCellYH(10, 1), antialiasingModes, currentAntialiasingMode, 20, 3));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPV(3, 50), m_verLay.getCellPS(10, 1), antialiasingModes, currentAntialiasingMode, 20, 3));
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(2, 1), m_layout.getCellYH(12, 1), "Texture Filter"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(12, 1), "Texture Filter"));
     std::vector<std::string> textureFilters;
     textureFilters.push_back("Bilinear");
     textureFilters.push_back("Trilinear");
@@ -138,26 +139,26 @@ SettingsDialog::SettingsDialog(
     #endif
 
     m_textureFilterIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, std::make_tuple(std::get<0>(m_layout.getCellXW(3, 1)), 110), m_layout.getCellYH(12, 1), textureFilters, currentTextureFilter, 20, 3));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPV(3, 110), m_verLay.getCellPS(12, 1), textureFilters, currentTextureFilter, 20, 3));
 
     m_showFpsIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellXW(5, 2), m_layout.getCellYH(8, 1), "Show Framerate"));
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_horLay.getCellPS(5, 2), m_verLay.getCellPS(8, 1), "Show Framerate"));
     m_items[m_showFpsIndex].checked = currentFpsState;
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(2, 1), m_layout.getCellYH(22, 1), "Device"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(22, 1), "Device"));
 
     m_lowLatencyIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::CHECK, m_layout.getCellXW(5, 1), m_layout.getCellYH(24, 1), "Low Latency"));
+    m_items.push_back(GuiItem(GuiItem::CHECK, m_horLay.getCellPS(5, 1), m_verLay.getCellPS(24, 1), "Low Latency"));
     m_items[m_lowLatencyIndex].checked = lowLatency;
 
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_layout.getCellXW(2, 1), m_layout.getCellYH(24, 1), "Rate"));
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(24, 1), "Rate"));
 
     std::vector<std::string> rateVec;
     rateVec.push_back("22050 Hz");
     rateVec.push_back("44100 Hz");
     rateVec.push_back("48000 Hz");
     m_freqComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellXW(3, 1), m_layout.getCellYH(24, 1), rateVec, currentRateIndex, 20, 2));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 1), m_verLay.getCellPS(24, 1), rateVec, currentRateIndex, 20, 2));
 
     std::vector<std::string> comboOalDevices;
     comboOalDevices.push_back("Default");
@@ -176,21 +177,26 @@ SettingsDialog::SettingsDialog(
     }
 
     m_audioDevicesComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_layout.getCellXW(3, 3), m_layout.getCellYH(22, 1), comboOalDevices, currentOpenalDeviceIndex, 20, 3));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 3), m_verLay.getCellPS(22, 1), comboOalDevices, currentOpenalDeviceIndex, 20, 3));
 
     const int BUTTON_SPACING = 8;
+    const int widthOfButtons = m_horLay.getCellS(0, 8);
+    const int widthOfButtonOk = 95;
+    const int widthOfButtonCancel = widthOfButtonOk;
+    const int widthOfButtonDefaults = widthOfButtons - BUTTON_SPACING * 2 - widthOfButtonOk - widthOfButtonCancel;
 
-    int widthOfButtons = std::get<1>(m_layout.getCellXW(1, 6));
-    int widthOfButtonOk = 95;
-    int widthOfButtonCancel = widthOfButtonOk;
-    int widthOfButtonDefaults = widthOfButtons - BUTTON_SPACING * 2 - widthOfButtonOk - widthOfButtonCancel;
+    m_horBtnLay.add(widthOfButtonOk);
+    m_horBtnLay.add(BUTTON_SPACING);
+    m_horBtnLay.add(widthOfButtonCancel);
+    m_horBtnLay.add(BUTTON_SPACING);
+    m_horBtnLay.add(widthOfButtonDefaults);
 
     m_okButtonIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1),                                                                           m_layout.getCellY(28), widthOfButtonOk,       m_layout.getCellHeight(28, 1), "OK"));
+    m_items.push_back(GuiItem(GuiItem::BUTTON, m_horBtnLay.getCellPS(0, 1), m_verLay.getCellPS(28, 1), "OK"));
     m_cancelButtonIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1) + widthOfButtonOk + BUTTON_SPACING,                                        m_layout.getCellY(28), widthOfButtonCancel,   m_layout.getCellHeight(28, 1), "Cancel"));
+    m_items.push_back(GuiItem(GuiItem::BUTTON, m_horBtnLay.getCellPS(2, 1), m_verLay.getCellPS(28, 1), "Cancel"));
     m_defaultsButtonIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::BUTTON, m_layout.getCellX(1) + widthOfButtonOk + BUTTON_SPACING + widthOfButtonCancel + BUTTON_SPACING, m_layout.getCellY(28), widthOfButtonDefaults, m_layout.getCellHeight(28, 1), "Set to Defaults"));
+    m_items.push_back(GuiItem(GuiItem::BUTTON, m_horBtnLay.getCellPS(4, 1), m_verLay.getCellPS(28, 1), "Set to Defaults"));
 
     m_returnPressed = false;
     m_enterPressed = false;
