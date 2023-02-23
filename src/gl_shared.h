@@ -3,6 +3,7 @@
 
 #include "gl1.h"
 #include <cstdint>
+#include <cassert>
 //#include <cstdio>
 
 /*
@@ -16,12 +17,12 @@ private:
     class RC
     {
     private:
-        uint32_t count; // Reference count
+        uint32_t count; // reference count
 
     public:
         void AddRef()
         {
-            // Increment the reference count
+            // increment the reference count
             count++;
         }
 
@@ -30,82 +31,79 @@ private:
         int Release()
         {
             assert(count > 0);
-            // Decrement the reference count and
+            // decrement the reference count and
             // return the reference count.
             return --count;
         }
     };
-    GLuint pData;       // pointer
-    RC* reference; // Reference count
+
+    GLuint pData;  // OpenGL object name, 0 - no object
+    RC* reference; // reference count
+
+    void create()
+    {
+        if (pData)
+        {
+            reference = new RC();
+            reference->AddRef();
+            //printf("ctor %u\n", pValue); fflush(stdout);
+        }
+    }
+
+    void destroy()
+    {
+        if (pData)
+        {
+            assert(reference);
+            if (reference->Release() == 0)
+            {
+                DelFun(1, &pData);
+                checkGL();
+                delete reference;
+                //printf("dtor %u\n", pData); fflush(stdout);
+            }
+        }
+    }
 
 public:
     SharedGLobj() : pData(0), reference(nullptr)
     {
-        // Create a new reference
-        reference = new RC();
-        // Increment the reference count
-        reference->AddRef();
-        //printf("ctor zero %u\n", reference->Count()); fflush(stdout);
+        create();
     }
 
     SharedGLobj(GLuint pValue) : pData(pValue), reference(nullptr)
     {
-        // Create a new reference
-        reference = new RC();
-        // Increment the reference count
-        reference->AddRef();
-        //printf("ctor %u %u\n", pValue, reference->Count()); fflush(stdout);
+        create();
     }
 
     SharedGLobj(const SharedGLobj<DelFun>& sp) : pData(sp.pData), reference(sp.reference)
     {
-        // Copy constructor
-        // Copy the data and reference pointer
-        // and increment the reference count
-        reference->AddRef();
+        if (pData)
+        {
+            assert(reference);
+            reference->AddRef();
+        }
     }
 
     ~SharedGLobj()
     {
-        // Destructor
-        // Decrement the reference count
-        // if reference become zero delete the data
-        if (reference->Release() == 0)
-        {
-            if (pData)
-            {
-                DelFun(1, &pData);
-                checkGL();
-            }
-            delete reference;
-        }
-        //printf("dtor %u\n", pData); fflush(stdout);
+        destroy();
     }
 
     operator GLuint() const { return pData; }
 
     SharedGLobj<DelFun>& operator = (const SharedGLobj<DelFun>& sp)
     {
-        // Assignment operator
-        if (this != &sp) // Avoid self assignment
+        if (this != &sp) // avoid self assignment
         {
-            // Decrement the old reference count
-            // if reference become zero delete the old data
-            if (reference->Release() == 0)
-            {
-                if (pData)
-                {
-                    DelFun(1, &pData);
-                    checkGL();
-                }
-                delete reference;
-            }
-
-            // Copy the data and reference pointer
-            // and increment the reference count
+            destroy();
             pData = sp.pData;
             reference = sp.reference;
-            reference->AddRef();
+            if (pData)
+            {
+                assert(reference);
+                reference->AddRef();
+            }
         }
         return *this;
     }
