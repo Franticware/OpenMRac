@@ -83,6 +83,7 @@ HEADERS += \
     gbuff_in.h \
     ghost.h \
     gl1.h \
+    gl_shared.h \
     glm1.h \
     gltext.h \
     gui.h \

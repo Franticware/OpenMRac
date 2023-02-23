@@ -403,19 +403,15 @@ void MainMenu::game()
     p_bactive = false;
 
     // všechny textury smazat
-
-    glDeleteTextures(1, &p_logo_textura); checkGL();
     p_logo_textura = 0;
 
     for (unsigned int i = 0; i != p_gamemng->p_cars.size(); ++i)
         for (unsigned int j = 0; j != p_gamemng->p_cars[i].pict_tex.size(); ++j)
         {
-            glDeleteTextures(1, &(p_gamemng->p_cars[i].pict_tex[j].tex)); checkGL();
             p_gamemng->p_cars[i].pict_tex[j].tex = 0;
         }
     for (unsigned int i = 0; i != p_gamemng->p_maps.size(); ++i)
     {
-        glDeleteTextures(1, &(p_gamemng->p_maps[i].pict_tex)); checkGL();
         p_gamemng->p_maps[i].pict_tex = 0;
     }
 

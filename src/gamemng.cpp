@@ -329,7 +329,9 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
 
     {
         uint32_t white_pix[256];
-        glGenTextures(1, &p_whitetex); checkGL();
+        GLuint texTmp;
+        glGenTextures(1, &texTmp); checkGL();
+        p_whitetex = texTmp;
         memset(white_pix, 0xff, 256 * 4);
         glBindTexture(GL_TEXTURE_2D, p_whitetex); checkGL();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, white_pix); checkGL();
@@ -708,10 +710,6 @@ void Gamemng::init_hud()
     p_gltext_start.init(10, 1, 1.f/*velikost textu*/, 0, 0, &p_glfont, font_color);
     p_gltext_start.set_pos(0.f, 0.f);
 }
-
-extern GLuint g_ghost_tex;
-extern int g_ghost_w;
-extern int g_ghost_h;
 
 void Gamemng::render_frame(const glm::mat4& m)
 {

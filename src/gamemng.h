@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include "gl1.h"
+#include "gl_shared.h"
 
 #define STRING_OPTIONS_TITLE   "Options\n\n\n\n"
 #define STRING_OPTIONS_LABELS  "\n\nSound Volume:\nView Distance:"
@@ -33,7 +34,7 @@ enum Gamemenu_states {
 extern SDL_Window* gameWindow;
 
 struct Gamemap {
-    Gamemap() : light_ah(0), light_av(0), pict_tex(0) { filename[0] = 0; filename_tex[0] = 0; name[0] = 0; }
+    Gamemap() : light_ah(0), light_av(0) { filename[0] = 0; filename_tex[0] = 0; name[0] = 0; }
     char filename[256];
     float light_ah;
     float light_av;
@@ -41,7 +42,7 @@ struct Gamemap {
     // textura
     char filename_tex[256];
     char name[256];
-    GLuint pict_tex;
+    SharedGLtex pict_tex;
 };
 
 struct Gameobj {
@@ -56,8 +57,8 @@ struct Gameobj {
 };
 
 struct Car_th {
-    Car_th() : tex(0) { fname[0] = 0; }
-    GLuint tex; // textura
+    Car_th() { fname[0] = 0; }
+    SharedGLtex tex; // textura
     float color[4];
     char fname[256]; // jméno souboru s texturou
 };
@@ -219,7 +220,6 @@ const char* time_m_s(float time);
 class Gamemng {
 public:
     Gamemng() :
-        p_whitetex(0), p_smoketex(0), p_skycmtex(0),
         p_rbos(0), p_reverse(false), p_players(0),
         p_wide169(false), p_far(0), p_car2do(0), p_car2dp(0), p_cartransf(0), p_carrendermng(0),
         p_ghostmodel(0), p_ghostmatmng(0), p_ghostrendermng(0), p_ghosttransf(0),
@@ -236,8 +236,6 @@ public:
     ~Gamemng()
     {
         unload();
-        /* destroy all other */
-        glDeleteTextures(1, &(p_smoketex)); checkGL();
     }
     void unload();
     void init(const char* maps_def, const char* objs_def, const char* cars_def, const char* skies_def); // vytvořit skysph
@@ -268,9 +266,9 @@ public:
     ShaderMng p_shadermng;
     Skysph p_skysph;
 
-    GLuint p_whitetex;
-    GLuint p_smoketex; // přenosná textura - z init, zrušit v destruktoru
-    GLuint p_skycmtex; // cube map or sphere map
+    SharedGLtex p_whitetex;
+    SharedGLtex p_smoketex; // přenosná textura - z init, zrušit v destruktoru
+    SharedGLtex p_skycmtex; // cube map or sphere map
 
     // skytex spravuje p_skysph
     float p_skyang;
@@ -370,7 +368,7 @@ public:
     Gltext p_gltext_start;
     Carcam p_startcam[4];
 
-    GLuint p_fonttex;
+    SharedGLtex p_fonttex;
 
     std::unique_ptr<Sound_crash> p_sound_crash;
     std::vector<Sound_car> p_sound_car;

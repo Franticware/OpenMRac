@@ -6,7 +6,7 @@
 #include <algorithm>
 #include "shadermng.h"
 
-void Glfont::set_texture(GLuint texture)
+void Glfont::set_texture(SharedGLtex texture)
 {
     p_texture = texture;
 }

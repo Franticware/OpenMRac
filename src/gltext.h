@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include "gl1.h"
+#include "gl_shared.h"
 
 #include <vector>
 
@@ -15,11 +16,11 @@ struct Glfchar {
 
 class Glfont {
 public:
-    Glfont() : p_texture(0), p_dist(0), p_charmap_start(0), p_charmap_size(0), p_defaultchar(0) { }
+    Glfont() : p_dist(0), p_charmap_start(0), p_charmap_size(0), p_defaultchar(0) { }
     void init(const unsigned int mapsize[2]/*počet znaků*/, const unsigned int mapsize1[2]/*rozměry jednoho znaku*/, unsigned int mapcharh, const char* mapfname);
-    void set_texture(GLuint texture);
+    void set_texture(SharedGLtex texture);
     unsigned int get_char_i(char c) const;
-    GLuint p_texture;
+    SharedGLtex p_texture;
     float p_dist; // vzdálenost mezi znaky
     Glfchar p_charmap[256];
     unsigned int p_charmap_start;

@@ -332,9 +332,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
 
 void Gamemng::unload()
 {
-    glDeleteTextures(1, &(p_skysph.tex_sky)); checkGL();
     p_skysph.tex_sky = 0;
-    glDeleteTextures(1, &(p_skycmtex)); checkGL();
     p_skycmtex = 0;
     p_skysph.tex_sky = 0;
     // v destruktoru zrušit texturu slunce

@@ -6,6 +6,7 @@
 #include "pict2.h"
 #include "glm1.h"
 #include "gl1.h"
+#include "gl_shared.h"
 #include <cstring>
 
 class Transf {
@@ -40,14 +41,13 @@ public:
 
 class Mat {
 public:
-    Mat() : texture(0), texsunk(0), balpha_test(false), benv_map(false), bboth_side(false), blighting(false), bmipmap(false), bsunken(false), special(0) { texd_name[0] = 0; texa_name[0] = 0; sund_name[0] = 0; suna_name[0] = 0; }
-    ~Mat() { glDeleteTextures(1, &texture); glDeleteTextures(1, &texsunk); checkGL(); texture = 0; }
+    Mat() : balpha_test(false), benv_map(false), bboth_side(false), blighting(false), bmipmap(false), bsunken(false), special(0) { texd_name[0] = 0; texa_name[0] = 0; sund_name[0] = 0; suna_name[0] = 0; }
     void load(const char* fname);
     void default_mat();
     void setgl();
 
-    GLuint texture; // id textury
-    GLuint texsunk; // id sunken textury
+    SharedGLtex texture; // id textury
+    SharedGLtex texsunk; // id sunken textury
     bool balpha_test; // alfa test
     bool benv_map; // mapa prostředí
     bool bboth_side; // oboustranný materiál
@@ -73,7 +73,7 @@ class Gamemng;
 
 class Rendermng {
 public:
-    Rendermng() : p_t3dm(0), p_matmng(0), p_octopus(0), p_boctocube(false), b_visible(false), p_skycmtex(0), p_transf(0) { }
+    Rendermng() : p_t3dm(0), p_matmng(0), p_octopus(0), p_boctocube(false), b_visible(false), p_transf(0) { }
     void init(Gamemng* gamemng, const T3dm* t3dm, const Matmng* matmng, Octopus* octopus = 0);
     void set_oc(const float frustum[6], const T3dm& t3dm); // nastaví jednotlivou octocube (asi)
     void set_transf(const Transf* transf) { p_transf = transf; }
@@ -97,8 +97,7 @@ public:
     Octocube p_octocube;
     bool b_visible;
     Octopus p_octocube_base;
-    // rozhodnout se, kdo bude vlastníkem objektů
-    GLuint p_skycmtex;
+    SharedGLtex p_skycmtex;
     const Transf* p_transf;
 };
 

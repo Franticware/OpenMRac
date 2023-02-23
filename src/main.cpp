@@ -93,10 +93,6 @@ extern int ge_bpass1; // globální vypnutí aktualizace pohledu
 extern int g_freecam;
 extern int g_sound_on;
 
-GLuint g_ghost_tex = 0;
-int g_ghost_w = 0;
-int g_ghost_h = 0;
-
 int g_multisampleMode = 2; // 0 - 0ff, 1 - 2x, 2 - 4x
 int g_textureFiltering = 2; // 0 - bilinear, 1 - trilinear, 2 - aniso
 int g_opengl_profile = DEFAULT_PROFILE;
@@ -415,9 +411,6 @@ int my_main (int argc, char** argv)
     glEnable(GL_CULL_FACE); checkGL();
     glEnable(GL_DEPTH_TEST); checkGL();
     glDepthFunc(GL_LESS); checkGL();
-
-    g_ghost_w = okno_rozmery[2];
-    g_ghost_h = okno_rozmery[3];
 
 #ifdef TEST_SCRSHOT
     srand0(); // seed = 0

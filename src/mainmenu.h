@@ -66,7 +66,7 @@ public:
 
     bool p_controlsChanged;
 
-    GLuint p_logo_textura;
+    SharedGLtex p_logo_textura;
 
     // další struktura na textury aut, možná propojená s gamemng, to samé tratě
     Gltext p_text_main;
@@ -110,7 +110,7 @@ public:
 
     bool p_enterMode;
 
-    GLuint p_tex_sel_bnd; // pracovní proměnná pro aktivní texturu výběru
+    SharedGLtex p_tex_sel_bnd; // pracovní proměnná pro aktivní texturu výběru
 
     static const float font_color[4];
     static const float font_color_disconnected[4];
