@@ -39,6 +39,12 @@ inline void glDepthRange1(float a, float b)
 #undef glDepthRange
 #define glDepthRange use_glDepthRange1_instead_of_glDepthRange
 
+inline void glDeleteBuffers1(GLsizei n, const GLuint * buffers)
+{
+    // workaround for GLee (win32), no harm on other platforms
+    glDeleteBuffers(n, buffers);
+}
+
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
 #endif

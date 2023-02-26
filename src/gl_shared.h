@@ -26,8 +26,6 @@ private:
             count++;
         }
 
-        uint32_t Count() const { return count; }
-
         int Release()
         {
             assert(count > 0);
@@ -90,8 +88,6 @@ public:
         destroy();
     }
 
-    operator GLuint() const { return pData; }
-
     SharedGLobj<DelFun>& operator = (const SharedGLobj<DelFun>& sp)
     {
         if (this != &sp) // avoid self assignment
@@ -107,9 +103,11 @@ public:
         }
         return *this;
     }
+
+    operator GLuint() const { return pData; }
 };
 
 using SharedGLtex = SharedGLobj<glDeleteTextures>;
-using SharedGLbuf = SharedGLobj<glDeleteBuffers>;
+using SharedGLbuf = SharedGLobj<glDeleteBuffers1>;
 
 #endif // GL_SHARED_H

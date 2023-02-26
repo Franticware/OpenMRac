@@ -6,6 +6,7 @@
 #include "settings_dat.h"
 
 #include <SDL2/SDL.h>
+#include <map>
 
 enum MainMenu_states {
     STATE_RACE = 0, STATE_CONTROLS, STATE_OPTIONS, STATE_BEST_LAPS, STATE_QUIT, STATE_Q,
@@ -104,9 +105,11 @@ public:
 
     int p_track_sel;
 
+    void countKeys();
     int p_testKeysCount;
     SDL_Keycode p_testKeysLastKeyDown;
     SDL_Keycode p_testKeysLastKeyUp;
+    std::map<SDL_Keycode, uint8_t> p_testKeysMap;
 
     bool p_enterMode;
 

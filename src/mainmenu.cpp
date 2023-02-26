@@ -682,6 +682,15 @@ void MainMenu::exitEnterMode()
     }
 }
 
+void MainMenu::countKeys()
+{
+    p_testKeysCount = 0;
+    for (const auto& p : p_testKeysMap)
+    {
+        p_testKeysCount += (uint32_t)p.second;
+    }
+}
+
 void MainMenu::event(const SDL_Event& e)
 {
     // check for messages
@@ -694,8 +703,9 @@ void MainMenu::event(const SDL_Event& e)
             {
                 if (!ignoreKey(e.key.keysym.sym))
                 {
-                    ++p_testKeysCount;
                     p_testKeysLastKeyDown = e.key.keysym.sym;
+                    p_testKeysMap[e.key.keysym.sym] = 1;
+                    countKeys();
                 }
                 if (sym == SDLK_ESCAPE)
                 {
@@ -805,8 +815,9 @@ void MainMenu::event(const SDL_Event& e)
             {
                 if (!ignoreKey(e.key.keysym.sym))
                 {
-                    --p_testKeysCount;
                     p_testKeysLastKeyUp = e.key.keysym.sym;
+                    p_testKeysMap[e.key.keysym.sym] = 0;
+                    countKeys();
                 }
             }
             if (p_state == STATE_CONTROLS && (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER))
@@ -823,6 +834,7 @@ void MainMenu::event(const SDL_Event& e)
                 p_testKeysCount = 0;
                 p_testKeysLastKeyDown = -1; //SDLK_LAST;
                 p_testKeysLastKeyUp = -1; //SDLK_LAST;
+                p_testKeysMap.clear();
             }
             break;
         }
