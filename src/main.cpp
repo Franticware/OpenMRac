@@ -1014,6 +1014,13 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
     // Create our opengl context and attach it to our window
     maincontext = SDL_GL_CreateContext(gameWindow);
 
+    if (!initGlExt())
+    {
+        fprintf(stderr, "%s\n", GLEXT_ERROR_MESSAGE); fflush(stdout);
+        SDL_Quit();
+        return 1;
+    }
+
     // This makes our buffer swap syncronized with the monitor's vertical refresh
     SDL_GL_SetSwapInterval(vsync ? 1 : 0);
 

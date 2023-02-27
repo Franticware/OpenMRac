@@ -9,16 +9,30 @@
 
 #if defined(__WIN32__)
 
-#include <GL/GLee.h>
+//#define GLEW_STATIC
+#include <GL/glew.h>
+
+inline bool initGlExt(void)
+{
+    return glewInit() == GLEW_OK;
+}
+
+#define GLEXT_ERROR_MESSAGE "glewInit error"
 
 // GLES2 did not work on windows
 #define DEFAULT_PROFILE PROFILE_COMPAT
-
 
 #else
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glcorearb.h>
+
+inline bool initGlExt(void)
+{
+    return true;
+}
+
+#define GLEXT_ERROR_MESSAGE ""
 
 #define DEFAULT_PROFILE PROFILE_ES2
 
@@ -41,7 +55,7 @@ inline void glDepthRange1(float a, float b)
 
 inline void glDeleteBuffers1(GLsizei n, const GLuint * buffers)
 {
-    // workaround for GLee (win32), no harm on other platforms
+    // workaround for GLEW (win32), no harm on other platforms
     glDeleteBuffers(n, buffers);
 }
 

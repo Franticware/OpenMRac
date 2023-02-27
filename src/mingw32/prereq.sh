@@ -2,14 +2,14 @@
 
 TOOLCHAIN_FILE="../mingw32-toolchain.cmake"
 
-rm -Rf glee
-git clone https://github.com/Franticware/glee
-cd glee
-cmake -DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE \
--S. -B. \
--DCMAKE_BUILD_TYPE:STRING="MinSizeRel"
-make
-cd ..
+GLEWVER=2.2.0
+rm -Rf
+rm -f glew-$GLEWVER-win32.zip
+rm -f glew32.dll
+wget https://github.com/nigels-com/glew/releases/download/glew-$GLEWVER/glew-$GLEWVER-win32.zip
+unzip glew-$GLEWVER-win32.zip
+mv glew-$GLEWVER glew
+cp glew/bin/Release/Win32/glew32.dll .
 
 SDL2VER=2.26.3
 rm -Rf SDL2
