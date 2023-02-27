@@ -460,20 +460,15 @@ void MainMenu::render() // vykreslení menu
         glVertexAttrib4f((GLuint)ShaderAttrib::Color, seda, seda, seda,1); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        float y_coord = 2.8 - 0.2;
-        static const float vert_array[12] = {-4, -2+y_coord, -10,
-                                             4, -2+y_coord, -10,
-                                             -4,  2+y_coord, -10,
-                                             4,  2+y_coord, -10,
+        const float y_coord = 2.6;
+        const float texc_size = 1;
+        static const float vert_array[20] = {-4, -2+y_coord, -10, 0, 0,
+                                             4, -2+y_coord, -10,    texc_size, 0,
+                                             -4,  2+y_coord, -10,   0,  texc_size,
+                                             4,  2+y_coord, -10,    texc_size,  texc_size,
                                             };
-        float texc_size = 1;
-        static const float texc_array[8] = {0, 0,
-                                            texc_size, 0,
-                                            0,  texc_size,
-                                            texc_size,  texc_size,
-                                           };
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array + 3); checkGL();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
@@ -557,27 +552,19 @@ void MainMenu::render() // vykreslení menu
 
         glDisable(GL_BLEND); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_tex_sel_bnd); checkGL();
-        // vykreslení obrázku loga
         glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        float y_coord = 1.f*0.319f;
-        float size = 0.5f*0.319f;
-        static const float vert_array[12] = {-16*size, -10*size+y_coord, -10,
-                                             16*size, -10*size+y_coord, -10,
-
-                                             -16*size,  10*size+y_coord, -10,
-                                             16*size,  10*size+y_coord, -10,
+        const float y_coord = 1.f*0.319f;
+        const float size = 0.5f*0.319f;
+        static const float vert_array[20] = {-16*size, -10*size+y_coord, -10,   0, 0,
+                                             16*size, -10*size+y_coord, -10,    1, 0,
+                                             -16*size,  10*size+y_coord, -10,   0,  1,
+                                             16*size,  10*size+y_coord, -10,    1,  1,
                                             };
-        static const float texc_array[8] = {0, 0,
-                                            1, 0,
 
-                                            0,  1,
-                                            1,  1,
-                                           };
-
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array+3); checkGL();
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
@@ -590,6 +577,7 @@ void MainMenu::render() // vykreslení menu
         glEnable(GL_BLEND); checkGL();
 
         {
+            // up/down arrows
             glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
             glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
 
@@ -597,29 +585,23 @@ void MainMenu::render() // vykreslení menu
             float yposun0 = (1+6);
             float yposun1 = (1-6);
 
-            static const float vert_array[24] = {-1*size, -0.506316f*size+yposun0, -10, 1*size, -0.546316f*size+yposun0, -10, 1*size, 0.546316f*size+yposun0, -10, -1*size, 0.506316f*size+yposun0, -10,
-                -1*size, -0.506316f*size+yposun1, -10, 1*size, -0.546316f*size+yposun1, -10, 1*size, 0.546316f*size+yposun1, -10, -1*size, 0.506316f*size+yposun1, -10
+            static const float vert_array[40] = {
+                -1*size, -0.506316f*size+yposun0, -10,  0.875, 0.28125,
+                1*size, -0.546316f*size+yposun0, -10,   0.875, 0.148438,
+                1*size, 0.546316f*size+yposun0, -10,    0.914063, 0.148438,
+                -1*size, 0.506316f*size+yposun0, -10,   0.914063, 0.28125,
+                -1*size, -0.506316f*size+yposun1, -10,  0.914063, 0.28125,
+                1*size, -0.546316f*size+yposun1, -10,   0.914063, 0.148438,
+                1*size, 0.546316f*size+yposun1, -10,    0.875, 0.148438,
+                -1*size, 0.506316f*size+yposun1, -10,   0.875, 0.28125
                 };
-            static const float texc_array[16] = {
-                0.875, 0.28125,
-                0.875, 0.148438,
-                0.914063, 0.148438,
-                0.914063, 0.28125,
-
-                0.914063, 0.28125,
-                0.914063, 0.148438,
-                0.875, 0.148438,
-                0.875, 0.28125,
-
-                };
-
             static const GLushort ind_array[12] = {
                 0,1,2, 0,2,3,
                 4,5,6, 4,6,7
             };
 
-            glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
-            glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array); checkGL();
+            glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array); checkGL();
+            glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array+3); checkGL();
             glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, ind_array); checkGL();
 
             glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
@@ -640,18 +622,13 @@ void MainMenu::render() // vykreslení menu
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         float y_coord = 1.f*0.319f;
         float size = 0.5f*0.319f;
-        static const float vert_array[12] = {-16*size, -10*size+y_coord, -10,
-                                             16*size, -10*size+y_coord, -10,
-                                             -16*size,  10*size+y_coord, -10,
-                                             16*size,  10*size+y_coord, -10,
+        static const float vert_array[20] = {-16*size, -10*size+y_coord, -10,   0, 0,
+                                             16*size, -10*size+y_coord, -10,    1, 0,
+                                             -16*size,  10*size+y_coord, -10,   0,  1,
+                                             16*size,  10*size+y_coord, -10,    1,  1,
                                             };
-        static const float texc_array[8] = {0, 0,
-                                            1, 0,
-                                            0,  1,
-                                            1,  1,
-                                           };
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array);
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texc_array);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array+3);
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();

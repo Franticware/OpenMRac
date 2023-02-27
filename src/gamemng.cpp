@@ -711,6 +711,139 @@ void Gamemng::init_hud()
     p_gltext_start.set_pos(0.f, 0.f);
 }
 
+void Gamemng::render_smoke(const glm::mat4& m)
+{
+    // 3.fáze renderu aut - render částic
+    static const float texCoords[8] = {0, 0, 1, 0, 1, 1, 0, 1};
+
+    static std::vector<float> vertArray;
+    vertArray.clear();
+
+    float smokeColor[3];
+    for (int i = 0; i != 3; ++i)
+    {
+        smokeColor[i] = p_light_ambient[i] + p_light_diffuse[i];
+        if (smokeColor[i] > 1.f)
+            smokeColor[i] = 1.f;
+        smokeColor[i] *= 0.6; // odstín šedi 0.6 pronásobený světlem
+    }
+
+    // smoke generation
+    for (unsigned int i = 0; i != p_players; ++i)
+    {
+        if (p_carrendermng[i].isVisible())
+        {
+            glm::mat4 mdl_mtrx = glm::translate(m, glm::vec3(p_car2do[i].p_x0[1], 0.f, p_car2do[i].p_x0[0]));
+
+            for (unsigned int j = 0; j != p_particles[i].m_particleContainer.size(); ++j)
+            {
+                Particle& particle = p_particles[i].m_particleContainer[j];
+                glm::vec3 result = mdl_mtrx * glm::vec4(particle.position[0], particle.position[1], particle.position[2], 1.f);
+
+                // 0
+                vertArray.push_back(result[0] - particle.radius);
+                vertArray.push_back(result[1] - particle.radius);
+                vertArray.push_back(result[2]);
+
+                vertArray.push_back(smokeColor[0]);
+                vertArray.push_back(smokeColor[1]);
+                vertArray.push_back(smokeColor[2]);
+                vertArray.push_back(particle.density);
+
+                vertArray.push_back(texCoords[(0 + particle.texConfig * 2) % 8]);
+                vertArray.push_back(texCoords[(1 + particle.texConfig * 2) % 8]);
+
+                // 1
+                vertArray.push_back(result[0] + particle.radius);
+                vertArray.push_back(result[1] - particle.radius);
+                vertArray.push_back(result[2]);
+
+                vertArray.push_back(smokeColor[0]);
+                vertArray.push_back(smokeColor[1]);
+                vertArray.push_back(smokeColor[2]);
+                vertArray.push_back(particle.density);
+
+                vertArray.push_back(texCoords[(2 + particle.texConfig * 2) % 8]);
+                vertArray.push_back(texCoords[(3 + particle.texConfig * 2) % 8]);
+
+                // 2
+                vertArray.push_back(result[0] + particle.radius);
+                vertArray.push_back(result[1] + particle.radius);
+                vertArray.push_back(result[2]);
+
+                vertArray.push_back(smokeColor[0]);
+                vertArray.push_back(smokeColor[1]);
+                vertArray.push_back(smokeColor[2]);
+                vertArray.push_back(particle.density);
+
+                vertArray.push_back(texCoords[(4 + particle.texConfig * 2) % 8]);
+                vertArray.push_back(texCoords[(5 + particle.texConfig * 2) % 8]);
+
+                // 0
+                vertArray.push_back(result[0] - particle.radius);
+                vertArray.push_back(result[1] - particle.radius);
+                vertArray.push_back(result[2]);
+
+                vertArray.push_back(smokeColor[0]);
+                vertArray.push_back(smokeColor[1]);
+                vertArray.push_back(smokeColor[2]);
+                vertArray.push_back(particle.density);
+
+                vertArray.push_back(texCoords[(0 + particle.texConfig * 2) % 8]);
+                vertArray.push_back(texCoords[(1 + particle.texConfig * 2) % 8]);
+
+                // 2
+                vertArray.push_back(result[0] + particle.radius);
+                vertArray.push_back(result[1] + particle.radius);
+                vertArray.push_back(result[2]);
+
+                vertArray.push_back(smokeColor[0]);
+                vertArray.push_back(smokeColor[1]);
+                vertArray.push_back(smokeColor[2]);
+                vertArray.push_back(particle.density);
+
+                vertArray.push_back(texCoords[(4 + particle.texConfig * 2) % 8]);
+                vertArray.push_back(texCoords[(5 + particle.texConfig * 2) % 8]);
+
+                // 3
+                vertArray.push_back(result[0] - particle.radius);
+                vertArray.push_back(result[1] + particle.radius);
+                vertArray.push_back(result[2]);
+
+                vertArray.push_back(smokeColor[0]);
+                vertArray.push_back(smokeColor[1]);
+                vertArray.push_back(smokeColor[2]);
+                vertArray.push_back(particle.density);
+
+                vertArray.push_back(texCoords[(6 + particle.texConfig * 2) % 8]);
+                vertArray.push_back(texCoords[(7 + particle.texConfig * 2) % 8]);
+            }
+        }
+    }
+    if (!vertArray.empty())
+    {
+        glEnable(GL_BLEND); checkGL();
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
+        glBindTexture(GL_TEXTURE_2D, p_smoketex); checkGL();
+        glDepthMask(GL_FALSE); checkGL();
+        p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1.f));
+        p_shadermng.use(ShaderId::ColorTex);
+        p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+        glEnableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL(); // smoke color array
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, vertArray.data());
+        glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, sizeof(float)*9, vertArray.data()+3);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*9, vertArray.data()+7);
+        glDrawArrays(GL_TRIANGLES, 0, vertArray.size()/9);
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();
+        glDepthMask(GL_TRUE); checkGL();
+        glDisable(GL_BLEND); checkGL();
+    }
+}
+
 void Gamemng::render_frame(const glm::mat4& m)
 {
     p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
@@ -776,109 +909,7 @@ void Gamemng::render_frame(const glm::mat4& m)
         p_carrendermng[i].render_o_pass_glassReflection(mdl_ms[i]);
     }
 
-    static const float texCoords[8] = {0, 0, 1, 0, 1, 1, 0, 1};
-    // 3.fáze renderu aut - render částic
-    static std::vector<float> vertexArray;
-    static std::vector<float> texCoordArray;
-    static std::vector<float> colorArray;
-    static std::vector<GLushort> indexArray;
-    vertexArray.clear();
-    texCoordArray.clear();
-    colorArray.clear();
-
-    float smokeColor[3];
-    for (int i = 0; i != 3; ++i)
-    {
-        smokeColor[i] = p_light_ambient[i] + p_light_diffuse[i];
-        if (smokeColor[i] > 1.f)
-            smokeColor[i] = 1.f;
-        smokeColor[i] *= 0.6; // odstín šedi 0.6 pronásobený světlem
-    }
-
-    // smoke generation
-    for (unsigned int i = 0; i != p_players; ++i)
-    {
-        if (p_carrendermng[i].isVisible())
-        {
-            glm::mat4 mdl_mtrx = glm::translate(m, glm::vec3(p_car2do[i].p_x0[1], 0.f, p_car2do[i].p_x0[0]));
-
-            for (unsigned int j = 0; j != p_particles[i].m_particleContainer.size(); ++j)
-            {
-                Particle& particle = p_particles[i].m_particleContainer[j];
-                glm::vec3 result = mdl_mtrx * glm::vec4(particle.position[0], particle.position[1], particle.position[2], 1.f);
-
-                for (int i = 0; i != 4; ++i)
-                {
-                    colorArray.push_back(smokeColor[0]);
-                    colorArray.push_back(smokeColor[1]);
-                    colorArray.push_back(smokeColor[2]);
-                    colorArray.push_back(particle.density);
-                }
-                texCoordArray.push_back(texCoords[(0 + particle.texConfig * 2) % 8]);
-                texCoordArray.push_back(texCoords[(1 + particle.texConfig * 2) % 8]);
-
-                vertexArray.push_back(result[0] - particle.radius);
-                vertexArray.push_back(result[1] - particle.radius);
-                vertexArray.push_back(result[2]);
-
-                texCoordArray.push_back(texCoords[(2 + particle.texConfig * 2) % 8]);
-                texCoordArray.push_back(texCoords[(3 + particle.texConfig * 2) % 8]);
-
-                vertexArray.push_back(result[0] + particle.radius);
-                vertexArray.push_back(result[1] - particle.radius);
-                vertexArray.push_back(result[2]);
-
-                texCoordArray.push_back(texCoords[(4 + particle.texConfig * 2) % 8]);
-                texCoordArray.push_back(texCoords[(5 + particle.texConfig * 2) % 8]);
-
-                vertexArray.push_back(result[0] + particle.radius);
-                vertexArray.push_back(result[1] + particle.radius);
-                vertexArray.push_back(result[2]);
-
-                texCoordArray.push_back(texCoords[(6 + particle.texConfig * 2) % 8]);
-                texCoordArray.push_back(texCoords[(7 + particle.texConfig * 2) % 8]);
-
-                vertexArray.push_back(result[0] - particle.radius);
-                vertexArray.push_back(result[1] + particle.radius);
-                vertexArray.push_back(result[2]);
-            }
-        }
-    }
-    for (GLushort i = indexArray.size()/6; i < vertexArray.size()/12; ++i)
-    {
-        indexArray.push_back(i * 4 + 0);
-        indexArray.push_back(i * 4 + 1);
-        indexArray.push_back(i * 4 + 2);
-
-        indexArray.push_back(i * 4 + 0);
-        indexArray.push_back(i * 4 + 2);
-        indexArray.push_back(i * 4 + 3);
-    }
-
-    int indexArraySize = vertexArray.size()/12*6;
-
-    if (!vertexArray.empty() && !texCoordArray.empty() && !colorArray.empty())
-    {
-        glEnable(GL_BLEND); checkGL();
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-        glBindTexture(GL_TEXTURE_2D, p_smoketex); checkGL();
-        glDepthMask(GL_FALSE); checkGL();
-        p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1.f));
-        p_shadermng.use(ShaderId::ColorTex);
-        p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL(); // smoke color array
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vertexArray.data());
-        glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, colorArray.data());
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, 0, texCoordArray.data());
-        glDrawElements(GL_TRIANGLES, indexArraySize, GL_UNSIGNED_SHORT, indexArray.data()); // smoke render
-        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
-        glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        glDisableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();
-        glDepthMask(GL_TRUE); checkGL();
-        glDisable(GL_BLEND); checkGL();
-    }
+    render_smoke(m);
 
     // render ghost car
     if (p_isGhost && (p_ghostUpdated || p_ghostAvailable) && p_playerstate[0].lap_i_max > 0 && p_playerstate[0].lap_i_max <= p_laps) // rendering

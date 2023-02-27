@@ -777,21 +777,14 @@ void Gamemng::render_bricks()
     glVertexAttrib4f((GLuint)ShaderAttrib::Color, seda, seda, seda, 1); checkGL(); // vykreslení pozadí s texturou cihel
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Color);
-    static const float vert_array[12] = {-10, -10, -10,
-                                         10, -10, -10,
-
-                                         -10,  10, -10,
-                                         10,  10, -10,
+    static const float vert_array[28] = {
+                                        -10, -10, -10,  0, 1, 0.2, 1,
+                                        10, -10, -10,   0, 1, 0.2, 1,
+                                        -10, 10, -10,   1, 0, 0.2, 1,
+                                        10, 10, -10,    1, 0, 0.2, 1,
                                         };
-
-    static const float color_array[16] = {
-        0, 1, 0.2, 1,
-        0, 1, 0.2, 1,
-        1, 0, 0.2, 1,
-        1, 0, 0.2, 1,
-    };
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array); checkGL();
-    glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, 0, color_array); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, vert_array); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, vert_array + 3); checkGL();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();

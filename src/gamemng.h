@@ -244,6 +244,7 @@ public:
     void restart();
     void input(unsigned char keys[4*4]); // předání pole pravdivostních hodnot stisku kláves
     void frame(float deltaT, const glm::mat4& freecam_mtrx);
+    void render_smoke(const glm::mat4& m);
     void render_frame(const glm::mat4& m);
 
     void render_black();
