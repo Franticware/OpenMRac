@@ -3,9 +3,10 @@
 
 #define PROFILE_COMPAT 0
 #define PROFILE_ES2 1
+#define PROFILE_CORE33 2
 
 #define PROFILE_MIN PROFILE_COMPAT
-#define PROFILE_MAX PROFILE_ES2
+#define PROFILE_MAX PROFILE_CORE33
 
 #if defined(__WIN32__)
 
@@ -22,6 +23,8 @@ inline bool initGlExt(void)
 // GLES2 did not work on windows
 #define DEFAULT_PROFILE PROFILE_COMPAT
 
+#define GLDEBUG_APIENTRY __attribute__((stdcall))
+
 #else
 
 #define GL_GLEXT_PROTOTYPES
@@ -36,7 +39,12 @@ inline bool initGlExt(void)
 
 #define DEFAULT_PROFILE PROFILE_ES2
 
-#endif
+#define GLDEBUG_APIENTRY APIENTRY
+
+#endif // __WIN32__
+
+#define ENABLE_GLDEBUG 0
+#define ENABLE_glslangValidator 0
 
 extern int g_opengl_profile;
 
@@ -72,16 +80,27 @@ inline void glDeleteBuffers1(GLsizei n, const GLuint * buffers)
 #include <cassert>
 #include <cstdio>
 
+#define checkGL_case(a) case a: fprintf(stderr, "gl err %s (0x%x)\n", #a, a); break
+
 inline void checkGL()
 {
     GLenum err = glGetError();
     //assert(err == GL_NO_ERROR);
     if (err != GL_NO_ERROR)
     {
-        fprintf(stderr, "gl err %d\n", err);
+        switch (err)
+        {
+        checkGL_case(GL_INVALID_OPERATION);
+        checkGL_case(GL_INVALID_ENUM);
+        checkGL_case(GL_INVALID_VALUE);
+        default: fprintf(stderr, "gl err %u (0x%x)\n", err, err); break;
+        }
         fflush(stderr);
     }
 }
+
+#undef checkGL_case
+
 #else
 inline void checkGL() { }
 #endif

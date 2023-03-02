@@ -3,8 +3,26 @@
 #include <vector>
 #include <cstdio>
 #include <string>
+#include <regex>
 
 #define STR_SWCASE(prefix, ec, id) case ec::id: return prefix #id
+
+inline const char* strShaderId(ShaderId a)
+{
+    switch (a)
+    {
+    STR_SWCASE("", ShaderId, Color);
+    STR_SWCASE("", ShaderId, Tex);
+    STR_SWCASE("", ShaderId, ColorTex);
+    STR_SWCASE("", ShaderId, LightTex);
+    STR_SWCASE("", ShaderId, LightTexSunk);
+    STR_SWCASE("", ShaderId, Car);
+    STR_SWCASE("", ShaderId, CarTop);
+    STR_SWCASE("", ShaderId, GlassTint);
+    STR_SWCASE("", ShaderId, GlassReflection);
+    default: assert(false && "unexpected id"); return nullptr;
+    }
+}
 
 inline const char* strShaderAttrib(int a)
 {
@@ -70,8 +88,25 @@ ShaderMng::ShaderMng() : ints()
     currentShader = ShaderId::None;
 }
 
-static GLuint loadShader(GLenum type, const char *shaderSrc)
+static GLuint loadShader(GLenum type, const char *shaderSrc, const char* shaderName = nullptr)
 {
+    (void)shaderName;
+#if ENABLE_glslangValidator
+    if (shaderName)
+    {
+        std::string tmpName = std::string("tmp") + shaderName + (type == GL_VERTEX_SHADER ? ".vert" : ".frag");
+        FILE* fout = fopen(tmpName.c_str(), "w");
+        if (fout)
+        {
+            fprintf(fout, "%s", shaderSrc);
+            fclose(fout);
+            std::string validationCmd = std::string("glslangValidator ") + tmpName;
+            system(validationCmd.c_str());
+        }
+    }
+#endif
+
+    //printf("%s======\n%s\n", (type == GL_VERTEX_SHADER ? "VS" : "FS"), shaderSrc); fflush(stdout);
     GLuint shader;
     GLint compiled;
 // Create the shader object
@@ -86,7 +121,7 @@ static GLuint loadShader(GLenum type, const char *shaderSrc)
     glCompileShader(shader);
 // Check the compile status
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-    if(!compiled)
+    if(compiled == GL_FALSE)
     {
         GLint infoLen = 0;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
@@ -100,6 +135,32 @@ static GLuint loadShader(GLenum type, const char *shaderSrc)
         return 0;
     }
     return shader;
+}
+
+static void adaptShader(std::string& vs, std::string& fs, int opengl_profile)
+{
+    static const std::string version120line = "#version 120";
+    static const std::string version330line = "#version 330 core";
+    switch (opengl_profile)
+    {
+    case PROFILE_COMPAT:
+        vs = version120line+vs;
+        fs = version120line+fs;
+        break;
+    case PROFILE_ES2:
+        fs = "precision mediump float;"+fs;
+        break;
+    case PROFILE_CORE33:
+        vs = version330line+vs;
+        fs = version330line+"\nout vec4 fragColor;"+fs;
+        vs = std::regex_replace(vs, std::regex("attribute"), "in");
+        vs = std::regex_replace(vs, std::regex("varying"), "out");
+        fs = std::regex_replace(fs, std::regex("varying"), "in");
+        fs = std::regex_replace(fs, std::regex("texture2D"), "texture");
+        fs = std::regex_replace(fs, std::regex("textureCube"), "texture");
+        fs = std::regex_replace(fs, std::regex("gl_FragColor"), "fragColor");
+        break;
+    }
 }
 
 void ShaderMng::init()
@@ -165,24 +226,14 @@ TEST_STR_EC_COMPLETE(ShaderUniTex);
 
         if (!vs.empty() && !fs.empty())
         {
-
-            if (g_opengl_profile == PROFILE_ES2)
-            {
-                fs = "precision mediump float;"+fs;
-            }
-            else
-            {
-                static const char* version120line = "#version 120";
-                vs = version120line+vs;
-                fs = version120line+fs;
-            }
+            adaptShader(vs, fs, g_opengl_profile);
             GLuint programObject = glCreateProgram();
             for (int i = 0; i != (GLuint)ShaderAttrib::Count; ++i)
             {
                 glBindAttribLocation(programObject, i, strShaderAttrib(i));
             }
-            GLuint vId = loadShader(GL_VERTEX_SHADER, vs.c_str());
-            GLuint fId = loadShader(GL_FRAGMENT_SHADER, fs.c_str());
+            GLuint vId = loadShader(GL_VERTEX_SHADER,   vs.c_str(), strShaderId(id));
+            GLuint fId = loadShader(GL_FRAGMENT_SHADER, fs.c_str(), strShaderId(id));
 
             if (programObject != 0)
             {
@@ -194,7 +245,7 @@ TEST_STR_EC_COMPLETE(ShaderUniTex);
                 // Check the link status
                 GLint linked;
                 glGetProgramiv(programObject, GL_LINK_STATUS, &linked);
-                if(!linked)
+                if(linked == GL_FALSE)
                 {
                     GLint infoLen = 0;
                     glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, &infoLen);

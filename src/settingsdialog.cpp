@@ -102,8 +102,8 @@ SettingsDialog::SettingsDialog(
 
     std::vector<std::string> renderers;
     renderers.push_back("OpenGL Compat. profile");
-    //renderers.push_back("OpenGL Core profile");
     renderers.push_back("OpenGL ES 2");
+    renderers.push_back("OpenGL 3.3 Core profile");
 
     m_rendererComboIndex = m_items.size();
     m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 3), m_verLay.getCellPS(4, 1), renderers, renderer, 20, 6));
