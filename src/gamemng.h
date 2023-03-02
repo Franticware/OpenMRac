@@ -162,7 +162,7 @@ class Gamemenu {
 public:
     Gamemenu() : bmenu(false), state(0), p_gamemng(0), p_settings(0), p_menu(0)
     {
-        for (int i = 0; i != 4*3*2; ++i)
+        for (int i = 0; i != 24; ++i)
         {
             p_opt_verts[i] = 0;
         }
@@ -171,6 +171,7 @@ public:
             p_opt_color0[i] = 0;
             p_opt_color1[i] = 0;
         }
+        p_bufUpdated = false;
     }
     void sw();
     void keydown(unsigned int sym);
@@ -186,9 +187,13 @@ public:
     Gltext gltext_menu;
     Gltext p_text_opt, p_text_opt2, p_text_opt3;
 
-    float p_opt_verts[4*3*2];
+    float p_opt_verts[24];
     float p_opt_color0[3];
     float p_opt_color1[3];
+
+    bool p_bufUpdated = false; // GL buffer updated with latest data?
+    SharedGLbuf p_buf;
+    SharedGLbuf p_elemBuf;
 };
 
 //typedef float Gamemtrx[16];
@@ -270,6 +275,13 @@ public:
     SharedGLtex p_whitetex;
     SharedGLtex p_smoketex; // přenosná textura - z init, zrušit v destruktoru
     SharedGLtex p_skycmtex; // cube map or sphere map
+
+    //
+    SharedGLbuf p_smokebuf;
+    uint32_t p_smokeCount;
+
+    SharedGLbuf p_blackBuf;
+    SharedGLbuf p_brickBuf;
 
     // skytex spravuje p_skysph
     float p_skyang;

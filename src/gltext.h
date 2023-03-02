@@ -30,6 +30,8 @@ public:
 
 struct Gltline {
     std::vector<float> vert;
+    SharedGLbuf buf;
+    bool bufUpdated = false;
     unsigned int size = 0, isize = 0; // počet vrcholů
     float w = 0; // šířka řádku
     float color_b[4]; // barva spodní části písmen
@@ -67,7 +69,7 @@ public:
     bool p_b_bkgrect;
 
     std::vector<GLushort> indices;
-
+    SharedGLbuf buf;
 };
 
 #endif

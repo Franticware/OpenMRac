@@ -66,6 +66,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     static const char* model_o_names[] = {"", "bound", "mapobject", "ibound", 0};
     p_map_model->load(gamemap.filename, model_o_names);
     p_map_model->scale(10.f);
+    p_map_model->initBuf();
 
     float light_ambient[4];
     memcpy(light_ambient, gamesky.light_amb, 4*sizeof(float));
@@ -156,6 +157,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
                 p_objs[i].t3dm = std::make_unique<T3dm>();
                 const char* o_names[] = {"", "bound", 0};
                 p_objs[i].t3dm->load(p_objs[i].filename, o_names);
+                p_objs[i].t3dm->initBuf();
                 // načíst materiály
                 p_objs[i].matmng = std::make_unique<Matmng>();
                 p_objs[i].matmng->load(p_objs[i].t3dm.get());
@@ -189,6 +191,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         p_carmodel[i] = std::make_unique<T3dm>();
         const char* carmodel_o_names[] = {"", "bound", "wheel_fl", "wheel_fr", "wheel_back", 0};
         p_carmodel[i]->load(p_cars[cars_sel[i]].filename, carmodel_o_names);
+        p_carmodel[i]->initBuf();
         p_carmatmng[i] = std::make_unique<Matmng>();
         if (cars_tex_sel[i] != 0)
         {
@@ -282,6 +285,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         const char* ghost_o_names[] = {"", "bound", "wheel_fl", "wheel_fr", "wheel_back", 0};
         for (int i = 0; i != 2; ++i) {
             p_ghostmodel[i].load(p_cars[ghostcari[i]].filename, ghost_o_names);
+            p_ghostmodel[i].initBuf();
             if (ghostcarcolori[i] != 0) {
                 if (int(p_cars[ghostcari[i]].pict_tex.size()) <= ghostcarcolori[i])
                     ghostcarcolori[i] = p_cars[ghostcari[i]].pict_tex.size()-1;

@@ -80,6 +80,23 @@ void Gamemenu::init()
     p_opt_verts[21] = p_opt_verts[9];
     p_opt_verts[22] = p_opt_verts[10]+yposun;
     p_opt_verts[23] = p_opt_verts[11];
+
+    p_bufUpdated = false;
+
+    GLuint tmpBuf;
+    glGenBuffers(1, &tmpBuf);
+    p_buf = tmpBuf;
+    glGenBuffers(1, &tmpBuf);
+    p_elemBuf = tmpBuf;
+
+    glBindBuffer(GL_ARRAY_BUFFER, p_buf);
+    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_elemBuf);
+    static const GLushort quad0_1[12] = { 0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7 };
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quad0_1), quad0_1, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Gamemenu::render()
@@ -94,23 +111,25 @@ void Gamemenu::render()
         p_text_opt.render_c(&p_gamemng->p_shadermng);
         p_text_opt2.render_c(&p_gamemng->p_shadermng);
         p_text_opt3.render_c(&p_gamemng->p_shadermng);
-
         p_gamemng->p_shadermng.use(ShaderId::Color);
         p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
-
-        static const GLushort quad0[6] = { 0, 1, 2, 0, 2, 3 };
-        static const GLushort quad1[6] = { 4, 5, 6, 4, 6, 7 };
-
         glDisable(GL_BLEND); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, p_buf); checkGL();
+        if (!p_bufUpdated)
+        {
+            p_bufUpdated = true;
+            glBufferSubData(GL_ARRAY_BUFFER, 0, 24 * sizeof(float), p_opt_verts); checkGL();
+        }
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_elemBuf); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
-
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, p_opt_verts);
-
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
         glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color0); checkGL();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad0); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0); checkGL();
         glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color1); checkGL();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad1); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)(sizeof(GLushort)*6)); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 }
 
@@ -254,6 +273,8 @@ void Gamemenu::keydown(unsigned int sym)
 
         p_opt_verts[15] = xcmax*p_gamemng->get_far()*0.1f+xposun;
         p_opt_verts[18] = xcmax*p_gamemng->get_far()*0.1f+xposun;
+
+        p_bufUpdated = false;
     }
 }
 

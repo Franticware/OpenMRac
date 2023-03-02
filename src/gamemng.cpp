@@ -320,13 +320,39 @@ void Gamemng::set_scissor(int player)
 
 void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_def, const char* skies_def)
 {
+    {
+        static const float vert_array[12] = {-20, -10, -10,
+                                             20, -10, -10,
+                                             -20,  10, -10,
+                                              20,  10, -10};
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_blackBuf = tmpBuf;
+        glBindBuffer(GL_ARRAY_BUFFER, p_blackBuf);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vert_array), vert_array, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+    {
+        static const float vert_array[28] = {
+                                            -10, -10, -10,  0, 1, 0.2, 1,
+                                            10, -10, -10,   0, 1, 0.2, 1,
+                                            -10, 10, -10,   1, 0, 0.2, 1,
+                                            10, 10, -10,    1, 0, 0.2, 1,
+                                            };
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_brickBuf = tmpBuf;
+        glBindBuffer(GL_ARRAY_BUFFER, p_brickBuf);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vert_array), vert_array, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+    {
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_smokebuf = tmpBuf;
+        p_smokeCount = 0;
+    }
     p_shadermng.init();
-
-
-    /*glGenTextures(1, &p_whitetex);
-    p_whitetex.*/
-
-
     {
         uint32_t white_pix[256];
         GLuint texTmp;
@@ -339,9 +365,6 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); checkGL();
         glBindTexture(GL_TEXTURE_2D, 0); checkGL();
     }
-
-
-
     GLint viewport_pom[4];
     glGetIntegerv(GL_VIEWPORT, viewport_pom); checkGL();
     p_viewport[0] = viewport_pom[2];
@@ -392,7 +415,6 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
         }
         gbuff_in.fclose();
     }
-
     if (gbuff_in.f_open(objs_def, "r"))
     {
         while (gbuff_in.fgets(buff, 1024))
@@ -822,6 +844,13 @@ void Gamemng::render_smoke(const glm::mat4& m)
     }
     if (!vertArray.empty())
     {
+        glBindBuffer(GL_ARRAY_BUFFER, p_smokebuf);
+        if (vertArray.size() > p_smokeCount)
+        {
+            p_smokeCount = vertArray.size() * 2;
+            glBufferData(GL_ARRAY_BUFFER, p_smokeCount * sizeof(float), 0, GL_DYNAMIC_DRAW);
+        }
+        glBufferSubData(GL_ARRAY_BUFFER, 0, vertArray.size() * sizeof(float), vertArray.data());
         glEnable(GL_BLEND); checkGL();
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_smoketex); checkGL();
@@ -832,15 +861,16 @@ void Gamemng::render_smoke(const glm::mat4& m)
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL(); // smoke color array
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, vertArray.data());
-        glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, sizeof(float)*9, vertArray.data()+3);
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*9, vertArray.data()+7);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*9, 0);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*3));
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*9, (void*)(sizeof(float)*7));
         glDrawArrays(GL_TRIANGLES, 0, vertArray.size()/9);
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();
         glDepthMask(GL_TRUE); checkGL();
         glDisable(GL_BLEND); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 }
 

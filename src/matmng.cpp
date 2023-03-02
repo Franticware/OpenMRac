@@ -88,11 +88,13 @@ void Rendermng::render_o_pass_s3()
     p_gamemng->p_shadermng.use(ShaderId::ColorTex);
     p_gamemng->p_shadermng.set(ShaderUniInt::AlphaDiscard, (GLint)0);
 
+    glBindBuffer(GL_ARRAY_BUFFER, p_t3dm->p_buf);
+
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
 
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Pos0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Tex0));
 
     unsigned int l = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
@@ -125,7 +127,8 @@ void Rendermng::render_o_pass_s3()
                 // sem přidat transformace
                 if (p_t3dm->p_o[l].p_gi != 1)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_t3dm->p_o[l].p_buf); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, 0); checkGL();
                 }
                 ++l;
             }
@@ -141,34 +144,35 @@ void Rendermng::render_o_pass_s3()
     }
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void Rendermng::render_o_pass2(const glm::mat4& m)
 {
     if (!isVisible())
         return;
+    glBindBuffer(GL_ARRAY_BUFFER, p_t3dm->p_buf);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tan);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Bitan);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tan0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Bitan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Bitan0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Pos0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Norm0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Tan0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Bitan, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Bitan0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Tex0));
     unsigned int k = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
         const Mat& material = p_matmng->p_mat[i];
-
         if (material.bsunken)
         {
             glActiveTexture(GL_TEXTURE0 + (int)ShaderUniTex::Tex1);
             glBindTexture(GL_TEXTURE_2D, material.texsunk); checkGL();
             glActiveTexture(GL_TEXTURE0);
         }
-
         if (material.texture)
         {
             glBindTexture(GL_TEXTURE_2D, material.texture); checkGL();
@@ -177,7 +181,6 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
         {
             glBindTexture(GL_TEXTURE_2D, p_gamemng->p_whitetex); checkGL();
         }
-
         //if (material.balpha_test) setStandardAlphaTest(true);
         if (!material.blighting)
         {
@@ -208,7 +211,6 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
         {
             glDisable(GL_CULL_FACE); checkGL();
         }
-
         // TADY JE TO GRÓ
         if (p_octopus != NULL)
         {
@@ -216,7 +218,8 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_octopus->p_vw[j]->p_mi[i].p_buf); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, 0); checkGL();
                 }
             }
         } else { // vykreslování objektu bez octopusu
@@ -232,7 +235,8 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
                             glm::mat4 m2 = m * p_transf->mult_mwmx(p_t3dm->p_o[k].p_gi);
                             p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m2);
                         }
-                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i.data()); checkGL();
+                        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_t3dm->p_o[k].p_buf); checkGL();
+                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_i.size(), GL_UNSIGNED_SHORT, 0); checkGL();
                         if (p_transf)
                         {
                             p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
@@ -248,7 +252,8 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
                 glDisable(GL_CULL_FACE);
                 while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_t3dm->p_o[l].p_buf); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, 0); checkGL();
                     ++l;
                 }
                 glEnable(GL_CULL_FACE);
@@ -267,11 +272,13 @@ void Rendermng::render_o_pass2(const glm::mat4& m)
             glEnable(GL_CULL_FACE); checkGL();
         }
     }
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tan);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Bitan);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tan); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Bitan); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); checkGL();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); checkGL();
 }
 
 void Rendermng::render_o_pass_glassTint(const glm::mat4& m)
@@ -279,15 +286,16 @@ void Rendermng::render_o_pass_glassTint(const glm::mat4& m)
     if (!isVisible())
         return;
     p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    glDepthMask(GL_FALSE); checkGL();
+    glEnable(GL_BLEND); checkGL();
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
+    glBindBuffer(GL_ARRAY_BUFFER, p_t3dm->p_buf); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE,    sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Pos0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Norm0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE,    sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Tex0));
     unsigned int k = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
@@ -307,7 +315,8 @@ void Rendermng::render_o_pass_glassTint(const glm::mat4& m)
                 unsigned int l = k;
                 while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_t3dm->p_o[l].p_buf); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, 0); checkGL();
                     ++l;
                 }
                 k = l;
@@ -321,11 +330,12 @@ void Rendermng::render_o_pass_glassTint(const glm::mat4& m)
             }
         }
     }
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); checkGL();
+    glDisable(GL_BLEND); checkGL();
+    glDepthMask(GL_TRUE); checkGL();
 }
 
 void Rendermng::render_o_pass_glassReflection(const glm::mat4& m)
@@ -333,14 +343,15 @@ void Rendermng::render_o_pass_glassReflection(const glm::mat4& m)
     if (!isVisible())
         return;
     p_gamemng->p_shadermng.set(ShaderUniMat4::ModelViewMat, m);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    glEnable(GL_BLEND); checkGL();
+    glBlendFunc(GL_ONE, GL_ONE); checkGL();
+    glBindBuffer(GL_ARRAY_BUFFER, p_t3dm->p_buf); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE,    sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Pos0)); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Norm0)); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE,    sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Tex0)); checkGL();
     unsigned int k = 0;
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
@@ -360,7 +371,8 @@ void Rendermng::render_o_pass_glassReflection(const glm::mat4& m)
                 unsigned int l = k;
                 while (l != p_t3dm->p_o.size() && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i.data()); checkGL();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_t3dm->p_o[l].p_buf); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_i.size(), GL_UNSIGNED_SHORT, 0); checkGL();
                     ++l;
                 }
                 k = l;
@@ -374,25 +386,27 @@ void Rendermng::render_o_pass_glassReflection(const glm::mat4& m)
             }
         }
     }
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glDisable(GL_BLEND);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal); checkGL();
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); checkGL();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); checkGL();
+    glDisable(GL_BLEND); checkGL();
 }
 
 void Rendermng::render_o_pass_s2()
 {
     glEnable(GL_BLEND); checkGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
-
     if (p_boctocube && !b_visible)
         return;
+    glBindBuffer(GL_ARRAY_BUFFER, p_t3dm->p_buf);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count,p_t3dm->p_v.data()+(size_t)T3dmA::Pos0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, p_t3dm->p_v.data()+(size_t)T3dmA::Norm0);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count,p_t3dm->p_v.data()+(size_t)T3dmA::Tex0);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE,    sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Pos0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Normal, 3, GL_FLOAT, GL_FALSE, sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Norm0));
+    glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE,    sizeof(float)*(size_t)T3dmA::Count, (void*)(sizeof(float)*(size_t)T3dmA::Tex0));
     for (unsigned int i = 0; i != p_matmng->p_mat.size(); ++i)
     {
         const Mat& material = p_matmng->p_mat[i];
@@ -423,7 +437,8 @@ void Rendermng::render_o_pass_s2()
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i.data()); checkGL();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_octopus->p_vw[j]->p_mi[i].p_buf); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, 0); checkGL();
                 }
             }
         }
@@ -432,6 +447,7 @@ void Rendermng::render_o_pass_s2()
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Normal);
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void Mat::default_mat()

@@ -27,20 +27,29 @@ void Gltext::render(GLuint texture, ShaderMng* shadermng, bool useColor, float s
     glBindTexture(GL_TEXTURE_2D, texture); checkGL();
     glEnable(GL_BLEND); checkGL();
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); checkGL();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf);
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
     for (unsigned int i = 0; i != p_h; ++i)
     {
+        glBindBuffer(GL_ARRAY_BUFFER, p_lines[i].buf);
+        if (!p_lines[i].bufUpdated)
+        {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, p_lines[i].vert.size() * sizeof(float), p_lines[i].vert.data());
+            p_lines[i].bufUpdated = true;
+        }
         if (useColor)
         {
             glVertexAttrib4fv((GLuint)ShaderAttrib::Color, p_lines[i].color_b);
         }
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, p_lines[i].vert.data());
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, p_lines[i].vert.data() + 3);
-        glDrawElements(GL_TRIANGLES, p_lines[i].isize, GL_UNSIGNED_SHORT, indices.data()); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, 0);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, (void*)(sizeof(float)*3));
+        glDrawElements(GL_TRIANGLES, p_lines[i].isize, GL_UNSIGNED_SHORT, 0); checkGL();
     }
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glDisable(GL_BLEND); checkGL();
 }
 
@@ -118,6 +127,8 @@ void Gltext::puts(unsigned int i/*číslo řádku*/, const char* text)
             p_lines[i].vert[(j*4+1)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[2];
             p_lines[i].vert[(j*4+2)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
             p_lines[i].vert[(j*4+3)*5+4] = p_font->p_charmap[p_font->get_char_i(text[j])].texc[3];
+
+            p_lines[i].bufUpdated = false;
         }
         // přechod na další řádek
         if (text[utextsz] == '\n')
@@ -148,6 +159,13 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
         p_lines[i].size = 0; // max p_w*4
         p_lines[i].vert.clear();
         p_lines[i].vert.resize(p_w*4*5);
+
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_lines[i].buf = tmpBuf;
+        glBindBuffer(GL_ARRAY_BUFFER, p_lines[i].buf);
+        glBufferData(GL_ARRAY_BUFFER, p_lines[i].vert.size() * sizeof(float), 0, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
     indices.clear();
     indices.resize(p_w*6);
@@ -186,6 +204,7 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
             p_lines[i].vert[(j*4+2)*5+1] = text_top-(float(i))*p_fontsize;
             p_lines[i].vert[(j*4+3)*5+1] = text_top-(float(i))*p_fontsize;
         }
+        p_lines[i].bufUpdated = false;
     }
 
     for (unsigned int j = 0; j != p_w; ++j)
@@ -197,6 +216,13 @@ void Gltext::init(unsigned int w, unsigned int h, float fontsize, int cen_x, int
         indices[j * 6 + 4] = j * 4 + 2;
         indices[j * 6 + 5] = j * 4 + 3;
     }
+
+    GLuint tmpBuf;
+    glGenBuffers(1, &tmpBuf);
+    buf = tmpBuf;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLushort), indices.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Glfont::init(const unsigned int mapsize[2]/*počet znaků*/, const unsigned int mapsize1[2]/*rozměry jednoho znaku*/, unsigned int mapcharh, const char* mapfname)

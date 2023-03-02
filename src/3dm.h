@@ -5,12 +5,15 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include "gl_shared.h"
 
 class O3dm {
 public:
     std::vector<uint16_t> p_i; // pole indexů faců
+    SharedGLbuf p_buf;
     unsigned int p_m = 0; // id materiálu
     unsigned int p_gi = 0; // index transformační skupiny
+    void initBuf();
 };
 
 enum class T3dmA {
@@ -39,10 +42,12 @@ public:
     void scale(float aspect);
     int getgidobj(unsigned int gid) const; // najde první objekt s číslem skupiny, pokud ne, vrátí -1
     std::vector<float> p_v; // viz T3dmA
+    SharedGLbuf p_buf;
     std::vector<O3dm> p_o; // objekty
     std::vector<std::string> p_m; // materiály
     std::vector<float> p_cen; // středy objektů
     void clear() { p_v.clear(); p_o.clear(); p_m.clear(); p_cen.clear(); }
+    void initBuf();
 };
 
 #endif

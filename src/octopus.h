@@ -7,9 +7,23 @@
 #include <vector>
 #include <memory>
 
+#include "gl_shared.h"
+
 class Octocm {
 public:
     std::vector<uint16_t> p_i;
+    SharedGLbuf p_buf;
+
+    void initBuf()
+    {
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_buf = tmpBuf;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_buf);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, p_i.size() * sizeof(GLushort), p_i.data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
     unsigned int p_sz = 0;
 };
 

@@ -191,6 +191,7 @@ void Octocube::subdiv()
                         ++l;
                     }
                 }
+                p_sub[i]->p_mi[j].initBuf();
             }
         }
 
@@ -295,6 +296,7 @@ void Octopus::init(const float frustum[6], const T3dm& t3dm, unsigned int min_tr
                 }
             }
         }
+        p_oc->p_mi[i].initBuf();
         p_oc->p_face_num += l;
     }
     p_oc->p_lev = 0;

@@ -8,6 +8,26 @@
 #include <cmath>
 #include <algorithm>
 
+void O3dm::initBuf()
+{
+    GLuint tmpBuf;
+    glGenBuffers(1, &tmpBuf);
+    p_buf = tmpBuf;
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_buf);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, p_i.size() * sizeof(GLushort), p_i.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void T3dm::initBuf()
+{
+    GLuint tmpBuf;
+    glGenBuffers(1, &tmpBuf);
+    p_buf = tmpBuf;
+    glBindBuffer(GL_ARRAY_BUFFER, p_buf);
+    glBufferData(GL_ARRAY_BUFFER, p_v.size() * sizeof(float), p_v.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 int T3dm::getgidobj(unsigned int gid) const
 {
     for (unsigned int i = 0; i != p_o.size(); ++i)
@@ -312,5 +332,10 @@ void T3dm::load(const char* fname, const char** o_names)
 
         glm::vec3 bitangent = glm::normalize(glm::make_vec3(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Bitan0));
         glm::assign1(p_v.data()+i*(size_t)T3dmA::Count+(size_t)T3dmA::Bitan0, bitangent);
+    }
+
+    for (O3dm& o : p_o)
+    {
+        o.initBuf();
     }
 }

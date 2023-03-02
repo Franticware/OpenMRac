@@ -21,7 +21,9 @@ public:
     float r;
     float ang;
     std::vector<float> vert;
+    SharedGLbuf arrayBuf;
     std::vector<uint16_t> tris;
+    SharedGLbuf elemBuf;
     unsigned int size;
     SharedGLtex tex_sky;
 

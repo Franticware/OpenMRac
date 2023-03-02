@@ -16,6 +16,88 @@ void my_exit(int ret, bool callExit);
 
 void MainMenu::init(Gamemng* gamemng, Settings* settings)
 {
+    {
+        const float y_coord = 2.6;
+        const float texc_size = 1;
+        static const float vert_array[20] = {-4, -2+y_coord, -10, 0, 0,
+                                             4, -2+y_coord, -10,    texc_size, 0,
+                                             -4,  2+y_coord, -10,   0,  texc_size,
+                                             4,  2+y_coord, -10,    texc_size,  texc_size,
+                                            };
+
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_logoBuf = tmpBuf;
+        glBindBuffer(GL_ARRAY_BUFFER, p_logoBuf);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vert_array), vert_array, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+    {
+        const float y_coord = 1.f*0.319f;
+        const float size = 0.5f*0.319f;
+        static const float vert_array[20] = {-16*size, -10*size+y_coord, -10,   0, 0,
+                                             16*size, -10*size+y_coord, -10,    1, 0,
+                                             -16*size,  10*size+y_coord, -10,   0,  1,
+                                             16*size,  10*size+y_coord, -10,    1,  1,
+                                            };
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_carBuf = tmpBuf;
+        glBindBuffer(GL_ARRAY_BUFFER, p_carBuf);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vert_array), vert_array, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+    {
+        const float size = 1;
+        const float yposun0 = (1+6);
+        const float yposun1 = (1-6);
+
+        static const float vert_array[40] = {
+            -1*size, -0.506316f*size+yposun0, -10,  0.875, 0.28125,
+            1*size, -0.546316f*size+yposun0, -10,   0.875, 0.148438,
+            1*size, 0.546316f*size+yposun0, -10,    0.914063, 0.148438,
+            -1*size, 0.506316f*size+yposun0, -10,   0.914063, 0.28125,
+            -1*size, -0.506316f*size+yposun1, -10,  0.914063, 0.28125,
+            1*size, -0.546316f*size+yposun1, -10,   0.914063, 0.148438,
+            1*size, 0.546316f*size+yposun1, -10,    0.875, 0.148438,
+            -1*size, 0.506316f*size+yposun1, -10,   0.875, 0.28125
+            };
+        static const GLushort ind_array[12] = {
+            0,1,2, 0,2,3,
+            4,5,6, 4,6,7
+        };
+
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_arrowBuf = tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_arrowElemBuf = tmpBuf;
+        glBindBuffer(GL_ARRAY_BUFFER, p_arrowBuf);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vert_array), vert_array, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_arrowElemBuf);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(ind_array), ind_array, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+    {
+        p_bufUpdated = false;
+
+        GLuint tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_buf = tmpBuf;
+        glGenBuffers(1, &tmpBuf);
+        p_elemBuf = tmpBuf;
+
+        glBindBuffer(GL_ARRAY_BUFFER, p_buf);
+        glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_elemBuf);
+        static const GLushort quad0_1[12] = { 0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7 };
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quad0_1), quad0_1, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
+
     p_gamemng = gamemng;
     p_settings = settings;
 
@@ -453,29 +535,21 @@ void MainMenu::render() // vykreslení menu
     if (p_state >= STATE_RACE && p_state <= STATE_Q)
     {
         p_gamemng->p_shadermng.use(ShaderId::Tex);
-
         glBindTexture(GL_TEXTURE_2D, p_logo_textura); checkGL();
         static const float seda = 1.f;
         // vykreslení obrázku loga
+        glBindBuffer(GL_ARRAY_BUFFER, p_logoBuf);
         glVertexAttrib4f((GLuint)ShaderAttrib::Color, seda, seda, seda,1); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        const float y_coord = 2.6;
-        const float texc_size = 1;
-        static const float vert_array[20] = {-4, -2+y_coord, -10, 0, 0,
-                                             4, -2+y_coord, -10,    texc_size, 0,
-                                             -4,  2+y_coord, -10,   0,  texc_size,
-                                             4,  2+y_coord, -10,    texc_size,  texc_size,
-                                            };
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array); checkGL();
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array + 3); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float)*3)); checkGL();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
-        glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
         p_text_main.render_c(&p_gamemng->p_shadermng);
-
         p_text_main_ver.render_c(&p_gamemng->p_shadermng);
         p_text_main_www.render_c(&p_gamemng->p_shadermng);
     }
@@ -525,9 +599,6 @@ void MainMenu::render() // vykreslení menu
     }
     else if (p_state >= STATE_OPTIONS_SOUNDVOL && p_state <= STATE_OPTIONS_VIEWDIST)
     {
-        static const GLushort quad0[6] = { 0, 1, 2, 0, 2, 3 };
-        static const GLushort quad1[6] = { 4, 5, 6, 4, 6, 7 };
-
         p_text_opt.render_c(&p_gamemng->p_shadermng);
         p_text_opt2.render_c(&p_gamemng->p_shadermng);
         p_text_opt3.render_c(&p_gamemng->p_shadermng);
@@ -536,13 +607,23 @@ void MainMenu::render() // vykreslení menu
         p_gamemng->p_shadermng.use(ShaderId::Color);
 
         glDisable(GL_BLEND); checkGL();
+
+        glBindBuffer(GL_ARRAY_BUFFER, p_buf); checkGL();
+        if (!p_bufUpdated)
+        {
+            p_bufUpdated = true;
+            glBufferSubData(GL_ARRAY_BUFFER, 0, 24 * sizeof(float), p_opt_verts); checkGL();
+        }
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_elemBuf); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, p_opt_verts); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, 0);
         glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color0); checkGL();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad0); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0); checkGL();
         glVertexAttrib3fv((GLuint)ShaderAttrib::Color, p_opt_color1); checkGL();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, quad1); checkGL();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)(sizeof(GLushort)*6)); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
     else if (p_state == STATE_CAR_SEL)
     {
@@ -552,62 +633,35 @@ void MainMenu::render() // vykreslení menu
 
         glDisable(GL_BLEND); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_tex_sel_bnd); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, p_carBuf);
         glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        const float y_coord = 1.f*0.319f;
-        const float size = 0.5f*0.319f;
-        static const float vert_array[20] = {-16*size, -10*size+y_coord, -10,   0, 0,
-                                             16*size, -10*size+y_coord, -10,    1, 0,
-                                             -16*size,  10*size+y_coord, -10,   0,  1,
-                                             16*size,  10*size+y_coord, -10,    1,  1,
-                                            };
-
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array); checkGL();
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, vert_array+3); checkGL();
-
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0); checkGL();
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float)*3)); checkGL();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        glEnable(GL_BLEND); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+        glEnable(GL_BLEND); checkGL();
         p_text_carsel.render_c(&p_gamemng->p_shadermng);
         glVertexAttrib3f((GLuint)ShaderAttrib::Color, 1,1,1); checkGL();
-
         glEnable(GL_BLEND); checkGL();
-
         {
             // up/down arrows
+            glBindBuffer(GL_ARRAY_BUFFER, p_arrowBuf); checkGL();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_arrowElemBuf); checkGL();
             glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
             glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-
-            float size = 1;
-            float yposun0 = (1+6);
-            float yposun1 = (1-6);
-
-            static const float vert_array[40] = {
-                -1*size, -0.506316f*size+yposun0, -10,  0.875, 0.28125,
-                1*size, -0.546316f*size+yposun0, -10,   0.875, 0.148438,
-                1*size, 0.546316f*size+yposun0, -10,    0.914063, 0.148438,
-                -1*size, 0.506316f*size+yposun0, -10,   0.914063, 0.28125,
-                -1*size, -0.506316f*size+yposun1, -10,  0.914063, 0.28125,
-                1*size, -0.546316f*size+yposun1, -10,   0.914063, 0.148438,
-                1*size, 0.546316f*size+yposun1, -10,    0.875, 0.148438,
-                -1*size, 0.506316f*size+yposun1, -10,   0.875, 0.28125
-                };
-            static const GLushort ind_array[12] = {
-                0,1,2, 0,2,3,
-                4,5,6, 4,6,7
-            };
-
-            glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array); checkGL();
-            glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array+3); checkGL();
-            glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, ind_array); checkGL();
-
+            glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, 0); checkGL();
+            glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, (void*)(sizeof(float)*3)); checkGL();
+            glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_SHORT, 0); checkGL();
             glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
             glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
+            glBindBuffer(GL_ARRAY_BUFFER, 0); checkGL();
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); checkGL();
         }
-
     }
     else if (p_state == STATE_TRACK_SEL)
     {
@@ -617,23 +671,16 @@ void MainMenu::render() // vykreslení menu
 
         glDisable(GL_BLEND); checkGL();
         glBindTexture(GL_TEXTURE_2D, p_tex_sel_bnd); checkGL();
+        glBindBuffer(GL_ARRAY_BUFFER, p_carBuf);
         glVertexAttrib4f((GLuint)ShaderAttrib::Color, 1,1,1,1); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glEnableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-        float y_coord = 1.f*0.319f;
-        float size = 0.5f*0.319f;
-        static const float vert_array[20] = {-16*size, -10*size+y_coord, -10,   0, 0,
-                                             16*size, -10*size+y_coord, -10,    1, 0,
-                                             -16*size,  10*size+y_coord, -10,   0,  1,
-                                             16*size,  10*size+y_coord, -10,    1,  1,
-                                            };
-        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array);
-        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, vert_array+3);
-
+        glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float)*5, 0);
+        glVertexAttribPointer((GLuint)ShaderAttrib::Tex, 2, GL_FLOAT, GL_FALSE, sizeof(float)*5, (void*)(sizeof(float)*3));
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
         glDisableVertexAttribArray((GLuint)ShaderAttrib::Tex); checkGL();
-
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glEnable(GL_BLEND); checkGL();
 
         p_text_carsel.render_c(&p_gamemng->p_shadermng);
@@ -1312,6 +1359,8 @@ void MainMenu::afterEvent()
 
         p_opt_verts[15] = xcmax*p_view_dist*0.1f+xposun;
         p_opt_verts[18] = xcmax*p_view_dist*0.1f+xposun;
+
+        p_bufUpdated = false;
     }
     else if (p_state == STATE_CAR_SEL)
     {

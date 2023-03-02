@@ -759,14 +759,12 @@ void Gamemng::render_black()
     p_shadermng.set(ShaderUniMat4::ModelViewMat, identityMat);
     glVertexAttrib4f((GLuint)ShaderAttrib::Color, 0, 0, 0, 0.8); checkGL(); // ztmavení obrazovky černým poloprůhledným čtvercem
     p_shadermng.use(ShaderId::Color);
-    static const float vert_array[12] = {-20, -10, -10,
-                                         20, -10, -10,
-                                         -20,  10, -10,
-                                          20,  10, -10};
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array);
+    glBindBuffer(GL_ARRAY_BUFFER, p_blackBuf); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, 0); checkGL();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
-    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); checkGL();
 }
 
 void Gamemng::render_bricks()
@@ -774,35 +772,28 @@ void Gamemng::render_bricks()
     p_shadermng.set(ShaderUniMat4::ModelViewMat, glm::mat4(1));
     p_shadermng.use(ShaderId::Color);
     static const float seda = 1.f;
+    glBindBuffer(GL_ARRAY_BUFFER, p_brickBuf); checkGL();
     glVertexAttrib4f((GLuint)ShaderAttrib::Color, seda, seda, seda, 1); checkGL(); // vykreslení pozadí s texturou cihel
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glEnableVertexAttribArray((GLuint)ShaderAttrib::Color);
-    static const float vert_array[28] = {
-                                        -10, -10, -10,  0, 1, 0.2, 1,
-                                        10, -10, -10,   0, 1, 0.2, 1,
-                                        -10, 10, -10,   1, 0, 0.2, 1,
-                                        10, 10, -10,    1, 0, 0.2, 1,
-                                        };
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, vert_array); checkGL();
-    glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, vert_array + 3); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
+    glEnableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0); checkGL();
+    glVertexAttribPointer((GLuint)ShaderAttrib::Color, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (void*)(sizeof(float) * 3)); checkGL();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos); checkGL();
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Color); checkGL();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); checkGL();
 }
 
 void Gamemng::render_black_background()
 {
     glm::mat4 identityMat(1);
     p_shadermng.set(ShaderUniMat4::ModelViewMat, identityMat);
-    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 0, 0, 0, 0.8); checkGL(); // ztmavení obrazovky černým poloprůhledným čtvercem
     p_shadermng.use(ShaderId::Color);
-    static const float vert_array[12] = {-10, -10, -10,
-                                         10, -10, -10,
-                                         -10,  10, -10,
-                                         10,  10, -10,
-                                        };
+    glVertexAttrib4f((GLuint)ShaderAttrib::Color, 0, 0, 0, 0.8); checkGL(); // ztmavení obrazovky černým poloprůhledným čtvercem
+    glBindBuffer(GL_ARRAY_BUFFER, p_brickBuf); checkGL();
     glEnableVertexAttribArray((GLuint)ShaderAttrib::Pos);
-    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, 0, vert_array);
+    glVertexAttribPointer((GLuint)ShaderAttrib::Pos, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0); checkGL();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGL();
     glDisableVertexAttribArray((GLuint)ShaderAttrib::Pos);
+    glBindBuffer(GL_ARRAY_BUFFER, 0); checkGL();
 }

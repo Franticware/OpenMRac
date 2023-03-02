@@ -68,6 +68,14 @@ public:
     bool p_controlsChanged;
 
     SharedGLtex p_logo_textura;
+    SharedGLbuf p_logoBuf;
+    SharedGLbuf p_carBuf;
+    SharedGLbuf p_arrowBuf;
+    SharedGLbuf p_arrowElemBuf;
+
+    bool p_bufUpdated = false; // GL buffer updated with latest data?
+    SharedGLbuf p_buf;
+    SharedGLbuf p_elemBuf;
 
     // další struktura na textury aut, možná propojená s gamemng, to samé tratě
     Gltext p_text_main;
@@ -120,7 +128,6 @@ public:
     static const float font_color_ver[4];
     static const float font_color_hi[4];
     static const float font_color_enter[4];
-
 };
 
 #endif // HLIDAC_MAINMENU_H
