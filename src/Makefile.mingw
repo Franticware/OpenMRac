@@ -36,7 +36,7 @@ TARGET = openmrac.exe
 RES    = omicon.res
 OBJS := $(shell ls *.cpp | sed 's/.cpp/.o/g' | tr '\n' ' ')
 
-.PHONY: all clean install uninstall deb
+.PHONY: all clean dist
 
 all: $(TARGET)
 
@@ -51,3 +51,12 @@ clean:
 
 $(TARGET): $(RES) $(OBJS)
 	$(LINK) -o $(TARGET) $(OBJS) $(RES) $(LFLAGS)
+
+dist: all
+	$(eval DISTDIR := openmrac-$(shell date +%Y%m%d -r openmrac.exe))
+	mkdir -p $(DISTDIR)
+	rm -f $(DISTDIR)/*
+	cp openmrac.exe $(DISTDIR)
+	cp mingw32/glew32.dll $(DISTDIR)
+	cp mingw32/SDL2.dll $(DISTDIR)
+	cp ../../OpenMRac-data/openmrac.dat $(DISTDIR)

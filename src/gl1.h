@@ -15,6 +15,7 @@
 
 inline bool initGlExt(void)
 {
+    //glewExperimental = 1; // If using GLEW version 1.13 or earlier
     return glewInit() == GLEW_OK;
 }
 
