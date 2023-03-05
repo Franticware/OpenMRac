@@ -13,8 +13,7 @@ varying vec3 vNormal;
 
 void main()
 {
-    if (uHalftone != 0 && mod(mod(gl_FragCoord.x, 2.0)+mod(gl_FragCoord.y, 2.0)+0.5, 2.0) < 1.0)
-        discard;
+#insertHalftoneTest
     vec3 normal = vNormal;
     if (!gl_FrontFacing)
     {

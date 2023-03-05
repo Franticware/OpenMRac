@@ -161,6 +161,7 @@ static void adaptShader(std::string& vs, std::string& fs, int opengl_profile)
         fs = std::regex_replace(fs, std::regex("gl_FragColor"), "fragColor");
         break;
     }
+    fs = std::regex_replace(fs, std::regex("#insertHalftoneTest"), "if (uHalftone != 0 && mod(floor(gl_FragCoord.x)+floor(gl_FragCoord.y), 2.0) < 0.5) discard;");
 }
 
 void ShaderMng::init()
