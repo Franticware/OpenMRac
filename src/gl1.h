@@ -5,8 +5,13 @@
 #define PROFILE_ES2 1
 #define PROFILE_CORE33 2
 
+#ifdef USE_GLESv2
+#define PROFILE_MIN PROFILE_ES2
+#define PROFILE_MAX PROFILE_ES2
+#else
 #define PROFILE_MIN PROFILE_COMPAT
 #define PROFILE_MAX PROFILE_CORE33
+#endif
 
 #if defined(__WIN32__)
 
@@ -51,10 +56,14 @@ extern int g_opengl_profile;
 
 inline void glDepthRange1(float a, float b)
 {
+#ifdef USE_GLESv2
+    glDepthRangef(a, b);
+#else
     if (g_opengl_profile == PROFILE_ES2)
         glDepthRangef(a, b);
     else
         glDepthRange(a, b);
+#endif
 }
 
 #undef glDepthRangef

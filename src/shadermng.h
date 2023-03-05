@@ -5,7 +5,7 @@
 #include "glm1.h"
 
 enum class ShaderId {
-    None = -1,
+    NoShader = -1,
     Color = 0,
     Tex,
     ColorTex, // uses AlphaDiscard

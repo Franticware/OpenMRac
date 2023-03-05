@@ -1117,12 +1117,14 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
     glDebugMessageCallback(GLDebugMessageCallback, 0);
 #endif
 
-    if (PROFILE_CORE33)
+#ifndef USE_GLESv2
+    if (g_opengl_profile == PROFILE_CORE33)
     {
         GLuint vao;
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
     }
+#endif
     glViewport(0, 0, actualWidth, actualHeight); checkGL();
     return 0;
 }

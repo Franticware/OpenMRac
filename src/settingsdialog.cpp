@@ -101,12 +101,14 @@ SettingsDialog::SettingsDialog(
     m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(4, 1), "Renderer"));
 
     std::vector<std::string> renderers;
-    renderers.push_back("OpenGL Compat. profile");
-    renderers.push_back("OpenGL ES 2");
-    renderers.push_back("OpenGL 3.3 Core profile");
+    const char* strProfiles[3] = {"OpenGL Compat. profile", "OpenGL ES 2", "OpenGL 3.3 Core profile"};
+    for (int i = PROFILE_MIN; i <= PROFILE_MAX; ++i)
+    {
+        renderers.push_back(strProfiles[i]);
+    }
 
     m_rendererComboIndex = m_items.size();
-    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 3), m_verLay.getCellPS(4, 1), renderers, renderer, 20, 6));
+    m_items.push_back(GuiItem(GuiItem::COMBO, m_horLay.getCellPS(3, 3), m_verLay.getCellPS(4, 1), renderers, renderer - PROFILE_MIN, 20, 6));
 
     m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(2, 1), m_verLay.getCellPS(6, 1), "Mode"));
     m_resolutionsComboIndex = m_items.size();
@@ -285,7 +287,7 @@ void SettingsDialog::onKeyUp(SDL_Keycode k)
 int SettingsDialog::getRenderer()
 {
     const GuiItem& item = m_items[m_rendererComboIndex];
-    return item.currentItem;
+    return item.currentItem + PROFILE_MIN;
 }
 
 int SettingsDialog::getSelectedScreenMode() const

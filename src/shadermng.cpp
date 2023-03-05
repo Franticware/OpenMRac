@@ -85,7 +85,7 @@ inline const char* strShaderUniTex(int a)
 
 ShaderMng::ShaderMng() : ints()
 {
-    currentShader = ShaderId::None;
+    currentShader = ShaderId::NoShader;
 }
 
 static GLuint loadShader(GLenum type, const char *shaderSrc, const char* shaderName = nullptr)
@@ -293,7 +293,7 @@ void ShaderMng::use(ShaderId id)
     glUseProgram(0);
     currentShader = id;
     GLint loc;
-    if (id != ShaderId::None)
+    if (id != ShaderId::NoShader)
     {
         glUseProgram(shaders[(int)id].program);
         for (int i = 0; i != (int)ShaderUniMat4::Count; ++i)
@@ -349,7 +349,7 @@ void ShaderMng::set(ShaderUniMat4 id, glm::mat4 m)
         mat4pmv = m * mat4s[(int)ShaderUniMat4::ModelViewMat];
         updatedPmv = true;
     }*/
-    if (currentShader != ShaderId::None)
+    if (currentShader != ShaderId::NoShader)
     {
         glUseProgram(shaders[(int)currentShader].program);
         GLint loc = shaders[(int)currentShader].mat4locs[(int)id];
@@ -379,7 +379,7 @@ void ShaderMng::set(ShaderUniMat4 id, glm::mat4 m)
 void ShaderMng::set(ShaderUniVec4 id, glm::vec4 v)
 {
     vec4s[(int)id] = v;
-    if (currentShader != ShaderId::None)
+    if (currentShader != ShaderId::NoShader)
     {
         GLint loc = shaders[(int)currentShader].vec4locs[(int)id];
         if (loc != -1)
@@ -392,7 +392,7 @@ void ShaderMng::set(ShaderUniVec4 id, glm::vec4 v)
 void ShaderMng::set(ShaderUniInt id, GLint i)
 {
     ints[(int)id] = i;
-    if (currentShader != ShaderId::None)
+    if (currentShader != ShaderId::NoShader)
     {
         GLint loc = shaders[(int)currentShader].intlocs[(int)id];
         if (loc != -1)

@@ -21,8 +21,12 @@ QMAKE_CXXFLAGS += -DDIR_OPENMRAC_DAT=/usr/share/openmrac/
 QMAKE_CXXFLAGS += -DUSE_MINIAL
 #LIBS += -lopenal
 
-LIBS += \
-        -lSDL2 -lGL -ljpeg -lpng
+# libGL
+LIBS += -lSDL2 -lGL -ljpeg -lpng
+
+# libGLESv2
+#QMAKE_CXXFLAGS += -DUSE_GLESv2 -DDISABLE_ANISOTROPY
+#LIBS += -lSDL2 -lGLESv2 -ljpeg -lpng
 
 INCLUDEPATH += \
         /usr/include
