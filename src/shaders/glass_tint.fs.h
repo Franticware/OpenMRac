@@ -9,7 +9,7 @@ varying vec3 vCubeRay;
 
 void main()
 {
-    if (uHalftone != 0 && mod(gl_FragCoord.x + gl_FragCoord.y + 0.5, 2.0) < 1.0)
+    if (uHalftone != 0 && mod(mod(gl_FragCoord.x, 2.0)+mod(gl_FragCoord.y, 2.0)+0.5, 2.0) < 1.0)
         discard;
     vec4 texColor = texture2D( uTex0, vTex );
     if (texColor.a >= 0.5)
