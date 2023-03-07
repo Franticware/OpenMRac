@@ -43,7 +43,7 @@ all: $(TARGET)
 clean:
 	rm -f *.o $(RES) $(TARGET)
 
-%.o: %.cpp *.h
+%.o: %.cpp *.h shaders/*.h
 	$(CXX) -c $(CFLAGS) $<
 
 %.res: %.rc

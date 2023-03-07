@@ -17,7 +17,7 @@ all: $(TARGET)
 clean:
 	rm -f *.o $(TARGET)
 
-%.o: %.cpp *.h
+%.o: %.cpp *.h shaders/*.h
 	$(CXX) -c $(CFLAGS) $<
 
 $(TARGET): $(OBJS)
