@@ -81,6 +81,7 @@ HEADERS += \
     controls.h \
     cstring1.h \
     datkey.h \
+    error_msg.h \
     fopendir.h \
     gameaux.h \
     gamemng.h \

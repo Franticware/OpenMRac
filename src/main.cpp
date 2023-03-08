@@ -8,6 +8,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_endian.h>
 #include "gl1.h"
+#include "error_msg.h"
 
 #ifdef USE_MINIAL
 #include "minial.h"
@@ -1091,7 +1092,7 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
 
     if (!gameWindow)
     {
-        fprintf(stderr, "SDL window not created: %s\n", SDL_GetError()); fflush(stdout);
+        error_msg("SDL window not created: %s\n", SDL_GetError());
         SDL_Quit();
         return 1;
     }
@@ -1099,9 +1100,16 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
     // Create our opengl context and attach it to our window
     maincontext = SDL_GL_CreateContext(gameWindow);
 
+    if (!maincontext)
+    {
+        error_msg("GL context not created: %s\n", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
+
     if (!initGlExt())
     {
-        fprintf(stderr, "%s\n", GLEXT_ERROR_MESSAGE); fflush(stdout);
+        error_msg("%s\n", GLEXT_ERROR_MESSAGE);
         SDL_Quit();
         return 1;
     }

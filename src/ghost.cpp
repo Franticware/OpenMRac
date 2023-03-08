@@ -3,6 +3,7 @@
 #include "appdefs.h"
 #include <cstdio>
 #include <algorithm>
+#include <memory>
 
 Ghost::Ghost(bool frames) {
     m_version = 104;
@@ -21,27 +22,26 @@ bool Ghost::load(int track, int reverse) {
     m_reverse = reverse;
     char filename[1024];
     getfname(filename);
-    FILE* fin = fopenDir(filename, "rb", OPENMRAC_ORG, OPENMRAC_APP);
-    if (fin == NULL) return false;
-    if (fread(&m_version, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
-    if (m_version != 104) {fclose(fin); return false;}
-    if (fread(&m_track, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
-    if (m_track != track) {fclose(fin); return false;}
-    if (fread(&m_reverse, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
-    if (m_reverse != reverse) {fclose(fin); return false;}
-    if (fread(&m_car, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
-    if (m_car < 0 || m_car >= 3) {fclose(fin); return false;}
-    if (fread(&m_carcolor, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
-    if (m_carcolor < 0 || m_carcolor >= 4) {fclose(fin); return false;}
-    if (fread(&m_seconds, sizeof(float), 1, fin) != 1) {fclose(fin); return false;}
-    if (m_seconds < 10.0 || m_seconds > 31536000.0) {fclose(fin); return false;}
+    std::unique_ptr<FILE, decltype(&fclose)> fin(fopenDir(filename, "rb", OPENMRAC_ORG, OPENMRAC_APP), &fclose);
+    if (fin.get() == nullptr) return false;
+    if (fread(&m_version, sizeof(int), 1, fin.get()) != 1) return false;
+    if (m_version != 104) return false;
+    if (fread(&m_track, sizeof(int), 1, fin.get()) != 1) return false;
+    if (m_track != track) return false;
+    if (fread(&m_reverse, sizeof(int), 1, fin.get()) != 1) return false;
+    if (m_reverse != reverse) return false;
+    if (fread(&m_car, sizeof(int), 1, fin.get()) != 1) return false;
+    if (m_car < 0 || m_car >= 3) return false;
+    if (fread(&m_carcolor, sizeof(int), 1, fin.get()) != 1) return false;
+    if (m_carcolor < 0 || m_carcolor >= 4) return false;
+    if (fread(&m_seconds, sizeof(float), 1, fin.get()) != 1) return false;
+    if (m_seconds < 10.0 || m_seconds > 31536000.0) return false;
     if (!m_frames.empty())
     {
-        if (fread(&m_num, sizeof(int), 1, fin) != 1) {fclose(fin); return false;}
-        if (m_num < 0 || m_num > m_maxnum) {fclose(fin); return false;}
-        if (static_cast<int>(fread(m_frames.data(), sizeof(float)*4, m_num, fin)) != m_num) {fclose(fin); return false;}
+        if (fread(&m_num, sizeof(int), 1, fin.get()) != 1) return false;
+        if (m_num < 0 || m_num > m_maxnum) return false;
+        if (static_cast<int>(fread(m_frames.data(), sizeof(float)*4, m_num, fin.get())) != m_num) return false;
     }
-    fclose(fin);
     return true;
 }
 
