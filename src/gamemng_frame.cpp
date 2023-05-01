@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "gamemng.h"
 #include "cstring1.h"
 #include "rand1.h"
@@ -228,7 +226,7 @@ void Gamemng::frame(float deltaT)
                 if (p_playerstate[i].state_prev == 1 && p_playerstate[i].state == 2)
                 {
                     ++p_playerstate[i].lap_i;
-                    
+
                     int lap_i_max_prev = p_playerstate[i].lap_i_max;
                     p_playerstate[i].lap_i_max = std::max(p_playerstate[i].lap_i_max, p_playerstate[i].lap_i);
                     if (lap_i_max_prev != p_playerstate[i].lap_i_max)
@@ -250,7 +248,7 @@ void Gamemng::frame(float deltaT)
                             p_ghostNew[i].m_num = 0;
                             p_ghost_step[i] = 0; // předchod na nové kolo -> reset ghost stepů
                         }
-                    
+
                         p_playerhud[i].laptime_l_best.puts(0, time_m_s(p_playerstate[i].lap_time));
                         if (p_playerstate[i].lap_i_max < 2)
                         {
@@ -356,7 +354,7 @@ void Gamemng::frame(float deltaT)
                 // tady vytvořit zobrazení výsledků
             }
         }
-        
+
         for (unsigned int i = 0; i != p_players; ++i)
         {
             // TODO: test, zda se používá ghost
@@ -479,14 +477,14 @@ void Gamemng::frame(float deltaT)
 
         }
     }
-    
+
     if (p_isGhost) // rendering
     {
         int i = p_ghostUpdated;
         {
             float wheel_angle = 0;
             float wheel_rot = p_ghost_wheel_rot*200;
-            
+
             float framef = p_playerstate[0].lap_time*10.0;
             int framei = framef;
             float framej = framef - framei;
@@ -524,7 +522,7 @@ void Gamemng::frame(float deltaT)
             glPopMatrix(); checkGL();
         }
     }
-    
+
     for (unsigned int i = 0; i != p_players; ++i) // vytvoření transformačních matic kol
     {
         float transf_mwmx[16];
@@ -619,7 +617,7 @@ void Gamemng::frame(float deltaT)
 
             if (p_playerstate[i].lap_i_max >= 2)
                 p_playerhud[i].laptime_l_best.render(p_fonttex);
-                
+
             if (/*p_isGhost*/true) { // condemned
                 if (p_newlaprecordtxttime[i] > 0.f)
                     p_playerhud[i].newrecord.render(p_fonttex);
@@ -719,13 +717,13 @@ void Gamemng::frame(float deltaT)
 
 
     }
-    if (p_players == 3)
+    /*if (p_players == 3)
     {
         set_scissor(3); // 4. okno
         glClear(GL_COLOR_BUFFER_BIT); checkGL();
+    }*/
     }
-    }
-    
+
     // nastavení výchozího okna (přes celé) a vypnutí scissor testu
     unset_scissor();
 
@@ -825,7 +823,7 @@ void Gamemng::render_bricks()
     glEnableClientState(GL_COLOR_ARRAY); checkGL();
     static const float vert_array[12] = {-10, -10, -10,  10, -10, -10,  10,  10, -10, -10,  10, -10};
 
-    static const float color_array[12] = {        
+    static const float color_array[12] = {
         0, 1, 0.2,
         0, 1, 0.2,
         1, 0, 0.2,

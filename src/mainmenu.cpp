@@ -1,12 +1,10 @@
-#include "platform.h"
 #include "mainmenu.h"
 #include "load_texture.h"
 #include "glhelpers1.h"
 #include "gbuff_in.h"
 #include "rand1.h"
 #include "appdefs.h"
-
-#include <SDL/SDL.h>
+#include "alleg_minisdl.h"
 
 void my_exit(int ret, bool callExit);
 
@@ -325,7 +323,7 @@ void MainMenu::menu()
 {
     if (p_bactive) // už je aktivní
         return;
-    SDL_EnableKeyRepeat(500, 30);
+    //SDL_EnableKeyRepeat(500, 30);
     p_bactive = true;
 
     p_state = STATE_RACE;
@@ -366,14 +364,16 @@ void MainMenu::menu()
 
     Pict2 pictlogo_rgba;
     gbuff_in.f_open("logo-silver-d.png", "rb");
-    pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+    pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
 
     Pict2 pictlogo_a;
     gbuff_in.f_open("logo-silver-a.png", "rb");
-    pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+    pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
-    pictlogo_rgba.replace_alpha(pictlogo_a);
+    pictlogo_rgba.r2a(pictlogo_a);
+    pictlogo_rgba.scale(256, 256);
+    pictlogo_rgba.pack16();
     p_logo_textura = load_texture(pictlogo_rgba);
 
     //
@@ -383,8 +383,10 @@ void MainMenu::menu()
         {
             Pict2 pict_th;
             gbuff_in.f_open(p_gamemng->p_cars[i].pict_tex[j].fname, "rb");
-            pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+            pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             gbuff_in.fclose();
+            pict_th.scale(128, 128);
+            pict_th.pack16();
             p_gamemng->p_cars[i].pict_tex[j].tex = load_texture(pict_th);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
@@ -394,8 +396,10 @@ void MainMenu::menu()
     {
         Pict2 pict_th;
         gbuff_in.f_open(p_gamemng->p_maps[i].filename_tex, "rb");
-        pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+        pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
+        pict_th.scale(128, 128);
+        pict_th.pack16();
         p_gamemng->p_maps[i].pict_tex = load_texture(pict_th);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
@@ -406,23 +410,26 @@ void MainMenu::game()
 {
     if (!p_bactive) // už je aktivní
         return;
-    SDL_EnableKeyRepeat(0, 0);
+    //SDL_EnableKeyRepeat(0, 0);
     p_bactive = false;
 
     // všechny textury smazat
 
     glDeleteTextures(1, &p_logo_textura); checkGL();
+    subMem(256, 256);
     p_logo_textura = 0;
 
     for (unsigned int i = 0; i != p_gamemng->p_cars.size(); ++i)
         for (unsigned int j = 0; j != p_gamemng->p_cars[i].sz_mods; ++j)
         {
             glDeleteTextures(1, &(p_gamemng->p_cars[i].pict_tex[j].tex)); checkGL();
+            subMem(128, 128);
             p_gamemng->p_cars[i].pict_tex[j].tex = 0;
         }
     for (unsigned int i = 0; i != p_gamemng->p_maps.size(); ++i)
     {
         glDeleteTextures(1, &(p_gamemng->p_maps[i].pict_tex)); checkGL();
+        subMem(128, 128);
         p_gamemng->p_maps[i].pict_tex = 0;
     }
 
@@ -644,13 +651,13 @@ inline bool ignoreKey(SDLKey k)
 void MainMenu::exitEnterMode()
 {
     p_enterMode = false;
-    for (unsigned i = 0; i != p_settings->joystickDevices->size(); ++i)
+    /*for (unsigned i = 0; i != p_settings->joystickDevices->size(); ++i)
     {
         for (unsigned j = 0; j != (*p_settings->joystickDevices)[i].axesStates.size(); ++j)
         {
             (*p_settings->joystickDevices)[i].axesStates[j].resetEnterMode();
         }
-    }
+    }*/
 }
 
 void MainMenu::event(const SDL_Event& e)
@@ -671,7 +678,7 @@ void MainMenu::event(const SDL_Event& e)
                 if (sym == SDLK_ESCAPE)
                 {
                     p_state = STATE_CONTROLS_TEST_KEYBOARD;
-                    SDL_EnableKeyRepeat(500, 30);
+                    //SDL_EnableKeyRepeat(500, 30);
                 }
             }
             else if (p_state == STATE_CONTROLS_TEST_KEYBOARD)
@@ -790,14 +797,14 @@ void MainMenu::event(const SDL_Event& e)
             else if (p_state == STATE_CONTROLS_TEST_KEYBOARD && (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_KP_ENTER))
             {
                 p_state = STATE_CONTROLS_TEST_KEYBOARD_SCREEN;
-                SDL_EnableKeyRepeat(0, 0);
+                //SDL_EnableKeyRepeat(0, 0);
                 p_testKeysCount = 0;
                 p_testKeysLastKeyDown = SDLK_LAST;
                 p_testKeysLastKeyUp = SDLK_LAST;
             }
             break;
         }
-        case SDL_JOYAXISMOTION:
+        /*case SDL_JOYAXISMOTION:
         {
 
 
@@ -876,7 +883,7 @@ void MainMenu::event(const SDL_Event& e)
                 }
             }
             break;
-        }
+        }*/
     } // end switch
 
     afterEvent();

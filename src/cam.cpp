@@ -1,13 +1,8 @@
-#include "platform.h"
-
 #include "cam.h"
+
 #include <cstring>
 #include <cmath>
-#ifndef __MACOSX__
 #include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
 #include "glhelpers1.h"
 #include <cstdio>
 

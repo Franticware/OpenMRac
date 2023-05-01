@@ -1,5 +1,3 @@
-#include "platform.h"
-
 #include "gamemng.h"
 #include "cstring1.h"
 #include "rand1.h"
@@ -45,30 +43,15 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         // načtení textury oblohy z bufferu
         Pict2 pict;
         gbuff_in.f_open(gamesky.sky_tex, "rb");
-        pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
+        pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
+        pict.scale(256, 256);
+        pict.pack16();
         GLuint skytex = load_texture(pict);
         glBindTexture(GL_TEXTURE_2D, skytex); checkGL();
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); checkGL(); // vertikálně se textura neopakuje
         glBindTexture(GL_TEXTURE_2D, 0); checkGL();
-        p_skysph.set_sun(pict); // nastavení slunce podle zeleného bodu v obrázku
-        p_skysph.set_tex(skytex, p_suntex); //
-
-#if USE_CUBEMAP
-        // načtení textury cube mapy
-        Pict2 pict_cm;
-        gbuff_in.f_open(gamesky.skycm_tex, "rb");
-        pict_cm.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
-        gbuff_in.fclose();
-        p_skycmtex = load_texture_cube_map(pict_cm);
-#else
-        Pict2 pict_sph;                
-        const char* skysph_files[4] = {"sky0s.jpg", "sky1s.jpg", "sky2s.jpg", "sky3s.jpg"};
-        gbuff_in.f_open(skysph_files[sky_sel], "rb");
-        pict_sph.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_24b);
-        gbuff_in.fclose();
-        p_skycmtex = load_texture(pict_sph, false);
-#endif
+        p_skysph.set_tex(skytex); //
     }
 
     // loading map...
@@ -76,7 +59,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     p_map_matmng    = new Matmng;    // správce textur a statického osvětlení -> p_map_rendermng
     p_map_oct       = new Octopus;   //  -> p_map_rendermng
     p_map_rendermng = new Rendermng; //
-    p_map_rendermng->p_skycmtex = p_skycmtex;
+    //p_map_rendermng->p_skycmtex = p_skycmtex;
     static const char* model_o_names[] = {"", "bound", "mapobject", "ibound", 0};
     p_map_model->load(gamemap.filename, model_o_names);
     p_map_model->scale(10.f);
@@ -194,7 +177,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         it->f = p_objs[it->id].f;
         // vytvořit rendermng
         it->rendermng = new Rendermng;
-        it->rendermng->p_skycmtex = p_skycmtex;
+        //it->rendermng->p_skycmtex = p_skycmtex;
         it->rendermng->init(p_objs[it->id].t3dm, p_objs[it->id].matmng, 0);
         it->rendermng->set_oc(frustum, *(p_objs[it->id].t3dm));
     }
@@ -242,10 +225,10 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
     p_car2dp = new Car2D[p_players];
     p_cartransf = new Transf[p_players];
     p_carrendermng = new Rendermng[p_players];
-    for (unsigned int i = 0; i != p_players; ++i)
+    /*for (unsigned int i = 0; i != p_players; ++i)
     {
         p_carrendermng[i].p_skycmtex = p_skycmtex;
-    }
+    }*/
 
     float startpos0[2] = {0, 0};
 
@@ -272,7 +255,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
 
         p_car2dp[i].init(1.24, 0.58, -1.14, 0.58, p_car2do+i);
     }
-    
+
     p_isGhost = p_players == 1;
     p_ghostAvailable = 0;
     if (/*p_isGhost*/true)
@@ -296,8 +279,8 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         p_ghostmatmng = new Matmng[2];
         p_ghosttransf = new Transf[2];
         p_ghostrendermng = new Rendermng[2];
-        p_ghostrendermng[0].p_skycmtex = p_skycmtex;
-        p_ghostrendermng[1].p_skycmtex = p_skycmtex;
+        /*p_ghostrendermng[0].p_skycmtex = p_skycmtex;
+        p_ghostrendermng[1].p_skycmtex = p_skycmtex;*/
         const char* ghost_o_names[] = {"", "bound", "wheel_fl", "wheel_fr", "wheel_back", 0};
         for (int i = 0; i != 2; ++i) {
             p_ghostmodel[i].load(p_cars[ghostcari[i]].filename, ghost_o_names);
@@ -311,7 +294,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
                         if (strcmp(p_cars[ghostcari[i]].names[k], p_ghostmodel[i].p_m[j]) == 0)
                         {
                             p_ghostmodel[i].p_m[j][255] = 0;
-                            strncpy(p_ghostmodel[i].p_m[j], 
+                            strncpy(p_ghostmodel[i].p_m[j],
                                 p_cars[ghostcari[i]].names[ghostcarcolori[i]*p_cars[ghostcari[i]].sz_names+k], 255);
                         }
                     }
@@ -394,7 +377,7 @@ void Gamemng::unload()
         delete p_carmatmng[i]; p_carmatmng[i] = 0;
         p_sound_car[i].stop();
     }
-    
+
     delete[] p_ghostmodel; p_ghostmodel = 0;
     delete[] p_ghostmatmng; p_ghostmatmng = 0;
     delete[] p_ghostrendermng; p_ghostrendermng = 0;

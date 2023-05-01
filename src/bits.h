@@ -14,4 +14,17 @@ inline unsigned int bits_count(unsigned int value)
     return ret;
 }
 
+inline unsigned int bits_crop_npot(unsigned int value)
+{
+    if (value == 0) return 0;
+    unsigned int ret = value;
+    value >>= 1;
+    for (int i = 0; i != sizeof(unsigned int) * 8; ++i)
+    {
+        ret &= ~value;
+        value >>= 1;
+    }
+    return ret;
+}
+
 #endif

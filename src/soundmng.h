@@ -2,35 +2,12 @@
 #define HLIDAC_SOUNDMNG_H
 
 #include <cstring>
-
-#ifdef USE_MINIAL
 #include "minial.h"
-#else
-#ifndef __MACOSX__
-#include <AL/al.h>
-#else
-#include <OpenAL/al.h>
-#endif
-#endif
 
-#include <SDL/SDL_endian.h>
-
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
 inline void swapArrayLE16(unsigned char* , unsigned int )
 {
     // do nothing
 }
-#else
-inline void swapArrayLE16(unsigned char* data, unsigned int size)
-{
-    short* shortData = reinterpret_cast<short*>(data);
-    unsigned int count = size / 2;
-    for (unsigned int i = 0; i != count; ++i)
-    {
-        shortData[i] = SDL_SwapLE16(shortData[i]);
-    }
-}
-#endif
 
 inline void tweakLoop(unsigned char* data, unsigned int size)
 {
@@ -87,10 +64,10 @@ public:
 
     ALbuffer p_skid_sample;
     ALbuffer p_hit_sample[2];
-    
+
     //ALsource p_laprecord_stream;
     //ALbuffer p_laprecord_sample;
-    
+
     //void playLaprecord(float);
 
     void playSoundTest(float);

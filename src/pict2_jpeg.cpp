@@ -3,13 +3,8 @@
 
 extern "C"
 {
-#ifdef JPEG_9D_STATIC
-#include "jpeg-9d/jpeglib.h"
-#include "jpeg-9d/jerror.h"
-#else
 #include <jpeglib.h>
 #include <jerror.h>
-#endif
 }
 
 #include "pict2.h"
@@ -36,14 +31,14 @@ METHODDEF(void) my_output_message(j_common_ptr)
 
 //
 
-int Pict2::loadjpeg(const char* fname, unsigned int mode)
+int Pict2::loadjpeg(const char* fname)
 {
-    return loadjpeg_pom(true, fname, 0, mode);
+    return loadjpeg_pom(true, fname, 0);
 }
 
-int Pict2::loadjpeg(const void* data, unsigned int size, unsigned int mode)
+int Pict2::loadjpeg(const void* data, unsigned int size)
 {
-    return loadjpeg_pom(false, data, size, mode);
+    return loadjpeg_pom(false, data, size);
 }
 
 METHODDEF(void) my_init_source(j_decompress_ptr /*cinfo*/)
@@ -70,7 +65,7 @@ METHODDEF(void) my_term_source(j_decompress_ptr /*cinfo*/)
 {
 }
 
-int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_size, unsigned int mode)
+int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_size)
 {
     /* This struct contains the JPEG decompression parameters and pointers to
      * working space (which is allocated as needed by the JPEG library).
@@ -80,8 +75,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
      * Note that this struct must live as long as the main JPEG parameter
      * struct, to avoid dangling-pointer problems.
      */
-    //struct my_error_mgr jerr;
-    /*jpeg_error_mgr*/my_error_mgr jerr;
+    my_error_mgr jerr;
     /* More stuff */
     static FILE* fin = 0;		/* source file */
     JSAMPARRAY buffer;		/* Output row buffer */
@@ -89,10 +83,9 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
 
     jpeg_source_mgr source_mgr;
 
-    //bool breturnval = true;
     int ret = 1;
 
-    uncreate();
+    clear();
 
     /* In this example we want to open the input file before doing anything else,
      * so that the setjmp() error recovery below can assume the file is open.
@@ -103,8 +96,6 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
     if (bfile)
     {
         fin = fopen((const char*)fname_data, "rb");
-        //fprintf(stderr, "%s %s\n", __PRETTY_FUNCTION__, fname_data);
-
         if (!fin)
             return 0;
     }
@@ -120,7 +111,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
 
     if (setjmp(jerr.setjmp_buffer))
     {
-        uncreate();
+        clear();
         jpeg_destroy_decompress(&cinfo);
         /*if (buncreate)
             uncreate();*/
@@ -170,124 +161,24 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
      * with the stdio data source.
      */
 
-    if ((mode == PICT2_create_8b && cinfo.output_components == 1) || (mode == PICT2_create_24b && cinfo.output_components == 3))
     {
-        create(cinfo.output_width, cinfo.output_height, cinfo.output_components, 0);
-
-        /* We may need to do some setup of our own at this point before reading
-         * the data.  After jpeg_start_decompress() we have the correct scaled
-         * output image dimensions available, as well as the output colormap
-         * if we asked for color quantization.
-         * In this example, we need to make an output work buffer of the right size.
-         */
-        /* JSAMPLEs per row in output buffer */
-        row_stride = cinfo.output_width * cinfo.output_components;
-        /* Make a one-row-high sample array that will go away when done with image */
-        buffer = (*cinfo.mem->alloc_sarray)
-            ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-
-        /* Step 6: while (scan lines remain to be read) */
-        /*           jpeg_read_scanlines(...); */
-
-        /* Here we use the library's state variable cinfo.output_scanline as the
-         * loop counter, so that we don't have to keep track ourselves.
-         */
-        while (cinfo.output_scanline < cinfo.output_height) {
-            /* jpeg_read_scanlines expects an array of pointers to scanlines.
-             * Here the array is only one element long, but you could ask for
-             * more than one scanline at a time if that's more convenient.
-             */
-            jpeg_read_scanlines(&cinfo, buffer, 1); // toto nejspíš přičítá k cinfo.output_scanline jedničku
-            memcpy(
-                p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
-                *buffer, row_stride);
-        }
-    }
-    else if (mode == PICT2_create_8b && cinfo.output_components == 3)
-    {
-        create(cinfo.output_width, cinfo.output_height, 1, 0);
-        row_stride = cinfo.output_width * cinfo.output_components;
+        cinfo.out_color_space = JCS_RGB;
+        create(cinfo.output_width, cinfo.output_height, 0);
+        row_stride = cinfo.output_width * 4;
         buffer = (*cinfo.mem->alloc_sarray)
             ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
         while (cinfo.output_scanline < cinfo.output_height) {
             jpeg_read_scanlines(&cinfo, buffer, 1);
-            for (int i = 0; i != (int)cinfo.output_width; ++i)
-            { // zkopírovat první komponentu
-                p_px[(cinfo.output_height-cinfo.output_scanline)*cinfo.output_width+i] =
-                    (*buffer)[i*3];
+            //memcpy(p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride, *buffer, row_stride);
+            for (size_t i = 0; i != cinfo.output_width; ++i)
+            {
+                for (size_t j = 0; j != 3; ++j)
+                {
+                    p_px[(cinfo.output_height-cinfo.output_scanline)*row_stride + i * 4 + j] = (*buffer)[i * 3 + j];
+                }
+                p_px[(cinfo.output_height-cinfo.output_scanline)*row_stride + i * 4 + 3] = 0xff;
             }
         }
-    }
-    else if (mode == PICT2_create_24b && cinfo.output_components == 1)
-    {
-        create(cinfo.output_width, cinfo.output_height, 3, 0);
-        row_stride = cinfo.output_width * cinfo.output_components;
-        buffer = (*cinfo.mem->alloc_sarray)
-            ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-        while (cinfo.output_scanline < cinfo.output_height) {
-            jpeg_read_scanlines(&cinfo, buffer, 1);
-            memcpy(p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
-                *buffer, row_stride);
-        }
-
-        // rozkopírovat 1 komponentu do 3
-        for (int i0 = cinfo.output_width*cinfo.output_height; i0 != 0; --i0)
-        {
-            int i = i0 - 1;
-            p_px[i*3] = p_px[i*3+1] = p_px[i*3+2] = p_px[i];
-        }
-    }
-    else if (mode == PICT2_create_32b && cinfo.output_components == 1)
-    {
-        create(cinfo.output_width, cinfo.output_height, 4, 0);
-        row_stride = cinfo.output_width * cinfo.output_components;
-        buffer = (*cinfo.mem->alloc_sarray)
-            ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-        while (cinfo.output_scanline < cinfo.output_height) {
-            jpeg_read_scanlines(&cinfo, buffer, 1);
-            memcpy(
-                p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
-                *buffer, row_stride);
-        }
-
-        // jednu komponentu rozkopírovat do 3 a přidat alfa 0xff
-        for (int i0 = cinfo.output_width*cinfo.output_height; i0 != 0; --i0)
-        {
-            int i = i0 - 1;
-            p_px[i*4] = p_px[i*4+1] = p_px[i*4+2] = p_px[i];
-            p_px[i*4+3] = 0xff;
-        }
-    }
-    else if (mode == PICT2_create_32b && cinfo.output_components == 3)
-    {
-        create(cinfo.output_width, cinfo.output_height, 4, 0);
-        row_stride = cinfo.output_width * cinfo.output_components;
-        buffer = (*cinfo.mem->alloc_sarray)
-            ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-        while (cinfo.output_scanline < cinfo.output_height) {
-            jpeg_read_scanlines(&cinfo, buffer, 1);
-            memcpy(
-                p_px+(cinfo.output_height-cinfo.output_scanline)*row_stride,
-                *buffer, row_stride);
-        }
-
-        // přidat alfa 0xff
-        for (int i0 = cinfo.output_width*cinfo.output_height; i0 != 0; --i0)
-        {
-            int i = i0 - 1;
-            p_px[i*4+2] = p_px[i*3+2];
-            p_px[i*4+1] = p_px[i*3+1];
-            p_px[i*4] = p_px[i*3];
-            p_px[i*4+3] = 0xff;
-        }
-    }
-    else
-    {
-        uncreate();
-        jpeg_destroy_decompress(&cinfo);
-        if (bfile)
-            fclose(fin);
-        return 0;
     }
 
     /* Step 7: Finish decompression */
@@ -311,7 +202,7 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
 
     if (empty())
     {
-        uncreate();
+        clear();
         return 0;
     }
 

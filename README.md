@@ -1,10 +1,10 @@
 # OpenMRac
 
-[![OpenMRac youtube video](media/openmrac-yt.jpg)](https://youtu.be/r3hLTo5Nu1g)
+![Screenshot](media/openmrac-3dfx-0.png)
 
 OpenMRac is a split-screen racing game. It is a tweaked source release of [MultiRacer](https://www.franticware.com/multiracer).
 
-Programming was done by Vojtěch Salajka.  
+Programming was done by Vojtěch Salajka.
 Porting to big endian architectures for Amiga-like OSes was done by [Szilárd Biró](https://github.com/BSzili).
 
 ⚠️ Beware! The source code is old and messy, plus most comments are in Czech 😁
@@ -15,59 +15,10 @@ Franticware claims rights to the name "MultiRacer" which should not be used by o
 
 Game data files are in a separate repository under a different license: https://github.com/Franticware/OpenMRac-data
 
-# Installation Instructions
+# DOS 3dfx Version
 
-## Windows
+This branch contains DOS/DJGPP port of OpenMRac. It was tested working on DOS with 3dfx Voodoo 1, 486DX2 66 MHz, where it runs very slowly with audio stuttering, but seems stable. The screenshots were taken on real hardware.
 
-Download here: https://www.franticware.com/openmrac
+It was also tested in DOSBox-X, where it is unstable. When it runs, the audio is OK.
 
-## Linux
-
-### Arch-based (Arch, Manjaro, EndeavourOS, ...)
-
-Install **openmrac** package from AUR
-
-### Debian-based (Debian, Raspberry Pi OS, Ubuntu, MX Linux, Mint, ...)
-
-* Install **sox**
-* Install development packages for OpenGL, OpenAL, SDL 1.2, jpeg, png
-* Run the following to generate **openmrac.deb** package:
-
-```
-mkdir openmrac-deb
-cd openmrac-deb
-git clone https://github.com/Franticware/OpenMRac.git
-git clone https://github.com/Franticware/OpenMRac-data.git
-cd OpenMRac/src
-make -f Makefile.linux deb
-cd ../../..
-```
-
-* Install the package:
-
-```
-sudo dpkg -i openmrac-deb/OpenMRac/src/debian/openmrac.deb
-```
-
-Notes:
-
-* For simplicity, the resulting package contains both binary and data files. Packagers for Linux distributions will probably want to create a separate package for game data. See existing [AUR packages](https://aur.archlinux.org/packages?O=0&K=openmrac) for inspiration.
-
-* RFP for Debian can be found here: https://wiki.debian.org/Games/Suggested#OpenMRac
-
-### Other (openSUSE, Fedora, ...)
-
-```
-git clone https://github.com/Franticware/OpenMRac-data.git
-cd OpenMRac-data
-make install
-cd ..
-
-git clone https://github.com/Franticware/OpenMRac.git
-cd OpenMRac/src
-make -f Makefile.linux install
-cd ../..
-```
-
-## Mac OS X
-TODO
+![Screenshot](media/openmrac-3dfx-1.png)

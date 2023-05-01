@@ -1,6 +1,5 @@
-#include "platform.h"
-
 #include "car2d.h"
+
 #include <algorithm>
 
 using namespace RBf;

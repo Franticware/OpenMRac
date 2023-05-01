@@ -1,9 +1,7 @@
-#include "platform.h"
 #include "gamemng.h"
 #include "mainmenu.h"
 #include "glhelpers1.h"
-
-#include <SDL/SDL.h>
+#include "alleg_minisdl.h"
 
 /*
 Restart Race
@@ -268,9 +266,9 @@ void Gamemng::gamemenu_sw(bool b_quit)
         {
             p_sound_car[i].stop();
         }
-        SDL_EnableKeyRepeat(500, 30);
+        //SDL_EnableKeyRepeat(500, 30);
     } else {
         // rozjeď zvuky - to udělá automaticky frame díky chytrému stop();
-        SDL_EnableKeyRepeat(0, 0);
+        //SDL_EnableKeyRepeat(0, 0);
     }
 }

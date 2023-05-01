@@ -72,11 +72,11 @@ void Ghost::save() {
 
 void Ghost::getfname(char* buff) { // 1024 bajtů
     buff[1023] = 0;
-    const char* filenames[4] = {"speedway", "boulevard", "suburb", "ironworks"};
+    const char* filenames[4] = {"spdw", "blvd", "sbrb", "iwrk"};
     snprintf(buff, 1023, "%s%s.mrr", filenames[m_track], m_reverse ? "-rev" : "");
 }
 
-void Ghost::copyFrom(const Ghost& gnew) {    
+void Ghost::copyFrom(const Ghost& gnew) {
     m_version = gnew.m_version;
     m_track = gnew.m_track;
     m_reverse = gnew.m_reverse;

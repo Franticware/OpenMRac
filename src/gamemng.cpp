@@ -1,8 +1,6 @@
-#include "platform.h"
-
-#include "glext1.h"
-#include "glhelpers1.h"
 #include "gamemng.h"
+
+#include "glhelpers1.h"
 #include "cstring1.h"
 #include "rand1.h"
 #include "mtrxinv.h"
@@ -13,7 +11,7 @@
 #include <algorithm>
 #include <cstdio>
 
-#include <SDL/SDL.h>
+#include "alleg_minisdl.h"
 
 #include "soundmng.h"
 
@@ -418,15 +416,15 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
                 p_cars.push_back(gamecar);
             }
         }
-        gbuff_in.fclose();        
-        for (unsigned int i = 0; i != p_cars.size(); ++i) {   
+        gbuff_in.fclose();
+        for (unsigned int i = 0; i != p_cars.size(); ++i) {
             gbuff_in.f_open(p_cars[i].fname_sample_engine0, "rb");
             alGenBuffers(1, &(p_cars[i].p_engine0_sample)); global_al_buffers.push_back(p_cars[i].p_engine0_sample);
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             alBufferData(p_cars[i].p_engine0_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), 22050);
             gbuff_in.fclose();
-            
+
             gbuff_in.f_open(p_cars[i].fname_sample_engine1, "rb");
             alGenBuffers(1, &(p_cars[i].p_engine1_sample)); global_al_buffers.push_back(p_cars[i].p_engine1_sample);
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
@@ -515,19 +513,13 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
 
     p_skysph.init(10, 0);
     {
-        Pict2 pictsun;
-        gbuff_in.f_open("skysun.png", "rb");
-        pictsun.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
-        gbuff_in.fclose();
-        p_suntex = load_texture_alpha(pictsun, false);
-        p_skysph.set_tex(0, p_suntex);
-    }
-    {
         Pict2 pictsmoke;
         gbuff_in.f_open("smokea.png", "rb");
-        pictsmoke.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+        pictsmoke.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
-        p_smoketex = load_texture_alpha(pictsmoke, false);
+        pictsmoke.r2a();
+        pictsmoke.pack16();
+        p_smoketex = load_texture(pictsmoke, false);
     }
     unsigned int fontsize[2] = {16, 6};
     unsigned int charsize[2] = {32, 38};
@@ -535,13 +527,15 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
 
     Pict2 pictfont_rgba;
     gbuff_in.f_open("fontd.png", "rb");
-    pictfont_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_32b);
+    pictfont_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
     Pict2 pictfont_a;
     gbuff_in.f_open("fonta.png", "rb");
-    pictfont_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+    pictfont_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
-    pictfont_rgba.replace_alpha(pictfont_a);
+    pictfont_rgba.r2a(pictfont_a);
+    pictfont_rgba.scale(256, 256);
+    pictfont_rgba.pack16();
     p_fonttex = load_texture(pictfont_rgba);
     p_glfont.set_texture(p_fonttex); // kvůli render_c();
 
@@ -584,7 +578,7 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
     p_gamemenu.init();
 
     p_sound_game_static.init();
-    
+
     p_ghostOld = new Ghost;
     p_ghostNew = new Ghost[4];
 
@@ -691,7 +685,7 @@ void Gamemng::init_hud()
         p_playerhud[i].position.init(12, 1, 2.f, 0, 0, &p_glfont, font_color);
         p_playerhud[i].position.set_pos(0.f, 3.f - guiShift);
         p_playerhud[i].position.puts(0, "");
-        
+
         p_playerhud[i].newrecord.init(30, 1, 1.5f, 0, 0, &p_glfont, font_color);
         p_playerhud[i].newrecord.set_pos(0.f, 12.6f);
         p_playerhud[i].newrecord.puts(0, "New Lap Record!");
@@ -778,7 +772,7 @@ void Gamemng::render_frame()
         glPopMatrix(); checkGL();
     }
 
-#if USE_CUBEMAP
+/*#if USE_CUBEMAP
     // nastavení texturového prostoru pro vykreslení odrazů (cubemapa)
     glMatrixMode(GL_TEXTURE); checkGL();
     glLoadMatrixf(p_mtrx_texcm); checkGL(); // prvotní natočení cubemapy podle polohy slunce
@@ -786,7 +780,7 @@ void Gamemng::render_frame()
     mtrxinv(mdl_rot_mtrx_inv, mdl_rot_mtrx); // inverze aktuální rotační matice
     glMultMatrixf(mdl_rot_mtrx_inv); checkGL(); // rotace podle aktuální polohy kamery
     glMatrixMode(GL_MODELVIEW); checkGL();
-#endif
+#endif*/
 
 #ifndef CAR_IS_SPHERE
     // 2.fáze renderu aut - render skel a odrazů
@@ -899,11 +893,11 @@ void Gamemng::render_frame()
 
 #endif
 
-#if USE_CUBEMAP
+/*#if USE_CUBEMAP
     glMatrixMode(GL_TEXTURE); checkGL(); // vrácení texturového prostoru do výchozího stavu
     glLoadIdentity(); checkGL();
     glMatrixMode(GL_MODELVIEW); checkGL();
-#endif
+#endif*/
 
     static const float texCoords[8] = {0, 0, 1, 0, 1, 1, 0, 1};
     // 3.fáze renderu aut - render částic
@@ -1003,28 +997,28 @@ void Gamemng::render_frame()
         glEnable(GL_LIGHTING); checkGL();
     }
 #endif
-    
+
     // render ghost car
     if (p_isGhost && (p_ghostUpdated || p_ghostAvailable) && p_playerstate[0].lap_i_max > 0 && p_playerstate[0].lap_i_max <= p_laps) // rendering
     {
-    
-        bool useSampleCoverage = g_multisampleMode;
+
+        //bool useSampleCoverage = g_multisampleMode;
 
 //#if defined(_MSC_VER) || (defined(__WIN32__) && defined(__MINGW32__))
 //        useSampleCoverage = false;
 //#endif
-#if defined(__MACOSX__) || defined(__amigaos4__)
-        useSampleCoverage = false;
-#endif
+//#if defined(__MACOSX__) || defined(__amigaos4__)
+//        useSampleCoverage = false;
+//#endif
 
-#ifndef __MORPHOS__
+/*#ifndef __MORPHOS__
         if (useSampleCoverage)
         {
             glSampleCoverageARB(0.5, GL_FALSE); checkGL();
             glEnable(GL_SAMPLE_COVERAGE); checkGL();
         }
         else
-#endif
+#endif*/
         {
             glDepthRange(0,0); checkGL();
             glEnable(GL_ALPHA_TEST); checkGL(); // never alpha to coverage!
@@ -1072,19 +1066,19 @@ void Gamemng::render_frame()
             ghostX = p_ghostOld->m_frames[framei*4+0]*framej1+p_ghostOld->m_frames[framei1*4+0]*framej;
             ghostY = p_ghostOld->m_frames[framei*4+1]*framej1+p_ghostOld->m_frames[framei1*4+1]*framej;
             ghostA = p_ghostOld->m_frames[framei*4+2]*framej1+p_ghostOld->m_frames[framei1*4+2]*framej;
-            
+
             float angle_vector0 = std::cos(ghostA);
             float angle_vector1 = std::sin(ghostA);
-            
+
             float ghostdiffx = ghostX-p_ghost_x_prev[0];
             float ghostdiffy = ghostY-p_ghost_x_prev[1];
-            
+
             p_ghost_wheel_rot += angle_vector0*ghostdiffx+angle_vector1*ghostdiffy;
-            
+
             p_ghost_x_prev[0] = ghostX;
             p_ghost_x_prev[1] = ghostY;
         }
-        
+
         if (visible && (p_ghostAvailable || p_ghostUpdated)) {
             glPushMatrix(); checkGL();
             glTranslatef(ghostY, 0.f, ghostX); checkGL();
@@ -1116,12 +1110,12 @@ void Gamemng::render_frame()
             glMatrixMode(GL_MODELVIEW); checkGL();
         }
 
-#ifndef __MORPHOS__
+/*#ifndef __MORPHOS__
         if (useSampleCoverage)
         {
             glDisable(GL_SAMPLE_COVERAGE); checkGL();
         }
-#endif
+#endif*/
     }
 }
 
@@ -1135,7 +1129,7 @@ void Gamemng::restart()
     p_state0_5_time = 0.f;
 
     p_finished = 0;
-    
+
     for (unsigned int i = 0; i != 4; ++i)
     {
         p_newlaprecordtxttime[i] = -1;
@@ -1231,7 +1225,7 @@ void Gamemng::restart()
         p_playerstate[i].position_time = 0.f;
         p_playerstate[i].state_position = 0;
     }
-    
+
     p_ghost_time = 0.f;
 
     for (int i = 0; i != 4; ++i)
@@ -1239,11 +1233,11 @@ void Gamemng::restart()
         p_particles[i].clear();
     }
 
-    glClear (GL_COLOR_BUFFER_BIT); checkGL();
+    /*glClear (GL_COLOR_BUFFER_BIT); checkGL();
     SDL_GL_SwapBuffers();
     glClear (GL_COLOR_BUFFER_BIT); checkGL();
     SDL_GL_SwapBuffers();
-    glClear (GL_COLOR_BUFFER_BIT); checkGL();
+    glClear (GL_COLOR_BUFFER_BIT); checkGL();*/
 
 }
 

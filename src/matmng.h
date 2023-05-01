@@ -1,13 +1,7 @@
 #ifndef HLIDAC_MATMNG_H
 #define HLIDAC_MATMNG_H
 
-#include "platform.h"
-
-#ifndef __MACOSX__
 #include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
 #include <cstring>
 
 #ifndef SETKEYS
@@ -54,6 +48,7 @@ public:
     void setgl();
 
     GLuint texture; // id textury
+    bool bhiquality;
     bool balpha_test; // alfa test
     bool benv_map; // mapa prostředí
     bool bboth_side; // oboustranný materiál
@@ -82,7 +77,7 @@ public:
 
 class Rendermng {
 public:
-    Rendermng() : p_t3dm(0), p_matmng(0), p_octopus(0), p_boctocube(false), b_visible(false), p_skycmtex(0), p_transf(0) { }
+    Rendermng() : p_t3dm(0), p_matmng(0), p_octopus(0), p_boctocube(false), b_visible(false), /*p_skycmtex(0),*/ p_transf(0) { }
     ~Rendermng() {  }
     void init(const T3dm* t3dm, const Matmng* matmng, Octopus* octopus = 0);
     void set_oc(const float frustum[6], const T3dm& t3dm); // nastaví jednotlivou octocube (asi)
@@ -108,7 +103,7 @@ public:
     Octopus p_octocube_base;
     // rozhodnout se, kdo bude vlastníkem objektů
 
-    GLuint p_skycmtex;
+    //GLuint p_skycmtex;
 
     const Transf* p_transf;
 };

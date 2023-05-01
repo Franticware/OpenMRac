@@ -136,7 +136,8 @@ void T3dm::load(const char* fname, const char** o_names)
             {
                 if (!gbuff_in.fgets(buff, 1024)) { b_eof = true; break; }
                 // textury se zahazují (dodělat)
-                strncpy(p_m[i+1], buff, 255);
+                //strncpy(p_m[i+1], buff, 255);
+                memcpy(p_m[i+1], buff, 255); p_m[i+1][255] = 0;
                 p_m[i+1][255] = '\0';
                 for (int j = strlen(p_m[i+1]); j != 0; --j)
                 {

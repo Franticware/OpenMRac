@@ -1,4 +1,3 @@
-#include "platform.h"
 #include "rbsolver.h"
 
 float det3(const float c0[3], const float c1[3], const float c2[3])

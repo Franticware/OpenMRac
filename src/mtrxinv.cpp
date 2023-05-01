@@ -1,23 +1,22 @@
-#include "platform.h"
-
 #include <cmath>
+
 typedef float MATRIX3[9];
     typedef float MATRIX4[16];
     typedef float VFLOAT;
 
 void	m4_submat(const MATRIX4 mr, MATRIX3 mb, int i, int j ) {
-	  int di, dj, si, sj;
-	  // loop through 3x3 submatrix
-	  for( di = 0; di < 3; di ++ ) {
-	    for( dj = 0; dj < 3; dj ++ ) {
-	      // map 3x3 element (destination) to 4x4 element (source)
-	      si = di + ( ( di >= i ) ? 1 : 0 );
-	      sj = dj + ( ( dj >= j ) ? 1 : 0 );
-	      // copy element
-	      mb[di * 3 + dj] = mr[si * 4 + sj];
-	    }
-	  }
-	}
+      int di, dj, si, sj;
+      // loop through 3x3 submatrix
+      for( di = 0; di < 3; di ++ ) {
+        for( dj = 0; dj < 3; dj ++ ) {
+          // map 3x3 element (destination) to 4x4 element (source)
+          si = di + ( ( di >= i ) ? 1 : 0 );
+          sj = dj + ( ( dj >= j ) ? 1 : 0 );
+          // copy element
+          mb[di * 3 + dj] = mr[si * 4 + sj];
+        }
+      }
+    }
 
   //The determinant of a 4x4 matrix can be calculated as follows:
 

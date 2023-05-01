@@ -1,10 +1,10 @@
 #ifndef CONTROLS_H
 #define CONTROLS_H
 
+#include "alleg_minisdl.h"
+
 #include <string>
 #include <vector>
-
-#include <SDL/SDL.h>
 
 struct Control
 {
@@ -52,7 +52,7 @@ struct AxisState // for axis range detection
     int state;
 };
 
-struct JoystickIdentifier
+/*struct JoystickIdentifier
 {
     JoystickParameters parameters;
     int parametersIndex; // identical devices indexing
@@ -71,8 +71,8 @@ struct JoystickDevice
 
     void open(int index);
     void close();
-};
+};*/
 
-void initializeParametersIndices(std::vector<JoystickDevice>& devices);
+//void initializeParametersIndices(std::vector<JoystickDevice>& devices);
 
 #endif // CONTROLS_H

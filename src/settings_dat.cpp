@@ -4,27 +4,19 @@
 #include "cstring1.h"
 #include <cstdio>
 #include <algorithm>
-#include "glext1.h"
 #include "fopendir.h"
 #include "appdefs.h"
 
     // name,     default, min, max, comment
 const Sett_entry_base entry_base[] = {
     {"fullscreen", 0, 0, 1, "0 - windowed, 1 - fullscreen"},
-    {"screen_x", 800, 0, UINT_MAX, "screen resolution"},
-    {"screen_y", 600, 0, UINT_MAX, ""},
+    {"screen_x", 640, 0, UINT_MAX, "screen resolution"},
+    {"screen_y", 480, 0, UINT_MAX, ""},
     {"vsync", 0, 0, 1, "0 - vsync off, 1 - vsync on"},
     {"antialiasing", 0, 0, 2, "0 - off, 1 - 2x, 2 - 4x"},
-    {"texture_filter", 1, 0,
-#ifdef DISABLE_ANISOTROPY
-    1
-#else
-ASSERT_ANISOTROPY
-    2
-#endif
-    , "0 - bilinear, 1 - trilinear, 2 - anisotropic"},
-    {"view_distance", 10, 0, 10, "10 - far (best), 0 - near"},
-    {"show_fps", 0, 0, 1, "0 - fps counter off, 1 - fps counter on"},
+    {"texture_filter", 0, 0, 1, "0 - bilinear, 1 - trilinear, 2 - anisotropic"},
+    {"view_distance", 0, 0, 10, "10 - far (best), 0 - near"},
+    {"show_fps", 1, 0, 1, "0 - fps counter off, 1 - fps counter on"},
     {"sound_volume", 100, 0, 100, "0 - 100"},
     {"last_laps", 3, 1, 50, "last session"},
     {"last_daytime", 0, 0, 1, "0 - day, 1 - evening"},
@@ -63,7 +55,7 @@ const char* Settings::controlNames[16] = {
     "player4_right",
     };
 
-Settings::Settings(const char* filename, std::vector<JoystickDevice>* joystickDevices, std::vector<JoystickIdentifier>* joystickNotConnectedDevices, Control* controls)
+Settings::Settings(const char* filename, /*std::vector<JoystickDevice>* joystickDevices, std::vector<JoystickIdentifier>* joystickNotConnectedDevices,*/ Control* controls)
 {
     entry_size = sizeof(entry_base)/sizeof(*entry_base);
     entry = new Sett_entry[entry_size];
@@ -71,8 +63,8 @@ Settings::Settings(const char* filename, std::vector<JoystickDevice>* joystickDe
     {
         entry[i].defaultVal = entry[i].val = entry_base[i].val;
     }
-    this->joystickDevices = joystickDevices;
-    this->joystickNotConnectedDevices = joystickNotConnectedDevices;
+    /*this->joystickDevices = joystickDevices;
+    this->joystickNotConnectedDevices = joystickNotConnectedDevices;*/
     this->controls = controls;
     this->filename = filename;
     this->openalDeviceDefault = true;
@@ -153,7 +145,7 @@ int Settings::load()
                             controls[i].i = controlI;
                         }
                     }
-                    else if (strcmp(controlTypeBuff, "m") == 0)
+                    /*else if (strcmp(controlTypeBuff, "m") == 0)
                     {
                         if (sscanf(restOfBuff, "%u", &controlI) == 1)
                         {
@@ -253,7 +245,7 @@ int Settings::load()
 
 
                         }
-                    }
+                    }*/
                     break;
                 }
             }
@@ -314,7 +306,7 @@ int Settings::save()
         {
             fprintf(fout, "%s k %u\n", controlNames[i], controls[i].i);
         }
-        else if (controls[i].type == Control::E_MBUTTON)
+        /*else if (controls[i].type == Control::E_MBUTTON)
         {
             fprintf(fout, "%s m %u\n", controlNames[i], controls[i].i);
         }
@@ -343,7 +335,7 @@ int Settings::save()
                 fprintf(fout, "%s b %u", controlNames[i], controls[i].i);
             }
             fprintf(fout, " \"%s\" %d %d %d %d %d\n", identifier->parameters.name.c_str(), identifier->parameters.buttons, identifier->parameters.axes, identifier->parameters.hats, identifier->parameters.balls, identifier->parametersIndex);
-        }
+        }*/
     }
     fclose(fout);
     return 0;
@@ -414,7 +406,7 @@ unsigned int Settings::getDefault(const char* key)
     return 0;
 }
 
-void Settings::getJoystickName(char* buffer, int size, int i)
+/*void Settings::getJoystickName(char* buffer, int size, int i)
 {
     JoystickIdentifier* identifier = 0;
 
@@ -446,15 +438,15 @@ void Settings::getJoystickName(char* buffer, int size, int i)
         }
         snprintf(buffer, size, "%s%s%s", (isConnected ? "" : "N/C "), identifier->parameters.name.c_str(), nbuffer);
     }
-}
+}*/
 
-void Settings::getControlName(char* buff, unsigned n, unsigned i, bool joystickName)
+void Settings::getControlName(char* buff, unsigned n, unsigned i, bool /*joystickName*/)
 {
     if (controls[i].type == Control::E_KEYBOARD)
     {
         snprintf(buff, n, "%s", SDL_GetKeyName(static_cast<SDLKey>(controls[i].i)));
     }
-    else if (controls[i].type == Control::E_MBUTTON)
+    /*else if (controls[i].type == Control::E_MBUTTON)
     {
         if (controls[i].i == SDL_BUTTON_LEFT)
         {
@@ -538,7 +530,7 @@ void Settings::getControlName(char* buff, unsigned n, unsigned i, bool joystickN
         {
             snprintf(buff, n, "axis %d %s", controls[i].i + 1, axisValueNames[axisValueIndex]);
         }
-    }
+    }*/
     else
     {
         buff[0] = 0;

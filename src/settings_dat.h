@@ -15,7 +15,7 @@ struct Sett_entry {
 
 class Settings {
 public:
-    Settings(const char* filename, std::vector<JoystickDevice>* joystickDevices, std::vector<JoystickIdentifier>* joystickNotConnectedDevices, Control* controls);
+    Settings(const char* filename, /*std::vector<JoystickDevice>* joystickDevices, std::vector<JoystickIdentifier>* joystickNotConnectedDevices,*/ Control* controls);
     ~Settings() { delete[] entry; }
     int load(); // 0 - ok, jinak error
     int save();
@@ -30,8 +30,8 @@ public:
 
     Sett_entry* entry;
     unsigned int entry_size;
-    std::vector<JoystickDevice>* joystickDevices;
-    std::vector<JoystickIdentifier>* joystickNotConnectedDevices;
+    /*std::vector<JoystickDevice>* joystickDevices;
+    std::vector<JoystickIdentifier>* joystickNotConnectedDevices;*/
     Control* controls;
     const char* filename;
 

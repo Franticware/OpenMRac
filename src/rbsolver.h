@@ -1,8 +1,6 @@
 #ifndef HLIDAC_RBSOLVER_H
 #define HLIDAC_RBSOLVER_H
 
-#include "platform.h"
-
 #include "3dm.h"
 #include <cmath>
 
@@ -124,7 +122,7 @@ namespace RBf {
     }
     inline float safe(float f)
     {
-        if (!isfinite1(f))
+        if (!std::isfinite(f))
             return 0.f;
         return f;
     }

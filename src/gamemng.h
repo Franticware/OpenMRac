@@ -1,14 +1,8 @@
 #ifndef HLIDAC_GAMEMNG_H
 #define HLIDAC_GAMEMNG_H
 
-#include "platform.h"
-
 #include <vector>
-#ifndef __MACOSX__
 #include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
 
 #include "3dm.h"
 #include "octopus.h"
@@ -38,7 +32,7 @@ enum Gamemenu_states {
 
 struct Gamemap {
     Gamemap() : light_ah(0), light_av(0), pict_tex(0) { filename[0] = 0; filename_tex[0] = 0; name[0] = 0; }
-	//Gamemap(const Gamemap& gamemap) { memcpy(this, &gamemap, sizeof(Gamemap)); }
+    //Gamemap(const Gamemap& gamemap) { memcpy(this, &gamemap, sizeof(Gamemap)); }
     char filename[256];
     float light_ah;
     float light_av;
@@ -251,7 +245,7 @@ public:
         delete[] p_ghostNew;
         delete[] p_particles;
         /*destroy all other: textura slunce*/
-        glDeleteTextures(1, &(p_suntex)); checkGL();
+        //glDeleteTextures(1, &(p_suntex)); checkGL();
         glDeleteTextures(1, &(p_smoketex)); checkGL();
     }
     void unload();
@@ -281,7 +275,6 @@ public:
     Playerkeys p_playerkeys[4];
 
     Skysph p_skysph;
-    GLuint p_suntex; // přenosná textura - z init, zrušit v destruktoru
     GLuint p_smoketex; // přenosná textura - z init, zrušit v destruktoru
 
     GLuint p_skycmtex; // cube map or sphere map
@@ -302,7 +295,7 @@ public:
 
     T3dm* p_carmodel[4];
     Matmng* p_carmatmng[4];
-    
+
     T3dm* p_map_model;
     Matmng* p_map_matmng;
     Octopus* p_map_oct;
@@ -315,7 +308,7 @@ public:
     bool p_reverse;
     unsigned int p_players;
 
-    TimeSync p_timesync;    
+    TimeSync p_timesync;
     TimeSync p_particleTimesync;
 
     float p_light_position[4];
@@ -340,12 +333,12 @@ public:
     Transf* p_cartransf;
     Rendermng* p_carrendermng;
     Particles* p_particles;
-    
+
     T3dm* p_ghostmodel; // pole
     Matmng* p_ghostmatmng; // pole
     Rendermng* p_ghostrendermng; // pole
     Transf* p_ghosttransf; // pole
-    
+
     Ghost* p_ghostOld;
     Ghost* p_ghostNew; // pole 4 prvků
     int p_isGhost; // times 1 (now only used for rendering)

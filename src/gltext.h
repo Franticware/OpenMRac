@@ -1,14 +1,8 @@
 #ifndef HLIDAC_GLTEXT_H
 #define HLIDAC_GLTEXT_H
 
-#include "platform.h"
-
 #include <cstring>
-#ifndef __MACOSX__
 #include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
 
 struct Glfchar {
     float vertw;

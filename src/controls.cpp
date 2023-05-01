@@ -125,7 +125,7 @@ int AxisState::convertValue(Sint16 value) // -1, 0, 1 ... -, center, +; -2 ... u
     }
 }
 
-void JoystickDevice::open(int index)
+/*void JoystickDevice::open(int index)
 {
     device = SDL_JoystickOpen(index);
     identifier.parameters.name = SDL_JoystickName(index);
@@ -135,17 +135,17 @@ void JoystickDevice::open(int index)
     identifier.parameters.buttons = SDL_JoystickNumButtons(device);
     identifier.parametersIndex = -1;
     axesStates.resize(identifier.parameters.axes);
-}
+}*/
 
-void JoystickDevice::close()
+/*void JoystickDevice::close()
 {
     if (device)
     {
         SDL_JoystickClose(device);
     }
-}
+}*/
 
-void initializeParametersIndices(std::vector<JoystickDevice>& devices)
+/*void initializeParametersIndices(std::vector<JoystickDevice>& devices)
 {
     for (unsigned i = 0; i != devices.size(); ++i)
     {
@@ -161,4 +161,4 @@ void initializeParametersIndices(std::vector<JoystickDevice>& devices)
             }
         }
     }
-}
+}*/

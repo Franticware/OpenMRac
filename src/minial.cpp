@@ -6,14 +6,12 @@
  * To use this, add -DUSE_MINIAL to CFLAGS and remove -lopenal from LFLAGS.
  */
 
-#ifdef USE_MINIAL
-
 #include "minial.h"
 #include <map>
 #include <vector>
 #include <algorithm>
 #include <cmath>
-#include <SDL/SDL.h>
+#include "alleg_minisdl.h"
 
 #define MA_FILTER_NONE 0
 #define MA_FILTER_LINEAR 1 // recommended
@@ -21,7 +19,7 @@
 
 #define MA_FILTER MA_FILTER_LINEAR
 #define MA_FREQ 22050
-#define MA_SAMPLES 256
+#define MA_SAMPLES 1024
 
 struct ALCdevice
 {
@@ -54,7 +52,7 @@ struct MA_Source
 
 struct MA_Buffer
 {
-    std::vector<Sint16> samples;
+    std::vector<Uint16> samples;
     float pitch = 1.f;
 };
 
@@ -65,10 +63,12 @@ static std::map<ALuint, MA_Source>* sourceMap = /*nullptr*/0;
 static std::map<ALuint, MA_Buffer>* bufferMap = /*nullptr*/0;
 static std::vector<float>* floatBuff = /*nullptr*/0;
 
+static AUDIOSTREAM *stream = 0;
+
 static void ma_callback(void *userdata, Uint8 *stream, int len)
 {
     (void)userdata;
-    Sint16* stream16 = (Sint16*)stream;
+    Uint16* stream16 = (Uint16*)stream;
     int len16 = len >> 1;
     if (floatBuff == 0) return;
     floatBuff->resize(len16);
@@ -133,14 +133,37 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
         }
     }
 
-    for (int i = 0; i < len16; ++i)
+    /*for (int i = 0; i < len16; ++i)
     {
         int32_t temp = std::floor((*floatBuff)[i] + 0.5f);
         if (temp > 32767) temp = 32767;
         else if (temp < -32768) temp = -32768;
         stream16[i] = temp;
         //stream16[i] = (rand() % 256) - 128; // white noise
+    }*/
+
+    for (int i = 0; i < len16; ++i)
+    {
+        int32_t temp = std::floor((*floatBuff)[i] + 0.5f) + 32768;
+        if (temp > 65535) temp = 65535;
+        else if (temp < 0) temp = 0;
+        stream16[i] = temp;
     }
+}
+
+void MA_periodicStream(void)
+{
+    if (stream)
+    {
+        unsigned char *p = (unsigned char*)get_audio_stream_buffer(stream);
+
+        if (p) {
+            ma_callback(0, p, MA_SAMPLES * 2);
+            free_audio_stream_buffer(stream);
+        }
+
+    }
+
 }
 
 ////////////////
@@ -163,7 +186,7 @@ ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
 
 const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
 {
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
+    //SDL_InitSubSystem(SDL_INIT_AUDIO);
     if (device == 0 && (param == ALC_ALL_DEVICES_SPECIFIER || param == ALC_DEVICE_SPECIFIER))
     {
         static const ALCchar* ret = "\0\0";
@@ -179,6 +202,10 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     bufferMap = new std::map<ALuint, MA_Buffer>;
     floatBuff = new std::vector<float>;
     floatBuff->resize(MA_SAMPLES);
+
+    stream = play_audio_stream(MA_SAMPLES, 16, FALSE, MA_FREQ, 255, 128);
+
+#if 0
     SDL_AudioSpec as;
     as.freq = MA_FREQ;
     as.format = AUDIO_S16;
@@ -188,6 +215,7 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     as.userdata = /*nullptr*/0;
     SDL_OpenAudio(&as, /*nullptr*/0);
     SDL_PauseAudio(0);
+#endif
     return &alcDevice;
 }
 
@@ -213,7 +241,10 @@ void alcDestroyContext(ALCcontext *context)
 ALCboolean alcCloseDevice(ALCdevice *device)
 {
     (void)device;
-    SDL_CloseAudio();
+    //SDL_CloseAudio();
+    stop_audio_stream(stream);
+    stream = 0;
+
     delete sourceMap;
     sourceMap = 0;
     delete bufferMap;
@@ -367,5 +398,3 @@ void alSourceRewind(ALuint source)
     src.pos = 0;
     SDL_UnlockAudio();
 }
-
-#endif // USE_MINIAL

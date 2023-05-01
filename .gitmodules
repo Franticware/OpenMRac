@@ -1,0 +1,3 @@
+[submodule "src/dos-opengl"]
+	path = src/dos-opengl
+	url = https://github.com/Franticware/dos-opengl

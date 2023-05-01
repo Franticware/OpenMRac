@@ -1,16 +1,10 @@
 #ifndef HLIDAC_GLHELPERS1_H
 #define HLIDAC_GLHELPERS1_H
 
-#ifndef __MACOSX__
 #include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
 #include <cmath>
-#include "platform.h"
-#include "glext1.h"
 
-extern int g_multisampleMode;
+//extern int g_multisampleMode;
 
 #define ENABLE_CHECKGL 0
 
@@ -34,7 +28,7 @@ inline void checkGL()
 
 inline void setStandardAlphaTest(bool enable)
 {
-#if !defined(__MACOSX__) && !defined(__MORPHOS__)
+/*#if !defined(__MACOSX__) && !defined(__MORPHOS__)
     if (g_multisampleMode)
     {
         if (enable)
@@ -49,7 +43,7 @@ inline void setStandardAlphaTest(bool enable)
         }
     }
     else
-#endif
+#endif*/
     {
         if (enable)
         {
@@ -92,7 +86,7 @@ inline void normalize(float vect[3])
     vect[0] /= l;
     vect[1] /= l;
     vect[2] /= l;
-    if (!isfinite1(vect[0]) || !isfinite1(vect[1]) || !isfinite1(vect[2]))
+    if (!std::isfinite(vect[0]) || !std::isfinite(vect[1]) || !std::isfinite(vect[2]))
     {
         vect[0] = 0.f;
         vect[1] = 0.f;

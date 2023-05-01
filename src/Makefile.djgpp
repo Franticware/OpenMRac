@@ -1,0 +1,38 @@
+#ARCH        = -march=i386 -mtune=i486
+ARCH        =
+CFLAGS = \
+-DM_PI=3.14159265358979323846 \
+-I./dos-opengl/include \
+-I./dos-opengl/include/dmesa \
+-I./djgpp/jpeg \
+-I./djgpp/libpng \
+-O2 -Wall -Wextra -fno-exceptions -DNDEBUG $(ARCH)
+
+LFLAGS = \
+-L./djgpp/jpeg/.libs -ljpeg \
+./djgpp/libpng/libpng16_static.lib \
+-L./djgpp/zlib -lz \
+-L./dos-opengl/lib/allegro -lalleg \
+-L./dos-opengl/lib/dmesa -L./dos-opengl/lib/glide3/ -lgl -lglide3i
+
+CXX     = i586-pc-msdosdjgpp-g++
+LINK    = i586-pc-msdosdjgpp-g++
+EXE2COFF = /home/vojta/djgpp/i586-pc-msdosdjgpp/bin/exe2coff
+INTERM  = interm
+TARGET  = openmrac.exe
+OBJS   := $(shell ls *.cpp | sed 's/.cpp/.djgpp.o/g' | tr '\n' ' ')
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+clean:
+	rm -f *.o $(TARGET) $(INTERM).exe $(INTERM)
+
+%.djgpp.o: %.cpp *.h
+	$(CXX) -c $(CFLAGS) -o $@ $<
+
+$(TARGET): $(OBJS)
+	$(LINK) -o $(INTERM).exe $(OBJS) $(LFLAGS)
+	$(EXE2COFF) $(INTERM).exe
+	cat CWSDSTUB.EXE $(INTERM) > $(TARGET)

@@ -1,13 +1,8 @@
-#include "platform.h"
 #include "glhelpers1.h"
 #include "octopus.h"
 
 #include <algorithm>
-#ifndef __MACOSX__
 #include <GL/gl.h>
-#else
-#include <OpenGL/gl.h>
-#endif
 #include "triboxint.h"
 #include <cmath>
 

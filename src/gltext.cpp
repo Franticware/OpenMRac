@@ -1,6 +1,6 @@
-#include "platform.h"
-#include "load_texture.h"
 #include "gltext.h"
+
+#include "load_texture.h"
 #include "pict2.h"
 #include "gbuff_in.h"
 #include "matmng.h"
@@ -255,7 +255,7 @@ void Glfont::init(const unsigned int mapsize[2]/*počet znaků*/, const unsigned
 
     Pict2 pict;
     gbuff_in.f_open(mapfname, "rb");
-    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), PICT2_create_8b);
+    pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     gbuff_in.fclose();
     //
 
