@@ -1,6 +1,56 @@
 #include "pict2.h"
 #include "bits.h"
 
+int Pict2::loadomg(const void* data, unsigned int size)
+{
+    const int err = 0;
+    const int ok = 1;
+    uint8_t* bytes = (uint8_t*)data;
+    if (size < 8)
+    {
+        return err;
+    }
+    if (bytes[0] != 89 || bytes[1] != 'O' || bytes[2] != 'M' || bytes[3] != 'G' || bytes[4] != 0)
+    {
+        return err;
+    }
+    if (bytes[5] != 44 && bytes[5] != 56) // 4444, 565 formats
+    {
+        return err;
+    }
+    const uint32_t w = 1 << ((uint8_t)bytes[6]);
+    const uint32_t h = 1 << ((uint8_t)bytes[7]);
+    const uint32_t sz = w * h * 2;
+    p_w = w;
+    p_h = h;
+    p_px.resize(sz);
+    if (sz + 8 != size)
+    {
+        return err;
+    }
+    memcpy(p_px.data(), bytes + 8, sz);
+    return ok;
+}
+
+int Pict2::loaderr()
+{
+    packed = false;
+    p_w = 8;
+    p_h = 8;
+    p_px.resize(4 * 8 * 8);
+    int k = 0;
+    for (int i = 0; i != 8 * 8; ++i)
+    {
+        for (int j = 0; j != 4; ++j)
+        {
+            p_px[k] = j == 0 || j == 3 ? 0xff : 0x00;
+            ++k;
+        }
+    }
+    p_px[3] = 0;
+    return 1;
+}
+
 bool Pict2::r2a()
 {
     for (int i = 0; i != p_w * p_h; ++i)
@@ -26,6 +76,7 @@ bool Pict2::r2a(const Pict2& pict)
 
 void Pict2::scale(int newW, int newH)
 {
+    if (packed) return;
     // only to shrink down, POT textures
     if (newW > p_w) newW = p_w;
     if (newH > p_h) newH = p_h;
@@ -70,6 +121,9 @@ void Pict2::scale(int newW, int newH)
 
 void Pict2::pack16(void)
 {
+    if (packed)
+        return;
+    packed = true;
     bool use565 = true;
     for (int i = 0; i != p_w * p_h; ++i)
     {

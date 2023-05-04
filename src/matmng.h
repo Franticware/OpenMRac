@@ -11,6 +11,8 @@
 #include "glhelpers1.h"
 #include "pict2.h"
 
+extern int g_hq_textures;
+
 class Transf {
 public:
     Transf() : p_ibegin(0), p_iend(0), p_mwmx(0) { }

@@ -100,9 +100,9 @@ void Gamemenu::render()
         glEnableClientState(GL_VERTEX_ARRAY); checkGL();
         glVertexPointer(3, GL_FLOAT, 0, p_opt_verts); checkGL();
         glColor3fv(p_opt_color0); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
+        glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
         glColor3fv(p_opt_color1); checkGL();
-        glDrawArrays(GL_QUADS, 4, 4); checkGL();
+        glDrawArrays(GL_QUADS, 4, 4); checkGL(); afterDrawcall();
         glDisableClientState(GL_VERTEX_ARRAY); checkGL();
     }
 }

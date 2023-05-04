@@ -75,7 +75,7 @@ void Skysph::render()
     glVertexPointer(3, GL_FLOAT, 0, vert); checkGL();
     glTexCoordPointer(2, GL_FLOAT, 0, texc); checkGL();
     glBindTexture(GL_TEXTURE_2D, tex_sky); checkGL();
-    glDrawElements(GL_QUADS, size, GL_UNSIGNED_SHORT, quads); checkGL();
+    glDrawElements(GL_QUADS, size, GL_UNSIGNED_SHORT, quads); checkGL(); afterDrawcall();
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();
     glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
 }

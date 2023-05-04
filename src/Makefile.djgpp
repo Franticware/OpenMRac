@@ -6,33 +6,66 @@ CFLAGS = \
 -I./dos-opengl/include/dmesa \
 -I./djgpp/jpeg \
 -I./djgpp/libpng \
+-std=gnu++11 -nostdlib -m32 -ffreestanding \
 -O2 -Wall -Wextra -fno-exceptions -DNDEBUG $(ARCH)
 
 LFLAGS = \
+-s -lm -no-pie \
 -L./djgpp/jpeg/.libs -ljpeg \
 ./djgpp/libpng/libpng16_static.lib \
 -L./djgpp/zlib -lz \
 -L./dos-opengl/lib/allegro -lalleg \
 -L./dos-opengl/lib/dmesa -L./dos-opengl/lib/glide3/ -lgl -lglide3i
 
+CC      = i586-pc-msdosdjgpp-gcc
 CXX     = i586-pc-msdosdjgpp-g++
 LINK    = i586-pc-msdosdjgpp-g++
 EXE2COFF = /home/vojta/djgpp/i586-pc-msdosdjgpp/bin/exe2coff
 INTERM  = interm
 TARGET  = openmrac.exe
-OBJS   := $(shell ls *.cpp | sed 's/.cpp/.djgpp.o/g' | tr '\n' ' ')
+INTERM2  = interm2
+TARGET2 = set3dfx.exe
+OBJS   := $(shell ls *.cpp | grep -v set3dfx.cpp | sed 's/.cpp/.djgpp.o/g' | tr '\n' ' ')
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET) $(TARGET2)
 
 clean:
-	rm -f *.o $(TARGET) $(INTERM).exe $(INTERM)
+	rm -f *.o $(TARGET) $(INTERM).exe $(INTERM) $(INTERM2).exe $(INTERM2) glide3drv_h/glide3drv.h $(TARGET_SET_3DFX)
 
 %.djgpp.o: %.cpp *.h
 	$(CXX) -c $(CFLAGS) -o $@ $<
 
-$(TARGET): $(OBJS)
-	$(LINK) -o $(INTERM).exe $(OBJS) $(LFLAGS)
+dxe.o: dos-opengl/lib/glide3/dxe.c
+	$(CC) -c -std=gnu99 -nostdlib -ffreestanding -fgnu89-inline -Wfatal-errors -Iinclude/osmesa -fno-strict-aliasing -fwrapv -o $@ $<
+
+$(TARGET): $(OBJS) dxe.o
+	$(LINK) -o $(INTERM).exe $(OBJS) dxe.o $(LFLAGS)
 	$(EXE2COFF) $(INTERM).exe
 	cat CWSDSTUB.EXE $(INTERM) > $(TARGET)
+
+glide3drv_h/glide3drv.h:
+	echo "static const unsigned char glide3x_v1[] = {" > $@
+	cat dos-opengl/lib/glide3/drivers/v1/glide3x.dxe | xxd -i >> $@
+	echo "};" >> $@
+	echo "static const unsigned char glide3x_v2[] = {" >> $@
+	cat dos-opengl/lib/glide3/drivers/v2/glide3x.dxe | xxd -i >> $@
+	echo "};" >> $@
+	echo "static const unsigned char glide3x_v3[] = {" >> $@
+	cat dos-opengl/lib/glide3/drivers/v3/glide3x.dxe | xxd -i >> $@
+	echo "};" >> $@
+	echo "static const unsigned char glide3x_v4[] = {" >> $@
+	cat dos-opengl/lib/glide3/drivers/v4/glide3x.dxe | xxd -i >> $@
+	echo "};" >> $@
+	echo "static const unsigned char glide3x_vr[] = {" >> $@
+	cat dos-opengl/lib/glide3/drivers/vr/glide3x.dxe | xxd -i >> $@
+	echo "};" >> $@
+
+set3dfx.o: set3dfx.cpp glide3drv_h/glide3drv.h
+	$(CXX) -c $(CFLAGS) -o $@ $<
+
+$(TARGET2): set3dfx.o
+	$(LINK) -o $(INTERM2).exe set3dfx.o -s
+	$(EXE2COFF) $(INTERM2).exe
+	cat CWSDSTUB.EXE $(INTERM2) > $(TARGET2)

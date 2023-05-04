@@ -363,17 +363,27 @@ void MainMenu::menu()
     // tady načíst všechny textury
 
     Pict2 pictlogo_rgba;
-    gbuff_in.f_open("logo-silver-d.png", "rb");
-    pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-    gbuff_in.fclose();
+    bool pictlogoPng = gbuff_in.f_open("logo-silver-d.png", "rb");
+    if (pictlogoPng)
+    {
+        pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+        gbuff_in.fclose();
 
-    Pict2 pictlogo_a;
-    gbuff_in.f_open("logo-silver-a.png", "rb");
-    pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-    gbuff_in.fclose();
-    pictlogo_rgba.r2a(pictlogo_a);
-    pictlogo_rgba.scale(256, 256);
-    pictlogo_rgba.pack16();
+        Pict2 pictlogo_a;
+        gbuff_in.f_open("logo-silver-a.png", "rb");
+        pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+        gbuff_in.fclose();
+        pictlogo_rgba.r2a(pictlogo_a);
+        pictlogo_rgba.scale(256, 256);
+        pictlogo_rgba.pack16();
+    }
+    else
+    {
+        gbuff_in.f_open("logo-silver.omg", "rb");
+        pictlogo_rgba.loadomg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+        gbuff_in.fclose();
+    }
+
     p_logo_textura = load_texture(pictlogo_rgba);
 
     //
@@ -385,7 +395,14 @@ void MainMenu::menu()
             gbuff_in.f_open(p_gamemng->p_cars[i].pict_tex[j].fname, "rb");
             pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             gbuff_in.fclose();
-            pict_th.scale(128, 128);
+            if (g_hq_textures)
+            {
+                pict_th.scale(256, 256);
+            }
+            else
+            {
+                pict_th.scale(128, 128);
+            }
             pict_th.pack16();
             p_gamemng->p_cars[i].pict_tex[j].tex = load_texture(pict_th);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
@@ -398,7 +415,14 @@ void MainMenu::menu()
         gbuff_in.f_open(p_gamemng->p_maps[i].filename_tex, "rb");
         pict_th.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
-        pict_th.scale(128, 128);
+        if (g_hq_textures)
+        {
+            pict_th.scale(256, 256);
+        }
+        else
+        {
+            pict_th.scale(128, 128);
+        }
         pict_th.pack16();
         p_gamemng->p_maps[i].pict_tex = load_texture(pict_th);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
@@ -487,7 +511,7 @@ void MainMenu::render() // vykreslení menu
         static const float texc_array[8] = {0, 0,       texc_size, 0,       texc_size,  texc_size,      0,  texc_size     };
         glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
         glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
+        glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
         glDisableClientState(GL_VERTEX_ARRAY); checkGL();
         glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
 
@@ -552,9 +576,9 @@ void MainMenu::render() // vykreslení menu
         glEnableClientState(GL_VERTEX_ARRAY); checkGL();
         glVertexPointer(3, GL_FLOAT, 0, p_opt_verts); checkGL();
         glColor3fv(p_opt_color0); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
+        glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
         glColor3fv(p_opt_color1); checkGL();
-        glDrawArrays(GL_QUADS, 4, 4); checkGL();
+        glDrawArrays(GL_QUADS, 4, 4); checkGL(); afterDrawcall();
         glDisableClientState(GL_VERTEX_ARRAY); checkGL();
     }
     else if (p_state == STATE_CAR_SEL)
@@ -573,7 +597,7 @@ void MainMenu::render() // vykreslení menu
         static const float texc_array[8] = {0, 0,       1, 0,       1,  1,      0,  1     };
         glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
         glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
+        glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
         glDisableClientState(GL_VERTEX_ARRAY); checkGL();
         glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
 
@@ -607,7 +631,7 @@ void MainMenu::render() // vykreslení menu
                 };
             glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
             glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-            glDrawArrays(GL_QUADS, 0, 8); checkGL();
+            glDrawArrays(GL_QUADS, 0, 8); checkGL(); afterDrawcall();
             glDisableClientState(GL_VERTEX_ARRAY); checkGL();
             glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
         }
@@ -629,7 +653,7 @@ void MainMenu::render() // vykreslení menu
         static const float texc_array[8] = {0, 0,       1, 0,       1,  1,      0,  1     };
         glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
         glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-        glDrawArrays(GL_QUADS, 0, 4); checkGL();
+        glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
         glDisableClientState(GL_VERTEX_ARRAY); checkGL();
         glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
 

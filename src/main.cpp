@@ -252,9 +252,34 @@ int my_main (int argc, char** argv)
         return 1;
     }
 
+    Control controls[16] = {
+        Control(SDLK_UP),
+        Control(SDLK_DOWN),
+        Control(SDLK_LEFT),
+        Control(SDLK_RIGHT),
+
+        Control(),
+        Control(),
+        Control(),
+        Control(),
+
+        Control(),
+        Control(),
+        Control(),
+        Control(),
+
+        Control(),
+        Control(),
+        Control(),
+        Control(),
+    };
+
+    Settings settings("settings.dat", /*&joystickDevices, &joystickNotConnectedDevices,*/ controls);
+    settings.load();
+
     set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
 
-    int digi = DIGI_AUTODETECT;
+    int digi = settings.get("enable_sound") ? DIGI_AUTODETECT : DIGI_NONE;
 
     if (install_sound(digi, MIDI_NONE, NULL) != 0)
     {
@@ -290,30 +315,7 @@ int my_main (int argc, char** argv)
 
     initializeParametersIndices(joystickDevices);*/
 
-    Control controls[16] = {
-        Control(SDLK_UP),
-        Control(SDLK_DOWN),
-        Control(SDLK_LEFT),
-        Control(SDLK_RIGHT),
 
-        Control(),
-        Control(),
-        Control(),
-        Control(),
-
-        Control(),
-        Control(),
-        Control(),
-        Control(),
-
-        Control(),
-        Control(),
-        Control(),
-        Control(),
-        };
-
-    Settings settings("settings.dat", /*&joystickDevices, &joystickNotConnectedDevices,*/ controls);
-    settings.load();
 
     gfx_dos_init_impl(settings.get("screen_x"), settings.get("screen_y"));
 
@@ -422,6 +424,8 @@ int my_main (int argc, char** argv)
     gamemng.set_global_volume(0);
     gamemng.p_bfps = settings.get("show_fps");
     gamemng.init_sound();
+
+    g_hq_textures = settings.get("hq_textures");
 
     MainMenu menu;
     menu.init(&gamemng, &settings);

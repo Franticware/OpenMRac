@@ -17,6 +17,9 @@ public:
     int loadjpeg(const void*, unsigned int);
     int loadpng(const void*, unsigned int);
     int loadpng(const char*);
+    int loadomg(const void*, unsigned int);
+    int loadomg(const char*);
+    int loaderr();
     void assign(int prm_w, int prm_h, const unsigned char* prm_px) {
         clear(); create(prm_w, prm_h, prm_px); }
     void clear(void) { p_px.clear(); p_w = 0; p_h = 0; }
@@ -37,6 +40,7 @@ public:
     void pack565(void);
     void pack16(void);
 
+    bool packed = false;
     bool packed565;
 
 private:

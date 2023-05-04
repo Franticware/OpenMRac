@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <cmath>
 
+int g_hq_textures = 0;
+
 void Rendermng::set_oc(const float frustum[6], const T3dm& t3dm)
 {
     p_octocube.p_r = 0.f;
@@ -109,7 +111,7 @@ void Rendermng::render_o_pass3()
                 // sem přidat transformace
                 if (p_t3dm->p_o[l].p_gi != 1)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL(); afterDrawcall();
                 }
                 ++l;
             }
@@ -227,7 +229,7 @@ void Rendermng::render_o_pass_s3()
                 // sem přidat transformace
                 if (p_t3dm->p_o[l].p_gi != 1)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL(); afterDrawcall();
                 }
                 ++l;
             }
@@ -294,7 +296,7 @@ void Rendermng::render_o_pass2()
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL(); afterDrawcall();
                 }
             }
         } else { // vykreslování objektu bez octopusu
@@ -311,7 +313,7 @@ void Rendermng::render_o_pass2()
                             glPushMatrix(); checkGL();
                             p_transf->mult_mwmx(p_t3dm->p_o[k].p_gi);
                         }
-                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL();
+                        glDrawElements(GL_TRIANGLES, p_t3dm->p_o[k].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[k].p_i); checkGL(); afterDrawcall();
                         if (p_transf)
                         {
                             glPopMatrix(); checkGL();
@@ -323,7 +325,7 @@ void Rendermng::render_o_pass2()
                 unsigned int l = k;
                 while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL(); afterDrawcall();
                     ++l;
                 }
                 l = k;
@@ -340,7 +342,7 @@ void Rendermng::render_o_pass2()
                 glColor4f(0, 0, 0, 1); checkGL();
                 while (l != p_t3dm->p_sz && p_t3dm->p_o[l].p_m == i)
                 {
-                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_t3dm->p_o[l].p_sz, GL_UNSIGNED_SHORT, p_t3dm->p_o[l].p_i); checkGL(); afterDrawcall();
                     ++l;
                 }
                 glFrontFace(GL_CCW); checkGL();
@@ -375,7 +377,7 @@ void Rendermng::render_o_pass2()
                 glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor_back); checkGL();
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL(); afterDrawcall();
                 }
                 glColorPointer(4, GL_FLOAT, 0, p_matmng->p_vcolor); checkGL();
                 glFrontFace(GL_CCW); checkGL();
@@ -449,7 +451,7 @@ void Rendermng::render_o_pass_s2()
             {
                 for (unsigned int j = 0; j != p_octopus->p_vw_sz; ++j)
                 {
-                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL();
+                    glDrawElements(GL_TRIANGLES, p_octopus->p_vw[j]->p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_octopus->p_vw[j]->p_mi[i].p_i); checkGL(); afterDrawcall();
                 }
             }
         }
@@ -493,6 +495,10 @@ void Mat::load(const char* fname)
     }
 
     bhiquality = strcmp(fname, "stromy0a.png.3mt") == 0 || strcmp(fname, "asphalt.jpg.3mt") == 0;
+    if (g_hq_textures)
+    {
+        bhiquality = true;
+    }
 
     if (!gbuff_in.f_open(fname, "r"))
         return;
@@ -640,12 +646,17 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                     pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
-                else
+                else if (strSuff(p_mat[i].texd_name, ".png"))
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
                     pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
+                else
+                {
+                    pict.loaderr();
+                }
+
                 Pict2 picta;
                 bool forceMipmap = false;
                 if (strSuff(p_mat[i].texa_name, ".jpg"))
@@ -654,24 +665,17 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                     picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
-                else
+                else if (strSuff(p_mat[i].texa_name, ".png"))
                 {
                     gbuff_in.f_open(p_mat[i].texa_name, "rb");
                     picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
-                    /*if (g_multisampleMode && strcmp(p_mat[i].texa_name, "stromy0a.png") == 0)
-                    {
-                        forceMipmap = true;
-                        for (int i = 0; i != picta.w() * picta.h() * 4; ++i)
-                        {
-                            float oldValue = picta.px()[i] / 255.f;
-                            float newValue = ((oldValue - 0.5) * 1.4 + 0.5) * 255.f;
-                            if (newValue > 255.f) newValue = 255.f;
-                            else if (newValue < 0.f) newValue = 0.f;
-                            picta.px()[i] = newValue;
-                        }
-                    }*/
                 }
+                else
+                {
+                    pict.loaderr();
+                }
+
                 pict.r2a(picta);
                 if (p_mat[i].bhiquality)
                 {
@@ -691,12 +695,23 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                     pict.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
-                else
+                else if (strSuff(p_mat[i].texd_name, ".png"))
                 {
                     gbuff_in.f_open(p_mat[i].texd_name, "rb");
                     pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
+                else if (strSuff(p_mat[i].texd_name, ".omg"))
+                {
+                    gbuff_in.f_open(p_mat[i].texd_name, "rb");
+                    pict.loadomg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+                    gbuff_in.fclose();
+                }
+                else
+                {
+                    pict.loaderr();
+                }
+
                 if (p_mat[i].bhiquality)
                 {
                     pict.scale(256, 256);
@@ -718,11 +733,15 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 picta.loadjpeg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                 gbuff_in.fclose();
             }
-            else
+            else if (strSuff(p_mat[i].texa_name, ".png"))
             {
                 gbuff_in.f_open(p_mat[i].texa_name, "rb");
                 picta.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                 gbuff_in.fclose();
+            }
+            else
+            {
+                picta.loaderr();
             }
             picta.r2a();
             if (p_mat[i].bhiquality)

@@ -39,7 +39,7 @@ void Gltext::render(GLuint texture)
     {
         glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
         glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
+        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL(); afterDrawcall();
     }
 
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();
@@ -70,7 +70,7 @@ void Gltext::render_c(GLuint texture)
         glColor4fv(p_lines[i].color_b); checkGL();
         glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
         glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
+        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL(); afterDrawcall();
     }
 
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();
@@ -103,7 +103,7 @@ void Gltext::renderscale(float scale, GLuint texture)
     {
         glVertexPointer(3, GL_FLOAT, 0, p_lines[i].vert); checkGL();
         glTexCoordPointer(2, GL_FLOAT, 0, p_lines[i].texc); checkGL();
-        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL();
+        glDrawArrays(GL_QUADS, 0, p_lines[i].size); checkGL(); afterDrawcall();
     }
 
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();

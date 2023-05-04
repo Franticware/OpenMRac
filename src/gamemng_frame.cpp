@@ -58,6 +58,8 @@ void Gamemng::frame(float deltaT)
 
     while (p_timesync.step() && p_state == 1) // po částech času (0.01 s) se přepočítá herní stav
     {
+        MA_periodicStream();
+
         // přepočet postupně všech hráčů (tzn. aut)
         for (unsigned int i = 0; i != p_players; ++i)
         {
@@ -375,6 +377,7 @@ void Gamemng::frame(float deltaT)
 
     while (p_particleTimesync.step()) // po částech času (0.01 s) se přepočítají částice
     {
+        MA_periodicStream();
         // přepočet částic postupně u všech hráčů (tzn. aut)
         for (unsigned int i = 0; i != p_players; ++i)
         {
@@ -478,6 +481,8 @@ void Gamemng::frame(float deltaT)
         }
     }
 
+    MA_periodicStream();
+
     if (p_isGhost) // rendering
     {
         int i = p_ghostUpdated;
@@ -558,6 +563,7 @@ void Gamemng::frame(float deltaT)
     {
     for (unsigned int i = 0; i != p_players; ++i)
     {
+        MA_periodicStream();
         set_scissor(i); // nastaví se podokénko (nemusí zabírat celou plochu hlavního SDL okna
         glPushMatrix(); checkGL();
         // transformace podle kamery a vykreslení
@@ -803,7 +809,7 @@ void Gamemng::render_black()
     glEnableClientState(GL_VERTEX_ARRAY); checkGL();
     static const float vert_array[12] = {-20, -10, -10,  20, -10, -10,  20,  10, -10, -20,  10, -10};
     glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-    glDrawArrays(GL_QUADS, 0, 4); checkGL();
+    glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();
 
     glPopMatrix(); checkGL();
@@ -831,7 +837,7 @@ void Gamemng::render_bricks()
     };
     glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
     glColorPointer(3, GL_FLOAT, 0, color_array);
-    glDrawArrays(GL_QUADS, 0, 4); checkGL();
+    glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();
     glDisableClientState(GL_COLOR_ARRAY); checkGL();
 
@@ -849,7 +855,7 @@ void Gamemng::render_black_background()
     glEnableClientState(GL_VERTEX_ARRAY); checkGL();
     static const float vert_array[12] = {-10, -10, -10,  10, -10, -10,  10,  10, -10, -10,  10, -10};
     glVertexPointer(3, GL_FLOAT, 0, vert_array); checkGL();
-    glDrawArrays(GL_QUADS, 0, 4); checkGL();
+    glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
     glDisableClientState(GL_VERTEX_ARRAY); checkGL();
     glPopMatrix(); checkGL();
 }

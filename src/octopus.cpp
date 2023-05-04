@@ -77,7 +77,7 @@ void Octocube::render_pass2() // vykreslení všech částí patřících octocu
     {
         if (p_mi[i].p_sz)
         {
-            glDrawElements(GL_TRIANGLES, p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_mi[i].p_i); checkGL();
+            glDrawElements(GL_TRIANGLES, p_mi[i].p_sz, GL_UNSIGNED_SHORT, p_mi[i].p_i); checkGL(); afterDrawcall();
         }
     }
 }

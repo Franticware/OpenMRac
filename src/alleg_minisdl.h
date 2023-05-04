@@ -57,10 +57,7 @@ typedef int SDLKey;
 
 typedef struct SDL_keysym
 {
-    //uint8_t scancode;
     SDLKey sym;
-    //SDLMod mod;
-    //Uint16 unicode;
 } SDL_keysym;
 
 typedef struct SDL_KeyboardEvent

@@ -23,38 +23,22 @@ inline void checkGL()
     }
 }
 #else
-#define checkGL() ;
+inline void checkGL(void) { }
 #endif
+
+inline void afterDrawcall(void) { }
 
 inline void setStandardAlphaTest(bool enable)
 {
-/*#if !defined(__MACOSX__) && !defined(__MORPHOS__)
-    if (g_multisampleMode)
+    if (enable)
     {
-        if (enable)
-        {
-            glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
-            checkGL();
-        }
-        else
-        {
-            glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
-            checkGL();
-        }
+        glEnable(GL_ALPHA_TEST);
+        checkGL();
     }
     else
-#endif*/
     {
-        if (enable)
-        {
-            glEnable(GL_ALPHA_TEST);
-            checkGL();
-        }
-        else
-        {
-            glDisable(GL_ALPHA_TEST);
-            checkGL();
-        }
+        glDisable(GL_ALPHA_TEST);
+        checkGL();
     }
 }
 

@@ -67,6 +67,8 @@ METHODDEF(void) my_term_source(j_decompress_ptr /*cinfo*/)
 
 int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_size)
 {
+    packed = false;
+
     /* This struct contains the JPEG decompression parameters and pointers to
      * working space (which is allocated as needed by the JPEG library).
      */

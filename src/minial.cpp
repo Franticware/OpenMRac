@@ -161,9 +161,7 @@ void MA_periodicStream(void)
             ma_callback(0, p, MA_SAMPLES * 2);
             free_audio_stream_buffer(stream);
         }
-
     }
-
 }
 
 ////////////////

@@ -987,7 +987,7 @@ void Gamemng::render_frame()
         glVertexPointer(3, GL_FLOAT, 0, &vertexArray[0]); checkGL();
         glColorPointer(4, GL_FLOAT, 0, &colorArray[0]); checkGL();
         glTexCoordPointer(2, GL_FLOAT, 0, &texCoordArray[0]); checkGL();
-        glDrawArrays(GL_QUADS, 0, vertexArray.size() / 3); checkGL(); // smoke render
+        glDrawArrays(GL_QUADS, 0, vertexArray.size() / 3); checkGL(); afterDrawcall(); // smoke render
         glDisableClientState(GL_VERTEX_ARRAY); checkGL();
         glDisableClientState(GL_COLOR_ARRAY); checkGL();
         glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
@@ -1040,7 +1040,7 @@ void Gamemng::render_frame()
                 const float texc_array[8] = {0,0,g_ghost_w/16.f,0,g_ghost_w/16.f,g_ghost_h/16.f,0,g_ghost_h/16.f};
                 glVertexPointer(2, GL_FLOAT, 0, vert_array); checkGL();
                 glTexCoordPointer(2, GL_FLOAT, 0, texc_array); checkGL();
-                glDrawArrays(GL_QUADS, 0, 4); checkGL();
+                glDrawArrays(GL_QUADS, 0, 4); checkGL(); afterDrawcall();
                 glDisableClientState(GL_VERTEX_ARRAY); checkGL();
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY); checkGL();
 
