@@ -22,3 +22,10 @@ This branch contains DOS/DJGPP port of OpenMRac. It was tested working on DOS wi
 It was also tested in DOSBox-X, where it is unstable. When it runs, the audio is OK.
 
 ![Screenshot](media/openmrac-3dfx-1.png)
+
+## Testers
+
+Thanks go to testers with real hardware:
+
+* Sledge @[High-Voltage.cz](https://www.high-voltage.cz/)
+* Ladis @[České-hry.cz](http://www.ceske-hry.cz/forum/)
