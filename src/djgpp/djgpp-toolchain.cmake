@@ -1,14 +1,14 @@
-# CMake Toolchain File for MinGW32 Cross Compilation
+# CMake Toolchain File for DJGPP Cross Compilation
 
 # the name of the target operating system
 set(CMAKE_SYSTEM_NAME DOS)
 
 # which tools to use
-set(CMAKE_C_COMPILER   /home/vojta/djgpp/bin/i586-pc-msdosdjgpp-gcc)
-set(CMAKE_CXX_COMPILER /home/vojta/djgpp/bin/i586-pc-msdosdjgpp-g++)
+set(CMAKE_C_COMPILER   i586-pc-msdosdjgpp-gcc)
+set(CMAKE_CXX_COMPILER i586-pc-msdosdjgpp-g++)
 
 # here is where the target environment located
-set(CMAKE_FIND_ROOT_PATH  /home/vojta/djgpp/)
+#set(CMAKE_FIND_ROOT_PATH )
 
 # adjust the default behavior of the FIND_XXX() commands:
 
