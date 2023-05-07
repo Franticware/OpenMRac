@@ -685,7 +685,6 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 {
                     pict.scale(128, 128);
                 }
-                pict.pack16();
                 p_mat[i].texture = load_texture(pict, p_mat[i].bmipmap || forceMipmap);
             } else { // 24 bit
                 Pict2 pict;
@@ -701,12 +700,6 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                     pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
                     gbuff_in.fclose();
                 }
-                else if (strSuff(p_mat[i].texd_name, ".omg"))
-                {
-                    gbuff_in.f_open(p_mat[i].texd_name, "rb");
-                    pict.loadomg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-                    gbuff_in.fclose();
-                }
                 else
                 {
                     pict.loaderr();
@@ -720,7 +713,6 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
                 {
                     pict.scale(128, 128);
                 }
-                pict.pack16();
                 p_mat[i].texture = load_texture(pict, p_mat[i].bmipmap);
             }
         }
@@ -752,7 +744,6 @@ void Matmng::load(const T3dm* t3dm, const float* ambcolor, const float* diffcolo
             {
                 picta.scale(128, 128);
             }
-            picta.pack16();
             p_mat[i].texture = load_texture(picta, p_mat[i].bmipmap);
         }
     }

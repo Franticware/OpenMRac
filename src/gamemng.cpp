@@ -518,7 +518,6 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
         pictsmoke.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
         pictsmoke.r2a();
-        pictsmoke.pack16();
         p_smoketex = load_texture(pictsmoke, false);
     }
     unsigned int fontsize[2] = {16, 6};
@@ -535,7 +534,6 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
     gbuff_in.fclose();
     pictfont_rgba.r2a(pictfont_a);
     pictfont_rgba.scale(256, 256);
-    pictfont_rgba.pack16();
     p_fonttex = load_texture(pictfont_rgba);
     p_glfont.set_texture(p_fonttex); // kvůli render_c();
 
@@ -583,6 +581,7 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
     p_ghostNew = new Ghost[4];
 
     p_particles = new Particles[4];
+    // p_particles = 0; // use this instead to disable smoke particles
 }
 
 void Gamemng::input(unsigned char keys[4*4])
@@ -918,7 +917,7 @@ void Gamemng::render_frame()
     }
 
     // smoke generation
-    for (unsigned int i = 0; i != p_players; ++i)
+    for (unsigned int i = 0; p_particles && i != p_players; ++i)
     {
         if (p_carrendermng[i].isVisible())
         {
@@ -1228,7 +1227,7 @@ void Gamemng::restart()
 
     p_ghost_time = 0.f;
 
-    for (int i = 0; i != 4; ++i)
+    for (int i = 0; p_particles && i != 4; ++i)
     {
         p_particles[i].clear();
     }

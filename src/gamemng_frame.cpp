@@ -375,48 +375,51 @@ void Gamemng::frame(float deltaT)
 
     }
 
-    while (p_particleTimesync.step()) // po částech času (0.01 s) se přepočítají částice
+    if (p_particles)
     {
-        MA_periodicStream();
-        // přepočet částic postupně u všech hráčů (tzn. aut)
-        for (unsigned int i = 0; i != p_players; ++i)
+        while (p_particleTimesync.step()) // po částech času (0.01 s) se přepočítají částice
         {
-            p_particles[i].step(p_timesync.p_T);
-            int randValue = rand();
-            bool generateNewParticle = false;
-            bool lessParticles = !p_car2dp[i].p_b_acc;
-            if (lessParticles)
+            MA_periodicStream();
+            // přepočet částic postupně u všech hráčů (tzn. aut)
+            for (unsigned int i = 0; i != p_players; ++i)
             {
-                generateNewParticle =
-                    //p_particles[i].m_stepCounter % 10 == 0;
-                    randValue < RAND_MAX * 0.1f;
-            }
-            else
-            {
-                generateNewParticle =
-                    p_particles[i].m_stepCounter % 5 == 0;
+                p_particles[i].step(p_timesync.p_T);
+                int randValue = rand();
+                bool generateNewParticle = false;
+                bool lessParticles = !p_car2dp[i].p_b_acc;
+                if (lessParticles)
+                {
+                    generateNewParticle =
+                        //p_particles[i].m_stepCounter % 10 == 0;
+                        randValue < RAND_MAX * 0.1f;
+                }
+                else
+                {
+                    generateNewParticle =
+                        p_particles[i].m_stepCounter % 5 == 0;
                     //randValue < RAND_MAX * 0.2f;
-            }
-            if (generateNewParticle)
-            {
-                glPushMatrix(); checkGL();
-                glLoadIdentity(); checkGL();
-                glRotatef(p_car2do[i].p_ax*57.29577951308232, 0, 1, 0); checkGL();
-                float mdl_mtrx[16];
-                glGetFloatv(GL_MODELVIEW_MATRIX, mdl_mtrx); checkGL();
-                glPopMatrix(); checkGL();
-                float exhaustPosition[3];
-                multMatPos(exhaustPosition, mdl_mtrx, p_cars[p_cars_sel[i]].exhaust_position);
-                float exhaustDirection[3];
-                multMatDir(exhaustDirection, mdl_mtrx, p_cars[p_cars_sel[i]].exhaust_direction);
-                float exhaustExitSpeed = lessParticles ? 0.9f : 1.1f;
-                float densityMultiplier = lessParticles ? 0.5f : 1.f;
-                p_particles[i].newParticle(Particle(exhaustPosition[0], exhaustPosition[1], exhaustPosition[2],
-                    exhaustDirection[0]*exhaustExitSpeed - 0.1f + 0.2f*static_cast<float>(rand())/RAND_MAX,
-                    exhaustDirection[1]*exhaustExitSpeed - 0.1f + 0.2f*static_cast<float>(rand())/RAND_MAX,
-                    exhaustDirection[2]*exhaustExitSpeed - 0.1f + 0.2f*static_cast<float>(rand())/RAND_MAX,
-                    rand() % 4, 0.04, 0.3,
-                    (0.55 + 0.1f*static_cast<float>(rand())/RAND_MAX) * densityMultiplier, 0.6 * densityMultiplier));
+                }
+                if (generateNewParticle)
+                {
+                    glPushMatrix(); checkGL();
+                    glLoadIdentity(); checkGL();
+                    glRotatef(p_car2do[i].p_ax*57.29577951308232, 0, 1, 0); checkGL();
+                    float mdl_mtrx[16];
+                    glGetFloatv(GL_MODELVIEW_MATRIX, mdl_mtrx); checkGL();
+                    glPopMatrix(); checkGL();
+                    float exhaustPosition[3];
+                    multMatPos(exhaustPosition, mdl_mtrx, p_cars[p_cars_sel[i]].exhaust_position);
+                    float exhaustDirection[3];
+                    multMatDir(exhaustDirection, mdl_mtrx, p_cars[p_cars_sel[i]].exhaust_direction);
+                    float exhaustExitSpeed = lessParticles ? 0.9f : 1.1f;
+                    float densityMultiplier = lessParticles ? 0.5f : 1.f;
+                    p_particles[i].newParticle(Particle(exhaustPosition[0], exhaustPosition[1], exhaustPosition[2],
+                                                        exhaustDirection[0]*exhaustExitSpeed - 0.1f + 0.2f*static_cast<float>(rand())/RAND_MAX,
+                                                        exhaustDirection[1]*exhaustExitSpeed - 0.1f + 0.2f*static_cast<float>(rand())/RAND_MAX,
+                                                        exhaustDirection[2]*exhaustExitSpeed - 0.1f + 0.2f*static_cast<float>(rand())/RAND_MAX,
+                                                        rand() % 4, 0.04, 0.3,
+                                                        (0.55 + 0.1f*static_cast<float>(rand())/RAND_MAX) * densityMultiplier, 0.6 * densityMultiplier));
+                }
             }
         }
     }
@@ -434,7 +437,6 @@ void Gamemng::frame(float deltaT)
     {
         p_mapobjs[i].rbo->update(false);
     }
-
 
     if (p_state == 0)
     {

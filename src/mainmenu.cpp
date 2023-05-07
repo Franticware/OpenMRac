@@ -363,26 +363,16 @@ void MainMenu::menu()
     // tady načíst všechny textury
 
     Pict2 pictlogo_rgba;
-    bool pictlogoPng = gbuff_in.f_open("logo-silver-d.png", "rb");
-    if (pictlogoPng)
-    {
-        pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-        gbuff_in.fclose();
+    gbuff_in.f_open("logo-silver-d.png", "rb");
+    pictlogo_rgba.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+    gbuff_in.fclose();
 
-        Pict2 pictlogo_a;
-        gbuff_in.f_open("logo-silver-a.png", "rb");
-        pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-        gbuff_in.fclose();
-        pictlogo_rgba.r2a(pictlogo_a);
-        pictlogo_rgba.scale(256, 256);
-        pictlogo_rgba.pack16();
-    }
-    else
-    {
-        gbuff_in.f_open("logo-silver.omg", "rb");
-        pictlogo_rgba.loadomg(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-        gbuff_in.fclose();
-    }
+    Pict2 pictlogo_a;
+    gbuff_in.f_open("logo-silver-a.png", "rb");
+    pictlogo_a.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
+    gbuff_in.fclose();
+    pictlogo_rgba.r2a(pictlogo_a);
+    pictlogo_rgba.scale(256, 256);
 
     p_logo_textura = load_texture(pictlogo_rgba);
 
@@ -403,7 +393,6 @@ void MainMenu::menu()
             {
                 pict_th.scale(128, 128);
             }
-            pict_th.pack16();
             p_gamemng->p_cars[i].pict_tex[j].tex = load_texture(pict_th);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
@@ -423,7 +412,6 @@ void MainMenu::menu()
         {
             pict_th.scale(128, 128);
         }
-        pict_th.pack16();
         p_gamemng->p_maps[i].pict_tex = load_texture(pict_th);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); checkGL(); // textura se neopakuje

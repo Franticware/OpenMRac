@@ -21,7 +21,8 @@ int Pict2::loadpng(const char* fname)
 // 0: ERROR; 1: OK; > 1: WARNING, OTHER
 int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_size) /*data_size použito, pokud bfile je false*/ // 8bitovou paletu nezkonvertuje na RGB (default = false)
 {
-    packed = false;
+    p_hasAlphaInit = false;
+    p_hasAlpha = true;
     png_image image;
     memset(&image, 0, sizeof(image));
     image.version = PNG_IMAGE_VERSION;

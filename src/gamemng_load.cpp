@@ -46,7 +46,6 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         pict.loadpng(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
         gbuff_in.fclose();
         pict.scale(256, 256);
-        pict.pack16();
         GLuint skytex = load_texture(pict);
         glBindTexture(GL_TEXTURE_2D, skytex); checkGL();
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); checkGL(); // vertikálně se textura neopakuje
@@ -218,7 +217,10 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         p_sound_car[i].init(p_sound_game_static.p_engine0_stream[i], p_sound_game_static.p_engine1_stream[i], p_cars[cars_sel[i]].engine1_pitch, p_sound_game_static.p_skid_stream[i], i, p_players);
 
         // částice
-        p_particles[i].clear();
+        if (p_particles)
+        {
+            p_particles[i].clear();
+        }
     }
 
     p_car2do = new RBSolver[p_players];

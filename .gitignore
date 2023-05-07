@@ -1,1 +1,16 @@
 *.o 
+GLIDE3X.DXE
+glide3x.dxe
+*.mrr
+*.MRR
+SETTINGS.DAT
+settings.dat
+interm
+interm.exe
+interm2
+interm2.exe
+openmrac.dat
+openmrac.exe
+set3dfx.exe
+glide3drv.h
+*.pro.user

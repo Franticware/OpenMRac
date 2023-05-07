@@ -17,8 +17,6 @@ public:
     int loadjpeg(const void*, unsigned int);
     int loadpng(const void*, unsigned int);
     int loadpng(const char*);
-    int loadomg(const void*, unsigned int);
-    int loadomg(const char*);
     int loaderr();
     void assign(int prm_w, int prm_h, const unsigned char* prm_px) {
         clear(); create(prm_w, prm_h, prm_px); }
@@ -30,22 +28,26 @@ public:
     int h(void) const { return p_h; }
     uint8_t* px() { return p_px.data(); }
     const unsigned char* c_px() const { return p_px.data(); }
+    const unsigned short* c_ppx() const { return p_ppx.data(); }
     unsigned char* px(int x, int y, int c = 0) { return p_px.data()+(x+y*p_w)*4+c; }
     const unsigned char* c_px(int x, int y, int c = 0) const { return p_px.data()+(x+y*p_w)*4+c; }
     unsigned char& operator[](size_t i) { return p_px[i]; }
     const unsigned char& operator[](size_t i) const { return p_px[i]; }
 
     void scale(int newW, int newH);
-    void pack4444(void);
-    void pack565(void);
-    void pack16(void);
+    void pack16(int alignment);
 
-    bool packed = false;
-    bool packed565;
+    void cropNpotH();
+
+    bool p_hasAlpha = false;
 
 private:
     int p_w, p_h; // private width, height, depth
     std::vector<uint8_t> p_px; // pixels
+    std::vector<uint16_t> p_ppx; // packed pixels
+
+    bool p_hasAlphaInit = false;
+
     void create(int prm_w, int prm_h, const unsigned char* prm_px) {
         p_w = prm_w; p_h = prm_h;
         p_px.resize(p_w*p_h*4);

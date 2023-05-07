@@ -4,10 +4,12 @@
 #include <GL/gl.h>
 #include "pict2.h"
 
-GLuint load_texture(const Pict2& pict, bool bmipmap = false);
+GLuint load_texture(Pict2 pict, bool bmipmap = false);
 
 void subMem(int w, int h);
 
 extern unsigned int g_texture_memory_usage;
+extern int g_textureFiltering;
+extern int g_textureMipmaps;
 
 #endif

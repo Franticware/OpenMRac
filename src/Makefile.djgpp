@@ -32,7 +32,7 @@ OBJS   := $(shell ls *.cpp | grep -v set3dfx.cpp | sed 's/.cpp/.djgpp.o/g' | tr 
 all: $(TARGET) $(TARGET2)
 
 clean:
-	rm -f *.o $(TARGET) $(INTERM).exe $(INTERM) $(INTERM2).exe $(INTERM2) glide3drv_h/glide3drv.h $(TARGET_SET_3DFX)
+	rm -f *.o $(TARGET) $(INTERM).exe $(INTERM) $(INTERM2).exe $(INTERM2) glide3drv_h/glide3drv.h $(TARGET2)
 
 %.djgpp.o: %.cpp *.h
 	$(CXX) -c $(CFLAGS) -o $@ $<

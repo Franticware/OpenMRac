@@ -76,16 +76,10 @@ static uint8_t cntNow = 0;
 
 float getdeltaT()
 {
-    //if (cntPrev == cntNow) return 0.01f;
-    //return 0.01f;
-    //return 1.0/60.0;
-
     cntNow = intCounter;
     uint8_t diff = cntNow - cntPrev;
     cntPrev = cntNow;
     return diff * 0.01f;
-
-    //return 0.01f;
 }
 
 // odkazy na různá místa projektu:
@@ -125,7 +119,6 @@ int g_ghost_w = 0;
 int g_ghost_h = 0;
 
 //int g_multisampleMode = 0; // 0 - 0ff, 1 - 2x, 2 - 4x
-int g_textureFiltering = 0; // 0 - bilinear, 1 - trilinear, 2 - aniso
 
 void saveTgaScreenshot()
 {
@@ -312,10 +305,7 @@ int my_main (int argc, char** argv)
             SDL_JoystickEventState(SDL_ENABLE);
         }
     }
-
     initializeParametersIndices(joystickDevices);*/
-
-
 
     gfx_dos_init_impl(settings.get("screen_x"), settings.get("screen_y"));
 
@@ -426,6 +416,8 @@ int my_main (int argc, char** argv)
     gamemng.init_sound();
 
     g_hq_textures = settings.get("hq_textures");
+    g_textureFiltering = settings.get("texture_filter");
+    g_textureMipmaps = settings.get("mipmaps");
 
     MainMenu menu;
     menu.init(&gamemng, &settings);
