@@ -1,6 +1,6 @@
 *.o 
 GLIDE3X.DXE
-glide3x.dxe
+src/glide3x.dxe
 *.mrr
 *.MRR
 SETTINGS.DAT

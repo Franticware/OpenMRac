@@ -1,0 +1,14 @@
+Pick the correct glide driver (glide3x.dxe) for your 3dfx card from
+one of the directories listed below and put it in the same place as
+q2.exe and gl.dxe:
+
+sst1  -> Voodoo Graphics
+
+sst96 -> Voodoo Rush
+
+cvg   -> Voodoo2
+
+h3    -> Banshee, Voodoo3
+
+h5    -> Voodoo4 and Voodoo5 (also works for Banshee and Voodoo3.)
+

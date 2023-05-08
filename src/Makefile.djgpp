@@ -53,7 +53,7 @@ glide3drv_h/glide3drv.h:
 	cat dos-opengl/lib/glide3/drivers/v2/glide3x.dxe | xxd -i >> $@
 	echo "};" >> $@
 	echo "static const unsigned char glide3x_v3[] = {" >> $@
-	cat dos-opengl/lib/glide3/drivers/v3/glide3x.dxe | xxd -i >> $@
+	cat dos-opengl-alt/h3/glide3x.dxe | xxd -i >> $@
 	echo "};" >> $@
 	echo "static const unsigned char glide3x_v4[] = {" >> $@
 	cat dos-opengl/lib/glide3/drivers/v4/glide3x.dxe | xxd -i >> $@
