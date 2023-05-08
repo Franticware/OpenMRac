@@ -18,8 +18,10 @@
 #define MA_FILTER_HIGH_QUALITY 2
 
 #define MA_FILTER MA_FILTER_LINEAR
-#define MA_FREQ 22050
+//#define MA_FREQ 22050
 #define MA_SAMPLES 1024
+
+int MA_freq = 0;
 
 struct ALCdevice
 {
@@ -201,7 +203,10 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     floatBuff = new std::vector<float>;
     floatBuff->resize(MA_SAMPLES);
 
-    stream = play_audio_stream(MA_SAMPLES, 16, FALSE, MA_FREQ, 255, 128);
+    if (MA_freq)
+    {
+        stream = play_audio_stream(MA_SAMPLES, 16, FALSE, MA_freq, 255, 128);
+    }
 
 #if 0
     SDL_AudioSpec as;
@@ -240,8 +245,11 @@ ALCboolean alcCloseDevice(ALCdevice *device)
 {
     (void)device;
     //SDL_CloseAudio();
-    stop_audio_stream(stream);
-    stream = 0;
+    if (stream)
+    {
+        stop_audio_stream(stream);
+        stream = 0;
+    }
 
     delete sourceMap;
     sourceMap = 0;
@@ -312,10 +320,10 @@ void alListenerfv(ALenum param, const ALfloat *values)
 
 void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq)
 {
-    if (buffer == 0 || bufferMap == 0 || format != AL_FORMAT_MONO16) return; // only 16-bit mono audio is currently supported
+    if (buffer == 0 || bufferMap == 0 || format != AL_FORMAT_MONO16 || MA_freq == 0) return; // only 16-bit mono audio is currently supported
     SDL_LockAudio();
     MA_Buffer& buff = (*bufferMap)[buffer];
-    buff.pitch = float(freq)/float(MA_FREQ);
+    buff.pitch = float(freq)/float(MA_freq);
     buff.samples.resize(size >> 1);
     std::copy((Sint16*)data, ((Sint16*)data) + buff.samples.size(), buff.samples.begin());
     SDL_UnlockAudio();

@@ -56,5 +56,6 @@ void alSourceRewind(ALuint source);
 void alSourceStop(ALuint source);
 
 void MA_periodicStream(void);
+extern int MA_freq;
 
 #endif // MINIAL_H

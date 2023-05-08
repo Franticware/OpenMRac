@@ -272,7 +272,11 @@ int my_main (int argc, char** argv)
 
     set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
 
-    int digi = settings.get("enable_sound") ? DIGI_AUTODETECT : DIGI_NONE;
+    const int sound_quality = settings.get("sound_quality");
+
+    int digi = sound_quality ? DIGI_AUTODETECT : DIGI_NONE;
+
+    MA_freq = 11025 * sound_quality;
 
     if (install_sound(digi, MIDI_NONE, NULL) != 0)
     {
