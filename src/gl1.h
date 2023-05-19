@@ -33,8 +33,12 @@ inline bool initGlExt(void)
 
 #else
 
+#if USE_GLESv2
+#include <GLES2/gl2.h>
+#else
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glcorearb.h>
+#endif
 
 inline bool initGlExt(void)
 {
@@ -78,10 +82,10 @@ inline void glDeleteBuffers1(GLsizei n, const GLuint * buffers)
 }
 
 #ifndef GL_MAX_TEXTURE_MAX_ANISOTROPY
-#define GL_MAX_TEXTURE_MAX_ANISOTROPY GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY 0x84FF
 #endif
 #ifndef GL_TEXTURE_MAX_ANISOTROPY
-#define GL_TEXTURE_MAX_ANISOTROPY GL_TEXTURE_MAX_ANISOTROPY_EXT
+#define GL_TEXTURE_MAX_ANISOTROPY 0x84FE
 #endif
 
 #define ASSERT_ANISOTROPY

@@ -286,6 +286,9 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     as.userdata = nullptr;
     SDL_AudioSpec obtained;
     SDL_AudioDeviceID id = SDL_OpenAudioDevice(devicename, 0, &as, &obtained, SDL_AUDIO_ALLOW_SAMPLES_CHANGE | SDL_AUDIO_ALLOW_FREQUENCY_CHANGE);
+
+    fprintf(stderr, "Audio driver: '%s'\n", SDL_GetCurrentAudioDriver()); fflush(stderr);
+
     if (id > 0)
     {
         maObtainedFreq = obtained.freq;

@@ -3,7 +3,7 @@ LFLAGS = -lSDL2 -lGLESv2 -lopenal -ljpeg -lpng -lm -s
 
 CXX    = g++
 LINK   = g++
-TARGET = openmrac
+TARGET = openmrac-es2
 OBJS := $(shell ls *.cpp | grep -v _win32.cpp | sed 's/.cpp/.o/g' | tr '\n' ' ')
 
 .PHONY: all clean install uninstall deb
@@ -20,27 +20,28 @@ $(TARGET): $(OBJS)
 	$(LINK) -o $(TARGET) $(OBJS) $(LFLAGS)
 
 install: all uninstall
-	sudo cp openmrac /usr/bin/openmrac
-	sudo cp openmrac.ico /usr/share/pixmaps/openmrac.ico
-	sudo cp openmrac.desktop /usr/share/applications/openmrac.desktop
+	sudo cp $(TARGET) /usr/bin/$(TARGET)
+	sudo cp openmrac.ico /usr/share/pixmaps/$(TARGET).ico
+	sudo cp $(TARGET).desktop /usr/share/applications/$(TARGET).desktop
 	sudo update-desktop-database || true
 
 uninstall:
-	sudo rm -f /usr/bin/openmrac
-	sudo rm -f /usr/share/pixmaps/openmrac.ico
-	sudo rm -f /usr/share/applications/openmrac.desktop
+	sudo rm -f /usr/bin/$(TARGET)
+	sudo rm -f /usr/share/pixmaps/$(TARGET).ico
+	sudo rm -f /usr/share/applications/$(TARGET).desktop
 	sudo update-desktop-database || true
 
 deb: all
 	rm -rf debian
 	cd ../../OpenMRac-data ; make
-	mkdir -p debian/openmrac/usr/bin
-	cp openmrac debian/openmrac/usr/bin/openmrac
-	mkdir -p debian/openmrac/usr/share/pixmaps
-	cp openmrac.ico debian/openmrac/usr/share/pixmaps/openmrac.ico
-	mkdir -p debian/openmrac/usr/share/applications
-	cp openmrac.desktop debian/openmrac/usr/share/applications/openmrac.desktop
-	mkdir -p debian/openmrac/usr/share/openmrac
+	mkdir -p debian/$(TARGET)/usr/bin
+	cp $(TARGET) debian/$(TARGET)/usr/bin/$(TARGET)
+	mkdir -p debian/$(TARGET)/usr/share/pixmaps
+	cp $(TARGET).ico debian/$(TARGET)/usr/share/pixmaps/$(TARGET).ico
+	mkdir -p debian/$(TARGET)/usr/share/applications
+	cp openmrac.desktop debian/$(TARGET)/usr/share/applications/$(TARGET).desktop
+	mkdir -p debian/$(TARGET)/usr/share/$(TARGET)
+	
 	cp ../../OpenMRac-data/openmrac.dat debian/openmrac/usr/share/openmrac/openmrac.dat
 	mkdir -p debian/openmrac/DEBIAN
 	cp control debian/openmrac/DEBIAN/control

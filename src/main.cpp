@@ -220,6 +220,8 @@ int my_main (int argc, char** argv)
     g_joystickDevices = &joystickDevices;
     std::vector<JoystickIdentifier> joystickNotConnectedDevices;
 
+    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");
+
     // initialize SDL video
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
     {
@@ -1118,7 +1120,7 @@ int EnableOpenGL(bool fullscreen, bool vsync, int width, int height)
     SDL_GL_SetSwapInterval(vsync ? 1 : 0);
 
     int actualWidth, actualHeight;
-    SDL_GetWindowSize(gameWindow, &actualWidth, &actualHeight);
+    SDL_GL_GetDrawableSize(gameWindow, &actualWidth, &actualHeight);
 
 #if ENABLE_GLDEBUG
     glEnable(GL_DEBUG_OUTPUT);

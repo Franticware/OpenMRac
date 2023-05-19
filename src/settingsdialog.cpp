@@ -1,4 +1,7 @@
 #include "settingsdialog.h"
+
+#include <cstring>
+
 #include "gl1.h"
 
 SettingsDialog::SettingsDialog(
@@ -77,7 +80,17 @@ SettingsDialog::SettingsDialog(
 
     m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(0, 1), "Video"));
     m_items.push_back(GuiItem(GuiItem::FRAME, m_horLay.getCellPS(0, 8), m_verLay.getCellPS(2, 15)));
-    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(18, 1), minial ? "Audio (SDL)" :  "Audio (OpenAL)"));
+
+    char audioStrBuff[64] = {0};
+    if (minial)
+    {
+        snprintf(audioStrBuff, 63, "Audio (SDL/%s)", SDL_GetCurrentAudioDriver());
+    }
+    else
+    {
+        strncpy(audioStrBuff, "Audio (OpenAL)", 63);
+    }
+    m_items.push_back(GuiItem(GuiItem::LABEL, m_horLay.getCellPS(0, 6), m_verLay.getCellPS(18, 1), audioStrBuff));
     m_items.push_back(GuiItem(GuiItem::FRAME, m_horLay.getCellPS(0, 8), m_verLay.getCellPS(20, 6)));
 
     std::vector<std::string> resolutions;

@@ -71,3 +71,9 @@ cd ../..
 
 ## Mac OS X
 TODO
+
+# Branches
+
+* [main](https://github.com/Franticware/OpenMRac/tree/main) - current SDL 2 version, OpenGL with shaders
+* [legacy](https://github.com/Franticware/OpenMRac/tree/legacy) - older SDL 1.2 version, OpenGL 1.x (no shaders)
+* [dos-3dfx](https://github.com/Franticware/OpenMRac/tree/dos-3dfx) - version for DOS with 3dfx cards, based on the legacy branch

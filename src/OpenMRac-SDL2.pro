@@ -22,11 +22,11 @@ QMAKE_CXXFLAGS += -DUSE_MINIAL
 #LIBS += -lopenal
 
 # libGL
-LIBS += -lSDL2 -lGL -ljpeg -lpng
+#LIBS += -lSDL2 -lGL -ljpeg -lpng
 
 # libGLESv2
-#QMAKE_CXXFLAGS += -DUSE_GLESv2
-#LIBS += -lSDL2 -lGLESv2 -ljpeg -lpng
+QMAKE_CXXFLAGS += -DUSE_GLESv2
+LIBS += -lSDL2 -lGLESv2 -ljpeg -lpng
 
 INCLUDEPATH += \
         /usr/include
