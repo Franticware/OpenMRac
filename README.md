@@ -1,6 +1,6 @@
 # OpenMRac
 
-![Screenshot](media/openmrac-3dfx-0.png)
+[![OpenMRac youtube video](media/openmrac-yt.jpg)](https://www.youtube.com/watch?v=NlXblvwc_Ts&t=138s)
 
 OpenMRac is a split-screen racing game. It is a tweaked source release of [MultiRacer](https://www.franticware.com/multiracer).
 
@@ -20,6 +20,8 @@ Game data files are in a separate repository under a different license: https://
 This branch contains DOS/DJGPP port of OpenMRac. It was tested working on DOS with 3dfx Voodoo 1, 486DX2 66 MHz, where it runs very slowly with audio stuttering, but seems stable. The screenshots were taken on real hardware.
 
 It was also tested in DOSBox-X, where it is unstable. When it runs, the audio is OK.
+
+![Screenshot](media/openmrac-3dfx-0.png)
 
 ![Screenshot](media/openmrac-3dfx-1.png)
 
