@@ -40,7 +40,7 @@ int Pict2::loadpng_pom(bool bfile, const void* fname_data, unsigned int data_siz
     create(image.width, image.height, 0);
     // a negative stride indicates that the bottom-most row is first in the buffer
     // (as expected by openGL)
-    if (!png_image_finish_read(&image, NULL, p_px.data(), -image.width*4, NULL)) {
+    if (!png_image_finish_read(&image, NULL, p_px.data(), -PNG_IMAGE_ROW_STRIDE(image), NULL)) {
         png_image_free(&image);
         return 0;
     }
