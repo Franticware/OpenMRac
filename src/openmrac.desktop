@@ -2,6 +2,7 @@
 Categories=Application;Game;
 Exec=openmrac
 Icon=/usr/share/pixmaps/openmrac.ico
+Keywords=3D;multiplayer;car;racing;split-screen;
 Name=OpenMRac
 Terminal=false
 Type=Application
