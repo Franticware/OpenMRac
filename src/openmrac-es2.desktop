@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Application;Game;
+Exec=openmrac-es2
+Icon=/usr/share/pixmaps/openmrac-es2.ico
+Keywords=3D;multiplayer;car;racing;split-screen;
+Name=OpenMRac (ES2)
+Terminal=false
+Type=Application

@@ -29,31 +29,9 @@ Install **openmrac** package from AUR
 
 ### Debian-based (Debian, Raspberry Pi OS, Ubuntu, MX Linux, Mint, ...)
 
-* Install **sox**
-* Install development packages for OpenGL, OpenAL, SDL 2, jpeg, png
-* Run the following to generate **openmrac.deb** package:
+* The openmrac and openmrac-data packages are now available in many Debian-based distributions. If not, please use method described in the following section (Other).
 
-```
-mkdir openmrac-deb
-cd openmrac-deb
-git clone https://github.com/Franticware/OpenMRac.git
-git clone https://github.com/Franticware/OpenMRac-data.git
-cd OpenMRac/src
-make -f Makefile.linux deb
-cd ../../..
-```
-
-* Install the package:
-
-```
-sudo dpkg -i openmrac-deb/OpenMRac/src/debian/openmrac.deb
-```
-
-Notes:
-
-* For simplicity, the resulting package contains both binary and data files. Packagers for Linux distributions will probably want to create a separate package for game data. See existing [AUR packages](https://aur.archlinux.org/packages?O=0&K=openmrac) for inspiration.
-
-* RFP for Debian can be found here: https://wiki.debian.org/Games/Suggested#OpenMRac
+* Note: The openmrac-es2 package is planned (OpenGL ES 2.0 variant) which might be better suited for SBCs based on RISC-V and ARM.
 
 ### Other (openSUSE, Fedora, ...)
 

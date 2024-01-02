@@ -11,7 +11,7 @@ override LD = $(CC)
 TARGET = openmrac
 OBJS := $(sort $(shell ls *.cpp | grep -v _win32.cpp | sed 's/.cpp/.o/g' | tr '\n' ' '))
 
-.PHONY: all clean install uninstall deb
+.PHONY: all clean install uninstall
 
 all: $(TARGET)
 
@@ -35,18 +35,3 @@ uninstall:
 	sudo rm -f /usr/share/pixmaps/openmrac.ico
 	sudo rm -f /usr/share/applications/openmrac.desktop
 	sudo update-desktop-database || true
-
-deb: all
-	rm -rf debian
-	cd ../../OpenMRac-data ; make
-	mkdir -p debian/openmrac/usr/bin
-	cp openmrac debian/openmrac/usr/bin/openmrac
-	mkdir -p debian/openmrac/usr/share/pixmaps
-	cp openmrac.ico debian/openmrac/usr/share/pixmaps/openmrac.ico
-	mkdir -p debian/openmrac/usr/share/applications
-	cp openmrac.desktop debian/openmrac/usr/share/applications/openmrac.desktop
-	mkdir -p debian/openmrac/usr/share/openmrac
-	cp ../../OpenMRac-data/openmrac.dat debian/openmrac/usr/share/openmrac/openmrac.dat
-	mkdir -p debian/openmrac/DEBIAN
-	cp control debian/openmrac/DEBIAN/control
-	cd debian ; dpkg-deb --build openmrac
