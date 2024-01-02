@@ -1,14 +1,15 @@
-CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -fno-exceptions -fPIC -std=c++20 -DNDEBUG
-LFLAGS = -lSDL2 -lGL -lopenal -ljpeg -lpng -lm -s
+prefix ?= /usr/local
+CXXFLAGS += -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=$(prefix)/share/openmrac/ -fno-exceptions -fPIC -std=c++20 -DNDEBUG
+LDFLAGS += -lSDL2 -lGL -lopenal -ljpeg -lpng -lm -s -lstdc++
 
 # Uncomment the following two lines to use MiniAL instead of OpenAL:
-#CFLAGS = -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=/usr/share/openmrac/ -DUSE_MINIAL -fno-exceptions -fPIC
-#LFLAGS = -lSDL2 -lGL -ljpeg -lpng -lm -s
+#CXXFLAGS += -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=$(prefix)/share/openmrac/ -DUSE_MINIAL -fno-exceptions -fPIC
+#LDFLAGS += -lSDL2 -lGL -ljpeg -lpng -lm -s -lstdc++
 
-CXX    = g++
-LINK   = g++
+CC ?= g++
+override LD = $(CC)
 TARGET = openmrac
-OBJS := $(shell ls *.cpp | grep -v _win32.cpp | sed 's/.cpp/.o/g' | tr '\n' ' ')
+OBJS := $(sort $(shell ls *.cpp | grep -v _win32.cpp | sed 's/.cpp/.o/g' | tr '\n' ' '))
 
 .PHONY: all clean install uninstall deb
 
@@ -18,10 +19,10 @@ clean:
 	rm -f *.o $(TARGET)
 
 %.o: %.cpp *.h shaders/*.h
-	$(CXX) -c $(CFLAGS) $<
+	$(CC) -c $(CPPFLAGS) $(CXXFLAGS) $<
 
 $(TARGET): $(OBJS)
-	$(LINK) -o $(TARGET) $(OBJS) $(LFLAGS)
+	$(LD) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
 install: all uninstall
 	sudo cp openmrac /usr/bin/openmrac
