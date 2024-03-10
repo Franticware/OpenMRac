@@ -5,13 +5,17 @@
 #include <vector>
 #include <set>
 
-#include "alleg_minisdl.h"
+#include <dos.h>
+#include <dpmi.h>
+#include <go32.h>
+
+#include "minisdl.h"
 #include <GL/gl.h>
 #include <GL/dmesa.h>
 #include "minial.h"
+#include "doskeyb.h"
 
 #include "gltext.h"
-#include "octopus.h"
 #include "skysph.h"
 
 #define NO_CAMERA
@@ -62,21 +66,58 @@
 std::vector<ALuint> global_al_sources;
 std::vector<ALuint> global_al_buffers;
 
-volatile uint8_t intCounter = 0;
-/* timer interrupt handler */
-void intCounterFun(void)
+_go32_dpmi_seginfo OldISR, NewISR;
+
+#define TIMER 8
+
+volatile uint8_t timerCounter = 0;
+
+#define LOCK_VARIABLE(x)    _go32_dpmi_lock_data((void *)&x,(long)sizeof(x));
+#define LOCK_FUNCTION(x)    _go32_dpmi_lock_code((void*)x,(long)x##_end - (long)x);
+#define END_OF_FUNCTION(x)    void x##_end(void) { }
+
+void TickHandler(void)
 {
-    ++intCounter;
+    ++timerCounter;
+}
+END_OF_FUNCTION(TickHandler)
+
+void timer_set(uint16_t prm)
+{
+    if (prm > 0 && prm < 150)
+        return;
+
+    outportb(0x43,0x36);
+    outportb(0x40,prm);
+    outportb(0x40,prm >> 8);
 }
 
-END_OF_FUNCTION(intCounterFun)
+void timer_init(uint16_t count)
+{
+    LOCK_FUNCTION(TickHandler);
+    LOCK_VARIABLE(timerCounter);
+
+    _go32_dpmi_get_protected_mode_interrupt_vector(TIMER, &OldISR);
+
+    NewISR.pm_offset = (int)TickHandler;
+    NewISR.pm_selector = _go32_my_cs();
+
+    _go32_dpmi_chain_protected_mode_interrupt_vector(TIMER, &NewISR);
+
+    timer_set(count);
+}
+
+void timer_quit(void)
+{
+    _go32_dpmi_set_protected_mode_interrupt_vector(TIMER, &OldISR);
+}
 
 static uint8_t cntPrev = 0;
 static uint8_t cntNow = 0;
 
 float getdeltaT()
 {
-    cntNow = intCounter;
+    cntNow = timerCounter; // dostodo
     uint8_t diff = cntNow - cntPrev;
     cntPrev = cntNow;
     return diff * 0.01f;
@@ -240,11 +281,6 @@ int my_main (int argc, char** argv)
     g_joystickDevices = &joystickDevices;
     std::vector<JoystickIdentifier> joystickNotConnectedDevices;*/
 
-    // Initializes the Allegro library.
-    if (allegro_init() != 0) {
-        return 1;
-    }
-
     Control controls[16] = {
         Control(SDLK_UP),
         Control(SDLK_DOWN),
@@ -270,27 +306,13 @@ int my_main (int argc, char** argv)
     Settings settings("settings.dat", /*&joystickDevices, &joystickNotConnectedDevices,*/ controls);
     settings.load();
 
-    set_gfx_mode(GFX_TEXT, 0, 0, 0, 0);
+    keyb_hook_int();
 
-    const int sound_quality = settings.get("sound_quality");
+    timer_init(315000000/22/12/100);
 
-    int digi = sound_quality ? DIGI_AUTODETECT : DIGI_NONE;
+    int sound_quality = settings.get("sound_quality");
 
     MA_freq = 11025 * sound_quality;
-
-    if (install_sound(digi, MIDI_NONE, NULL) != 0)
-    {
-        allegro_message("Error initialising sound system\n%s\n", allegro_error);
-        return 1;
-    }
-
-    // Installs the Allegro keyboard interrupt handler.
-    install_keyboard();
-    install_timer();
-
-    LOCK_VARIABLE(intCounter);
-    LOCK_FUNCTION(intCounterFun);
-    install_int(intCounterFun, 10);
 
     // initialize SDL video
     /*if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
@@ -478,7 +500,6 @@ int my_main (int argc, char** argv)
         // message processing loop
         SDL_Event event;
         memset(&event, 0, sizeof(SDL_Event));
-        preparePollEvent();
         while (SDL_PollEvent(&event))
         {
             // check for messages
@@ -841,8 +862,10 @@ int my_main (int argc, char** argv)
 
 void onExit(void)
 {
-    // clean up allegro and 3dfx
+    // clean up 3dfx
     gfx_dos_shutdown_impl();
+    keyb_unhook_int();
+    timer_quit();
 }
 
 int main (int argc, char** argv)

@@ -11,15 +11,16 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
-#include "alleg_minisdl.h"
+#include <cstring>
+#include <cstdio>
+#include "minisdl.h"
+#include "sb.h"
 
 #define MA_FILTER_NONE 0
 #define MA_FILTER_LINEAR 1 // recommended
 #define MA_FILTER_HIGH_QUALITY 2
 
 #define MA_FILTER MA_FILTER_LINEAR
-//#define MA_FREQ 22050
-#define MA_SAMPLES 1024
 
 int MA_freq = 0;
 
@@ -65,15 +66,11 @@ static std::map<ALuint, MA_Source>* sourceMap = /*nullptr*/0;
 static std::map<ALuint, MA_Buffer>* bufferMap = /*nullptr*/0;
 static std::vector<float>* floatBuff = /*nullptr*/0;
 
-static AUDIOSTREAM *stream = 0;
-
 static void ma_callback(void *userdata, Uint8 *stream, int len)
 {
     (void)userdata;
-    Uint16* stream16 = (Uint16*)stream;
-    int len16 = len >> 1;
     if (floatBuff == 0) return;
-    floatBuff->resize(len16);
+    floatBuff->resize(len);
     std::fill(floatBuff->begin(), floatBuff->end(), 0.f);
     if (sourceMap != 0)
     {
@@ -88,7 +85,7 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
                     if (!buff.samples.empty())
                     {
                         const float pitch = src.pitch * buff.pitch;
-                        for (int i = 0; i != len16; ++i)
+                        for (int i = 0; i != len; ++i)
                         {
                             while (src.pos >= buff.samples.size())
                             {
@@ -135,34 +132,23 @@ static void ma_callback(void *userdata, Uint8 *stream, int len)
         }
     }
 
-    /*for (int i = 0; i < len16; ++i)
+    for (int i = 0; i < len; ++i)
     {
-        int32_t temp = std::floor((*floatBuff)[i] + 0.5f);
-        if (temp > 32767) temp = 32767;
-        else if (temp < -32768) temp = -32768;
-        stream16[i] = temp;
-        //stream16[i] = (rand() % 256) - 128; // white noise
-    }*/
-
-    for (int i = 0; i < len16; ++i)
-    {
-        int32_t temp = std::floor((*floatBuff)[i] + 0.5f) + 32768;
-        if (temp > 65535) temp = 65535;
+        int32_t temp = std::floor((*floatBuff)[i] * 3.90625e-3 + 128.5f);
+        if (temp > 255) temp = 255;
         else if (temp < 0) temp = 0;
-        stream16[i] = temp;
+        stream[i] = temp;
     }
 }
 
 void MA_periodicStream(void)
 {
+    size_t len;
+    unsigned char* stream = StreamBuf(&len);
     if (stream)
     {
-        unsigned char *p = (unsigned char*)get_audio_stream_buffer(stream);
-
-        if (p) {
-            ma_callback(0, p, MA_SAMPLES * 2);
-            free_audio_stream_buffer(stream);
-        }
+        ma_callback(0, stream, len);
+        StreamReady();
     }
 }
 
@@ -186,7 +172,6 @@ ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
 
 const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
 {
-    //SDL_InitSubSystem(SDL_INIT_AUDIO);
     if (device == 0 && (param == ALC_ALL_DEVICES_SPECIFIER || param == ALC_DEVICE_SPECIFIER))
     {
         static const ALCchar* ret = "\0\0";
@@ -201,24 +186,20 @@ ALCdevice* alcOpenDevice(const ALCchar *devicename)
     sourceMap = new std::map<ALuint, MA_Source>;
     bufferMap = new std::map<ALuint, MA_Buffer>;
     floatBuff = new std::vector<float>;
-    floatBuff->resize(MA_SAMPLES);
+    floatBuff->resize(DMA_CHUNK);
 
     if (MA_freq)
     {
-        stream = play_audio_stream(MA_SAMPLES, 16, FALSE, MA_freq, 255, 128);
+        if (sb_init())
+        {
+            StreamStart(MA_freq);
+        }
+        else
+        {
+            MA_freq = 0;
+            printf("Cannot init sound card\n");
+        }
     }
-
-#if 0
-    SDL_AudioSpec as;
-    as.freq = MA_FREQ;
-    as.format = AUDIO_S16;
-    as.channels = 1;
-    as.samples = MA_SAMPLES;
-    as.callback = ma_callback;
-    as.userdata = /*nullptr*/0;
-    SDL_OpenAudio(&as, /*nullptr*/0);
-    SDL_PauseAudio(0);
-#endif
     return &alcDevice;
 }
 
@@ -244,11 +225,11 @@ void alcDestroyContext(ALCcontext *context)
 ALCboolean alcCloseDevice(ALCdevice *device)
 {
     (void)device;
-    //SDL_CloseAudio();
-    if (stream)
+
+    if (MA_freq)
     {
-        stop_audio_stream(stream);
-        stream = 0;
+        StreamStop();
+        sb_cleanup();
     }
 
     delete sourceMap;

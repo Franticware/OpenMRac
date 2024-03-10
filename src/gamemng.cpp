@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <cstdio>
 
-#include "alleg_minisdl.h"
+#include "minisdl.h"
 
 #include "soundmng.h"
 

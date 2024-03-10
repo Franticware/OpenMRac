@@ -1,8 +1,9 @@
-#ifndef ALLEG_MINISDL_H
-#define ALLEG_MINISDL_H
+#ifndef MINISDL_H
+#define MINISDL_H
 
 #include <cstdint>
-#include <allegro.h>
+//#include <allegro.h>
+#include "scancodes.h"
 
 typedef uint16_t Uint16;
 typedef int16_t Sint16;
@@ -39,19 +40,19 @@ typedef enum SDL_EventType
     SDL_NUMEVENTS = 32
 } SDL_EventType;
 
-#define SDLK_RIGHT KEY_RIGHT
-#define SDLK_LEFT KEY_LEFT
-#define SDLK_UP KEY_UP
-#define SDLK_DOWN KEY_DOWN
-#define SDLK_ESCAPE KEY_ESC
-#define SDLK_RETURN KEY_ENTER
-#define SDLK_KP_ENTER KEY_ENTER_PAD
-#define SDLK_F12 KEY_F12
-#define SDLK_PRINT KEY_PRTSCR
-#define SDLK_NUMLOCK KEY_NUMLOCK
-#define SDLK_DELETE KEY_DEL
+#define SDLK_RIGHT K_RIGHT
+#define SDLK_LEFT K_LEFT
+#define SDLK_UP K_UP
+#define SDLK_DOWN K_DOWN
+#define SDLK_ESCAPE K_ESC
+#define SDLK_RETURN K_ENTER
+#define SDLK_KP_ENTER K_NENTER
+#define SDLK_F12 K_F12
+/*#define SDLK_PRINT KEY_PRTSCR*/
+#define SDLK_NUMLOCK K_NLOCK
+#define SDLK_DELETE K_DEL
 
-#define SDLK_LAST KEY_MAX
+#define SDLK_LAST KEYB_SIZE
 
 typedef int SDLKey;
 
@@ -74,12 +75,10 @@ typedef union SDL_Event
     SDL_KeyboardEvent key;
 } SDL_Event;
 
-void preparePollEvent(void);
-
 int SDL_PollEvent(SDL_Event * event);
 const char* SDL_GetKeyName(int key);
 
 inline void SDL_LockAudio(void) {}
 inline void SDL_UnlockAudio(void) {}
 
-#endif // ALLEG_MINISDL_H
+#endif // MINISDL_H

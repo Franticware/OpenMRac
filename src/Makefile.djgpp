@@ -3,7 +3,6 @@ ARCH        =
 CFLAGS = \
 -DM_PI=3.14159265358979323846 \
 -I./q2dos/dos/3rdparty/include \
--I./djgpp/allegro/include \
 -I./djgpp/jpeg \
 -I./djgpp/libpng \
 -std=gnu++11 -nostdlib -m32 -ffreestanding \
@@ -14,7 +13,6 @@ LFLAGS = \
 -L./djgpp/jpeg/.libs -ljpeg \
 ./djgpp/libpng/libpng16_static.lib \
 -L./djgpp/zlib -lz \
--L./djgpp/allegro/lib/allegro -lalleg \
 -L./q2dos/dos/3rdparty/lib/mesa -lgl -L./q2dos/dos/3rdparty/sage/g3sdk/lib -lglide3x_dxe
 
 CC      = i586-pc-msdosdjgpp-gcc

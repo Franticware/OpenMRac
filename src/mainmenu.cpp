@@ -4,7 +4,7 @@
 #include "gbuff_in.h"
 #include "rand1.h"
 #include "appdefs.h"
-#include "alleg_minisdl.h"
+#include "minisdl.h"
 
 void my_exit(int ret, bool callExit);
 
@@ -657,7 +657,7 @@ void MainMenu::render() // vykreslení menu
 
 inline bool ignoreKey(SDLKey k)
 {
-    return k == SDLK_PRINT || k == SDLK_NUMLOCK;
+    return /*k == SDLK_PRINT ||*/ k == SDLK_NUMLOCK;
 }
 
 void MainMenu::exitEnterMode()

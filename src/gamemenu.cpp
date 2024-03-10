@@ -1,7 +1,7 @@
 #include "gamemng.h"
 #include "mainmenu.h"
 #include "glhelpers1.h"
-#include "alleg_minisdl.h"
+#include "minisdl.h"
 
 /*
 Restart Race

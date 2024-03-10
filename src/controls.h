@@ -1,7 +1,7 @@
 #ifndef CONTROLS_H
 #define CONTROLS_H
 
-#include "alleg_minisdl.h"
+#include "minisdl.h"
 
 #include <string>
 #include <vector>

@@ -4,7 +4,7 @@
 #include "gamemng.h"
 #include "gltext.h"
 #include "settings_dat.h"
-#include "alleg_minisdl.h"
+#include "minisdl.h"
 
 enum MainMenu_states {
     STATE_RACE = 0, STATE_CONTROLS, STATE_OPTIONS, STATE_BEST_LAPS, STATE_QUIT, STATE_Q,
