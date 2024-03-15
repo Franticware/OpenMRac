@@ -19,7 +19,8 @@ const Sett_entry_base entry_base[] = {
     {"mipmaps",         0,      0, 1,           "0 - mipmaps off, 1 - mipmaps on"},
     {"view_distance",   0,      0, 10,          "10 - far (best), 0 - near"},
     {"show_fps",        1,      0, 1,           "0 - fps counter off, 1 - fps counter on"},
-    {"sound_quality",   2,      0, 2,           "0 - off, 1 - low quality, 2 - normal quality"},
+    {"sound_device",    1,      0, 2,           "0 - none, 1 - SB, 2 - GUS"},
+    {"sound_quality",   2,      1, 2,           "1 - low quality, 2 - normal quality"},
     {"sound_volume",    100,    0, 100,         "0 - 100"},
     {"last_laps",       3,      1, 50,          "last session"},
     {"last_daytime",    0,      0, 1,           "0 - day, 1 - evening"},
@@ -70,7 +71,6 @@ Settings::Settings(const char* filename, /*std::vector<JoystickDevice>* joystick
     this->joystickNotConnectedDevices = joystickNotConnectedDevices;*/
     this->controls = controls;
     this->filename = filename;
-    this->openalDeviceDefault = true;
 }
 
 int Settings::load()
@@ -96,31 +96,6 @@ int Settings::load()
                 entry[i].val = std::max(std::min(val, entry_base[i].maxval), entry_base[i].minval);
                 found = true;
                 break;
-            }
-        }
-        // tady zkusit najít a načíst openal device
-        if (!found)
-        {
-            int readCharactersCount = 0;
-            char space;
-            if (sscanf(buff, "openal_device%c%n", &space, &readCharactersCount) == 1 && isSpace(space))
-            {
-                found = true;
-                char* restOfBuff = buff + readCharactersCount;
-
-                char* openalDeviceNameBuff = trim(restOfBuff);
-
-                openalDeviceDefault = true;
-                if (strcmp(openalDeviceNameBuff, "default") != 0 && strlen(openalDeviceNameBuff) > 2)
-                {
-                    int openalDeviceNameBuffLen = strlen(openalDeviceNameBuff);
-                    if (openalDeviceNameBuff[0] == '"' && openalDeviceNameBuff[openalDeviceNameBuffLen - 1] == '"')
-                    {
-                        openalDeviceNameBuff[openalDeviceNameBuffLen - 1] = 0;
-                        openalDeviceDefault = false;
-                        openalDeviceName = openalDeviceNameBuff + 1;
-                    }
-                }
             }
         }
         if (!found)
@@ -288,15 +263,6 @@ int Settings::save()
             strlen(entry_base[i].comment) ? "        // " : "" , entry_base[i].comment);
     }
 
-    if (openalDeviceDefault)
-    {
-        fprintf(fout, "openal_device default\n");
-    }
-    else
-    {
-        fprintf(fout, "openal_device \"%s\"\n", openalDeviceName.c_str());
-    }
-
     for (unsigned i = 0; i != 16; ++i)
     {
         // {E_NONE, E_KEYBOARD, E_MBUTTON, E_JAXIS, E_JHAT, E_JBUTTON};
@@ -358,18 +324,6 @@ int Settings::set(const char* key, unsigned int val) // 0 - OK, jinak chyba
     return 1;
 }
 
-const char* Settings::getOpenalDevice() const
-{
-    if (openalDeviceDefault)
-    {
-        return 0;
-    }
-    else
-    {
-        return openalDeviceName.c_str();
-    }
-}
-
 unsigned int Settings::get(const char* key)
 {
     for (unsigned int i = 0; i != entry_size; ++i)
@@ -381,19 +335,6 @@ unsigned int Settings::get(const char* key)
     }
     //assert(0);
     return 0;
-}
-
-void Settings::setOpenalDevice(const char* device)
-{
-    if (device)
-    {
-        openalDeviceDefault = false;
-        openalDeviceName = device;
-    }
-    else
-    {
-        openalDeviceDefault = true;
-    }
 }
 
 unsigned int Settings::getDefault(const char* key)

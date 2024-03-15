@@ -1,4 +1,5 @@
-/* Copyright (c) 2022, Vojtěch Salajka. All rights reserved. Use of this source code is governed by a BSD-style license that can be found in the LICENSE file. */
+/* Copyright (c) 2022, Vojtěch Salajka. All rights reserved. Use of this source code is governed by a BSD-style license
+ * that can be found in the LICENSE file. */
 
 /*
  * Naive implementation of a subset of OpenAL used by OpenMRac, featuring low sound quality and no optimization.
@@ -6,155 +7,37 @@
  * To use this, add -DUSE_MINIAL to CFLAGS and remove -lopenal from LFLAGS.
  */
 
-#include "minial.h"
-#include <map>
-#include <vector>
+#include "minial_sb.h"
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 #include <cstdio>
-#include "minisdl.h"
-#include "sb.h"
-
-#define MA_FILTER_NONE 0
-#define MA_FILTER_LINEAR 1 // recommended
-#define MA_FILTER_HIGH_QUALITY 2
-
-#define MA_FILTER MA_FILTER_LINEAR
-
-int MA_freq = 0;
+#include <cstring>
+#include <map>
+#include <vector>
 
 struct ALCdevice
 {
-    ALuint dummy;
+    char deviceName[256] = {0};
 };
 
 struct ALCcontext
 {
-    ALuint dummy;
+    MinialInterface* minialInterface;
 };
 
-struct MA_Source
-{
-    MA_Source()
-    {
-        buffer = 0;
-        pitch = 1;
-        gain = 1;
-        pos = 0;
-        looping = false;
-        playing = false;
-    }
-    ALuint buffer;
-    ALfloat pitch;
-    ALfloat gain;
-    ALfloat pos;
-    bool looping;
-    bool playing;
-};
-
-struct MA_Buffer
-{
-    std::vector<Uint16> samples;
-    float pitch = 1.f;
-};
-
-static ALCdevice alcDevice;
-static ALCcontext alcContext;
-
-static std::map<ALuint, MA_Source>* sourceMap = /*nullptr*/0;
-static std::map<ALuint, MA_Buffer>* bufferMap = /*nullptr*/0;
-static std::vector<float>* floatBuff = /*nullptr*/0;
-
-static void ma_callback(void *userdata, Uint8 *stream, int len)
-{
-    (void)userdata;
-    if (floatBuff == 0) return;
-    floatBuff->resize(len);
-    std::fill(floatBuff->begin(), floatBuff->end(), 0.f);
-    if (sourceMap != 0)
-    {
-        for (auto& p : *sourceMap)
-        {
-            MA_Source& src = p.second;
-            if (src.playing)
-            {
-                if (src.buffer != 0)
-                {
-                    MA_Buffer& buff = (*bufferMap)[src.buffer];
-                    if (!buff.samples.empty())
-                    {
-                        const float pitch = src.pitch * buff.pitch;
-                        for (int i = 0; i != len; ++i)
-                        {
-                            while (src.pos >= buff.samples.size())
-                            {
-                                if (src.looping)
-                                {
-                                    src.pos -= buff.samples.size();
-                                }
-                                else
-                                {
-                                    src.pos = 0;
-                                    src.playing = false;
-                                }
-                            }
-                            if (!src.playing) break;
-#if MA_FILTER == MA_FILTER_NONE
-                            (*floatBuff)[i] += buff.samples[src.pos] * src.gain;
-#endif
-#if MA_FILTER == MA_FILTER_LINEAR
-                            uint32_t ipos0 = src.pos;
-                            uint32_t ipos1 = ipos0 + 1;
-                            Sint16 smp0 = buff.samples[ipos0];
-                            Sint16 smp1 = 0;
-                            if (ipos1 >= buff.samples.size())
-                            {
-                                if (src.looping)
-                                {
-                                    smp1 = buff.samples[0];
-                                }
-                            }
-                            else
-                            {
-                                smp1 = buff.samples[ipos1];
-                            }
-                            (*floatBuff)[i] += (float(smp0) + (float(smp1) - float(smp0)) * (src.pos - ipos0)) * src.gain;
-#endif
-#if MA_FILTER == MA_FILTER_HIGH_QUALITY
-#error "Hight quality audio filter is currently not implemented"
-#endif
-                            src.pos += pitch;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < len; ++i)
-    {
-        int32_t temp = std::floor((*floatBuff)[i] * 3.90625e-3 + 128.5f);
-        if (temp > 255) temp = 255;
-        else if (temp < 0) temp = 0;
-        stream[i] = temp;
-    }
-}
+static MinialInterface* minialInterface = 0;
 
 void MA_periodicStream(void)
 {
-    size_t len;
-    unsigned char* stream = StreamBuf(&len);
-    if (stream)
+    if (minialInterface)
     {
-        ma_callback(0, stream, len);
-        StreamReady();
+        minialInterface->MA_periodicStream();
     }
 }
 
 ////////////////
 
-ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
+ALCboolean alcIsExtensionPresent(ALCdevice* device, const ALCchar* extname)
 {
     if (device == 0)
     {
@@ -170,7 +53,7 @@ ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname)
     return 0;
 }
 
-const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
+const ALCchar* alcGetString(ALCdevice* device, ALCenum param)
 {
     if (device == 0 && (param == ALC_ALL_DEVICES_SPECIFIER || param == ALC_DEVICE_SPECIFIER))
     {
@@ -180,208 +63,178 @@ const ALCchar* alcGetString(ALCdevice *device, ALCenum param)
     return 0;
 }
 
-ALCdevice* alcOpenDevice(const ALCchar *devicename)
+ALCdevice* alcOpenDevice(const ALCchar* devicename)
 {
-    (void)devicename;
-    sourceMap = new std::map<ALuint, MA_Source>;
-    bufferMap = new std::map<ALuint, MA_Buffer>;
-    floatBuff = new std::vector<float>;
-    floatBuff->resize(DMA_CHUNK);
+    ALCdevice* alcDevice = new ALCdevice;
+    strncpy(alcDevice->deviceName, devicename, 255);
+    return alcDevice;
+}
 
-    if (MA_freq)
+ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
+{
+    if (device == 0)
     {
-        if (sb_init())
+        return 0;
+    }
+
+    ALCint freq = 22050;
+
+    if (attrlist)
+    {
+        for (int i = 0; attrlist[i * 2] || attrlist[i * 2 + 1]; ++i)
         {
-            StreamStart(MA_freq);
-        }
-        else
-        {
-            MA_freq = 0;
-            printf("Cannot init sound card\n");
+            switch (attrlist[i * 2])
+            {
+            case ALC_FREQUENCY:
+                freq = attrlist[i * 2 + 1];
+                break;
+            default:
+                break;
+            }
         }
     }
-    return &alcDevice;
+
+    ALCcontext* alcContext = new ALCcontext;
+    alcContext->minialInterface = 0;
+
+    if (device == 0 || strcmp(device->deviceName, "default") == 0 || strcmp(device->deviceName, "sb") == 0)
+    {
+        alcContext->minialInterface = new MinialSB(freq);
+    }
+    else if (strcmp(device->deviceName, "none") == 0)
+    {
+        alcContext->minialInterface = 0;
+    }
+    else if (strcmp(device->deviceName, "gus") == 0)
+    {
+        alcContext->minialInterface = 0; // todo GUS impl.
+    }
+    else
+    {
+        delete alcContext;
+        return 0;
+    }
+
+    if (alcContext->minialInterface)
+    {
+        if (!alcContext->minialInterface->valid())
+        {
+            delete alcContext->minialInterface;
+            delete alcContext;
+            return 0;
+        }
+    }
+
+    return alcContext;
 }
 
-ALCcontext* alcCreateContext(ALCdevice *device, const ALCint *attrlist)
+ALCboolean alcMakeContextCurrent(ALCcontext* context)
 {
-    (void)device;
-    (void)attrlist;
-    return &alcContext;
-}
-
-ALCboolean alcMakeContextCurrent(ALCcontext *context)
-{
-    (void)context;
+    if (context)
+    {
+        minialInterface = context->minialInterface;
+    }
     return 1;
 }
 
-void alcDestroyContext(ALCcontext *context)
+void alcDestroyContext(ALCcontext* context)
 {
-    (void)context;
+    if (context)
+    {
+        if (context->minialInterface)
+        {
+            if (minialInterface == context->minialInterface)
+            {
+                minialInterface = 0;
+            }
+            delete context->minialInterface;
+        }
+        delete context;
+    }
     return;
 }
 
-ALCboolean alcCloseDevice(ALCdevice *device)
+ALCboolean alcCloseDevice(ALCdevice* device)
 {
-    (void)device;
-
-    if (MA_freq)
+    if (device)
     {
-        StreamStop();
-        sb_cleanup();
+        delete device;
     }
-
-    delete sourceMap;
-    sourceMap = 0;
-    delete bufferMap;
-    bufferMap = 0;
-    delete floatBuff;
-    floatBuff = 0;
     return 1;
 }
 
 ////////////////
 
-static ALuint sourceCounter = 1;
-static ALuint bufferCounter = 1;
-
-template<class T> void generateStuff(ALsizei n, ALuint* stuff, std::map<ALuint, T>& m, ALuint& counter)
+void alGenSources(ALsizei n, ALuint* sources)
 {
-    SDL_LockAudio();
-    for (ALsizei i = 0; i != n; ++i)
-    {
-        T stuffObj;
-        stuff[i] = counter;
-        m[counter] = stuffObj;
-        ++counter;
-    }
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->GenSources(n, sources);
 }
 
-void alGenSources(ALsizei n, ALuint *sources)
+void alGenBuffers(ALsizei n, ALuint* buffers)
 {
-    generateStuff(n, sources, *sourceMap, sourceCounter);
+    if (minialInterface)
+        minialInterface->GenBuffers(n, buffers);
 }
 
-void alGenBuffers(ALsizei n, ALuint *buffers)
+void alDeleteSources(ALsizei n, const ALuint* sources)
 {
-    generateStuff(n, buffers, *bufferMap, bufferCounter);
+    if (minialInterface)
+        minialInterface->DeleteSources(n, sources);
 }
 
-template<class T> void deleteStuff(ALsizei n, const ALuint* stuff, std::map<ALuint, T>* m)
+void alDeleteBuffers(ALsizei n, const ALuint* buffers)
 {
-    if (m == 0)
-        return;
-    SDL_LockAudio();
-    for (ALsizei i = 0; i != n; ++i)
-    {
-        m->erase(stuff[i]);
-    }
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->DeleteBuffers(n, buffers);
 }
 
-void alDeleteSources(ALsizei n, const ALuint *sources)
+void alListenerfv(ALenum param, const ALfloat* values)
 {
-    deleteStuff(n, sources, sourceMap);
-}
-
-void alDeleteBuffers(ALsizei n, const ALuint *buffers)
-{
-    deleteStuff(n, buffers, bufferMap);
-}
-
-void alListenerfv(ALenum param, const ALfloat *values)
-{
-    (void)param;
-    (void)values;
-    // listener parameters have no effect
+    if (minialInterface)
+        minialInterface->Listenerfv(param, values);
     return;
 }
 
-void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq)
+void alBufferData(ALuint buffer, ALenum format, const ALvoid* data, ALsizei size, ALsizei freq)
 {
-    if (buffer == 0 || bufferMap == 0 || format != AL_FORMAT_MONO16 || MA_freq == 0) return; // only 16-bit mono audio is currently supported
-    SDL_LockAudio();
-    MA_Buffer& buff = (*bufferMap)[buffer];
-    buff.pitch = float(freq)/float(MA_freq);
-    buff.samples.resize(size >> 1);
-    std::copy((Sint16*)data, ((Sint16*)data) + buff.samples.size(), buff.samples.begin());
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->BufferData(buffer, format, data, size, freq);
 }
 
 void alSourcef(ALuint source, ALenum param, ALfloat value)
 {
-    if (source == 0 || sourceMap == 0) return;
-    SDL_LockAudio();
-    MA_Source& src = (*sourceMap)[source];
-    switch (param)
-    {
-    case AL_PITCH:
-        if (value < 0.f) value = 0.f;
-        src.pitch = value;
-        break;
-    case AL_GAIN:
-        if (value < 0.f) value = 0.f;
-        if (value > 1.f) value = 1.f;
-        src.gain = value;
-        break;
-    case AL_SAMPLE_OFFSET:
-        if (value < 0.f) value = 0.f;
-        src.pos = value;
-        break;
-    }
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->Sourcef(source, param, value);
 }
 
-void alSourcefv(ALuint source, ALenum param, const ALfloat *values)
+void alSourcefv(ALuint source, ALenum param, const ALfloat* values)
 {
-    (void)source;
-    (void)param;
-    (void)values;
+    if (minialInterface)
+        minialInterface->Sourcefv(source, param, values);
     return;
 }
 
 void alSourcei(ALuint source, ALenum param, ALint value)
 {
-    if (source == 0 || sourceMap == 0) return;
-    SDL_LockAudio();
-    MA_Source& src = (*sourceMap)[source];
-    switch (param)
-    {
-    case AL_LOOPING:
-        src.looping = !!value;
-        break;
-    case AL_BUFFER:
-        src.buffer = value;
-        break;
-    }
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->Sourcei(source, param, value);
 }
 
 void alSourcePlay(ALuint source)
 {
-    if (source == 0 || sourceMap == 0) return;
-    SDL_LockAudio();
-    MA_Source& src = (*sourceMap)[source];
-    src.playing = true;
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->SourcePlay(source);
 }
 
 void alSourceStop(ALuint source)
 {
-    if (source == 0 || sourceMap == 0) return;
-    SDL_LockAudio();
-    MA_Source& src = (*sourceMap)[source];
-    src.playing = false;
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->SourceStop(source);
 }
 
 void alSourceRewind(ALuint source)
 {
-    if (source == 0 || sourceMap == 0) return;
-    SDL_LockAudio();
-    MA_Source& src = (*sourceMap)[source];
-    src.pos = 0;
-    SDL_UnlockAudio();
+    if (minialInterface)
+        minialInterface->SourceRewind(source);
 }

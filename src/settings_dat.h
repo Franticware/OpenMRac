@@ -20,9 +20,7 @@ public:
     int load(); // 0 - ok, jinak error
     int save();
     int set(const char* key, unsigned int val);
-    const char* getOpenalDevice() const;
     unsigned int get(const char* key);
-    void setOpenalDevice(const char* device);
     unsigned int getDefault(const char* key);
     void getJoystickName(char* buffer, int size, int i);
 
@@ -36,9 +34,6 @@ public:
     const char* filename;
 
     static const char* controlNames[16];
-
-    bool openalDeviceDefault;
-    std::string openalDeviceName; // jméno, pokud není default
 };
 
 //bool read_snddev_dat(char* buff);

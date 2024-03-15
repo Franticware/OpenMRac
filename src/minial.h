@@ -16,9 +16,10 @@ typedef unsigned int ALuint;
 
 #define ALC_DEVICE_SPECIFIER                     0x1005
 #define ALC_ALL_DEVICES_SPECIFIER                0x1013
+#define ALC_FREQUENCY                            0x1007
 
 ALCboolean alcCloseDevice(ALCdevice *device);
-ALCcontext* alcCreateContext(ALCdevice *device, const ALCint *attrlist);
+ALCcontext* alcCreateContext(const ALCdevice *device, const ALCint *attrlist);
 void alcDestroyContext(ALCcontext *context);
 const ALCchar* alcGetString(ALCdevice *device, ALCenum param);
 ALCboolean alcIsExtensionPresent(ALCdevice *device, const ALCchar *extname);
@@ -56,6 +57,5 @@ void alSourceRewind(ALuint source);
 void alSourceStop(ALuint source);
 
 void MA_periodicStream(void);
-extern int MA_freq;
 
 #endif // MINIAL_H

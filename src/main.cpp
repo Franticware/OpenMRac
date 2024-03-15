@@ -312,7 +312,11 @@ int my_main (int argc, char** argv)
 
     int sound_quality = settings.get("sound_quality");
 
-    MA_freq = 11025 * sound_quality;
+    int ma_freq = 11025 * sound_quality;
+    if (ma_freq == 0)
+    {
+        ma_freq = 22050;
+    }
 
     // initialize SDL video
     /*if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
@@ -335,16 +339,40 @@ int my_main (int argc, char** argv)
 
     gfx_dos_init_impl(settings.get("screen_x"), settings.get("screen_y"));
 
+    static const char aldeviceNone[] = "none";
+    static const char aldeviceSB[] = "sb";
+    static const char aldeviceGUS[] = "gus";
+
+    const char* aldevicestr = 0;
+    switch (settings.get("sound_device"))
+    {
+    case 0:
+        aldevicestr = aldeviceNone;
+        break;
+    case 1:
+        aldevicestr = aldeviceSB;
+        break;
+    case 2:
+        aldevicestr = aldeviceGUS;
+        break;
+    default:
+        break;
+    }
+
     glClearColor(0, 0, 0, 0);
 
     // Initialize Open AL
 
-    const char* aldevicestr = settings.getOpenalDevice();
-
     ALCdevice* aldevice = alcOpenDevice(aldevicestr); // NULL parameter = open default device
     ALCcontext* alcontext = NULL;
     if (aldevice != NULL) {
-        alcontext = alcCreateContext(aldevice,NULL); // create context
+
+        static const ALCint attribs[] = {
+            ALC_FREQUENCY, ma_freq,
+            0, 0
+        };
+
+        alcontext = alcCreateContext(aldevice, attribs); // create context
         if (alcontext != NULL) {
             alcMakeContextCurrent(alcontext); // set active context
         } else {
