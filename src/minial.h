@@ -56,6 +56,10 @@ void alSourcePlay(ALuint source);
 void alSourceRewind(ALuint source);
 void alSourceStop(ALuint source);
 
+#define AL_EXT_GUS_RAM_KB                       0xE0001
+
+ALint alGetInteger(ALenum param);
+
 void MA_periodicStream(void);
 
 #endif // MINIAL_H

@@ -1,6 +1,7 @@
 #include "gbuff_in.h"
 
 #include <cstdio>
+#include <cstdint>
 
 Gbuff_in gbuff_in;
 
@@ -8,6 +9,20 @@ bool Gbuff_in::init_dat(const char* fname)
 {
     p_bdat = true;
     return p_datdec.init(fname);
+}
+
+void Gbuff_in::downsampleAudio16()
+{
+    size_t newSize = p_datdec.p_buff.size() / 4 * 2;
+    int16_t* p = (int16_t*)p_datdec.p_buff.data();
+    for (unsigned int i = 0; i != newSize / 2; ++i)
+    {
+        int32_t sum = 0;
+        sum += p[i * 2] + p[i * 2 + 1];
+        sum /= 2;
+        p[i] = sum;
+    }
+    p_datdec.p_buff.resize(newSize);
 }
 
 void Gbuff_in::rewind()

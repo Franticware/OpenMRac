@@ -2,7 +2,6 @@
 
 #include "sb.h"
 #include <cmath>
-#include <cstdio>
 
 MinialSB::MinialSB(ALCint freq)
 {
@@ -18,7 +17,6 @@ MinialSB::MinialSB(ALCint freq)
     else
     {
         m_valid = false;
-        printf("Cannot init sound card\n");
     }
 }
 
@@ -68,12 +66,12 @@ void MinialSB::ma_callback(void* userdata, Uint8* stream, int len)
 
     for (auto& p : sourceMap)
     {
-        MA_Source& src = p.second;
+        MA_SB_Source& src = p.second;
         if (src.playing)
         {
             if (src.buffer != 0)
             {
-                MA_Buffer& buff = (bufferMap)[src.buffer];
+                MA_SB_Buffer& buff = (bufferMap)[src.buffer];
                 if (!buff.samples.empty())
                 {
                     const float pitch = src.pitch * buff.pitch;
@@ -174,7 +172,7 @@ void MinialSB::BufferData(ALuint buffer, ALenum format, const ALvoid* data, ALsi
     if (buffer == 0 || format != AL_FORMAT_MONO16)
         return; // only 16-bit mono audio is currently supported
     SDL_LockAudio();
-    MA_Buffer& buff = (bufferMap)[buffer];
+    MA_SB_Buffer& buff = (bufferMap)[buffer];
     buff.pitch = float(freq) / float(m_freq);
     buff.samples.resize(size >> 1);
     std::copy((Sint16*)data, ((Sint16*)data) + buff.samples.size(), buff.samples.begin());
@@ -185,7 +183,7 @@ void MinialSB::Sourcef(ALuint source, ALenum param, ALfloat value)
     if (source == 0)
         return;
     SDL_LockAudio();
-    MA_Source& src = (sourceMap)[source];
+    MA_SB_Source& src = (sourceMap)[source];
     switch (param)
     {
     case AL_PITCH:
@@ -220,7 +218,7 @@ void MinialSB::Sourcei(ALuint source, ALenum param, ALint value)
     if (source == 0)
         return;
     SDL_LockAudio();
-    MA_Source& src = (sourceMap)[source];
+    MA_SB_Source& src = (sourceMap)[source];
     switch (param)
     {
     case AL_LOOPING:
@@ -237,7 +235,7 @@ void MinialSB::SourcePlay(ALuint source)
     if (source == 0)
         return;
     SDL_LockAudio();
-    MA_Source& src = (sourceMap)[source];
+    MA_SB_Source& src = (sourceMap)[source];
     src.playing = true;
     SDL_UnlockAudio();
 }
@@ -246,7 +244,7 @@ void MinialSB::SourceStop(ALuint source)
     if (source == 0)
         return;
     SDL_LockAudio();
-    MA_Source& src = (sourceMap)[source];
+    MA_SB_Source& src = (sourceMap)[source];
     src.playing = false;
     SDL_UnlockAudio();
 }
@@ -255,7 +253,13 @@ void MinialSB::SourceRewind(ALuint source)
     if (source == 0)
         return;
     SDL_LockAudio();
-    MA_Source& src = (sourceMap)[source];
+    MA_SB_Source& src = (sourceMap)[source];
     src.pos = 0;
     SDL_UnlockAudio();
+}
+
+ALint MinialSB::GetInteger(ALenum param)
+{
+    (void)param;
+    return -1;
 }

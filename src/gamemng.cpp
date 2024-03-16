@@ -418,18 +418,18 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
         }
         gbuff_in.fclose();
         for (unsigned int i = 0; i != p_cars.size(); ++i) {
-            gbuff_in.f_open(p_cars[i].fname_sample_engine0, "rb");
+            gbuff_in.f_open(p_cars[i].fname_sample_engine0, "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
             alGenBuffers(1, &(p_cars[i].p_engine0_sample)); global_al_buffers.push_back(p_cars[i].p_engine0_sample);
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-            alBufferData(p_cars[i].p_engine0_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), 22050);
+            alBufferData(p_cars[i].p_engine0_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
             gbuff_in.fclose();
 
-            gbuff_in.f_open(p_cars[i].fname_sample_engine1, "rb");
+            gbuff_in.f_open(p_cars[i].fname_sample_engine1, "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
             alGenBuffers(1, &(p_cars[i].p_engine1_sample)); global_al_buffers.push_back(p_cars[i].p_engine1_sample);
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-            alBufferData(p_cars[i].p_engine1_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), 22050);
+            alBufferData(p_cars[i].p_engine1_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
             gbuff_in.fclose();
         }
     }

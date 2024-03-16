@@ -7,6 +7,7 @@
  * To use this, add -DUSE_MINIAL to CFLAGS and remove -lopenal from LFLAGS.
  */
 
+#include "minial_gus.h"
 #include "minial_sb.h"
 #include <algorithm>
 #include <cmath>
@@ -107,7 +108,7 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
     }
     else if (strcmp(device->deviceName, "gus") == 0)
     {
-        alcContext->minialInterface = 0; // todo GUS impl.
+        alcContext->minialInterface = new MinialGUS();
     }
     else
     {
@@ -237,4 +238,13 @@ void alSourceRewind(ALuint source)
 {
     if (minialInterface)
         minialInterface->SourceRewind(source);
+}
+
+ALint alGetInteger(ALenum param)
+{
+    if (minialInterface)
+    {
+        return minialInterface->GetInteger(param);
+    }
+    return -1;
 }

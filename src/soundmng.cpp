@@ -37,23 +37,23 @@ void Sound_game_static::playSoundTest(float gain)
 
 void Sound_game_static::init()
 {
-    gbuff_in.f_open("crash0.raw", "rb");
+    gbuff_in.f_open("crash0.raw", "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
     alGenBuffers(1, &(p_hit_sample[0])); global_al_buffers.push_back(p_hit_sample[0]);
     swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-    alBufferData(p_hit_sample[0], AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), 22050);
+    alBufferData(p_hit_sample[0], AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
     gbuff_in.fclose();
 
-    gbuff_in.f_open("crash1.raw", "rb");
+    gbuff_in.f_open("crash1.raw", "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
     alGenBuffers(1, &(p_hit_sample[1])); global_al_buffers.push_back(p_hit_sample[1]);
     swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-    alBufferData(p_hit_sample[1], AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), 22050);
+    alBufferData(p_hit_sample[1], AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
     gbuff_in.fclose();
 
-    gbuff_in.f_open("skid.raw", "rb");
+    gbuff_in.f_open("skid.raw", "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
     alGenBuffers(1, &(p_skid_sample)); global_al_buffers.push_back(p_skid_sample);
     swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
-    alBufferData(p_skid_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), 22050);
+    alBufferData(p_skid_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
     gbuff_in.fclose();
 
     for (unsigned int i = 0; i != 4; ++i) {
@@ -184,9 +184,9 @@ void Sound_car::init(ALsource stream_idle, ALsource stream_running, float runnin
     alSourcei(p_engine1_stream, AL_LOOPING, 1);
     alSourcei(p_skid_stream, AL_LOOPING, 1);
     // nejmenší délka v samplech je 32000
-    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, 32000.0*double(player)/double(players_n));
-    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, 32000.0*double(player)/double(players_n));
-    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, 32000.0*double(player)/double(players_n));
+    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n));
+    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n));
+    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n));
 
     alSourcef(p_engine0_stream, AL_GAIN, 0.5**p_global_volume);
     alSourcef(p_engine1_stream, AL_GAIN, engine1_volume0**p_global_volume);

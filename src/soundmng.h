@@ -19,6 +19,13 @@ inline void tweakLoop(unsigned char* data, unsigned int size)
     shortData[count - 1] = last + (first - last) * 0.3;
 }
 
+inline bool smallSampleRam()
+{
+    ALint ramKb = alGetInteger(AL_EXT_GUS_RAM_KB);
+    if (ramKb == -1) return false;
+    return ramKb < 512;
+}
+
 typedef ALuint ALbuffer;
 typedef ALuint ALsource;
 

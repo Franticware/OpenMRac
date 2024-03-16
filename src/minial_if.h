@@ -21,6 +21,7 @@ public:
     virtual void SourcePlay(ALuint source) = 0;
     virtual void SourceStop(ALuint source) = 0;
     virtual void SourceRewind(ALuint source) = 0;
+    virtual ALint GetInteger(ALenum param) = 0;
 
     virtual void MA_periodicStream(void) = 0;
 

@@ -17,6 +17,7 @@ public:
     // fce pro práci s textovým souborem
     char* fgets(char* str, int num); // normálně char * fgets ( char * str, int num, FILE * stream )
     void rewind();
+    void downsampleAudio16(); // hack
     // fce pro práci s binárním souborem
     /*const*/ unsigned char* fbuffptr();
     unsigned int fbuffsz();

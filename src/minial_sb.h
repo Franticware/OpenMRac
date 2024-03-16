@@ -7,9 +7,9 @@
 #include <map>
 #include <vector>
 
-struct MA_Source
+struct MA_SB_Source
 {
-    MA_Source()
+    MA_SB_Source()
     {
         buffer = 0;
         pitch = 1;
@@ -26,7 +26,7 @@ struct MA_Source
     bool playing;
 };
 
-struct MA_Buffer
+struct MA_SB_Buffer
 {
     std::vector<Uint16> samples;
     float pitch = 1.f;
@@ -49,6 +49,7 @@ public:
     virtual void SourcePlay(ALuint source) override;
     virtual void SourceStop(ALuint source) override;
     virtual void SourceRewind(ALuint source) override;
+    virtual ALint GetInteger(ALenum param) override;
 
     virtual void MA_periodicStream(void) override;
 
@@ -60,8 +61,8 @@ private:
     ALuint sourceCounter = 1;
     ALuint bufferCounter = 1;
 
-    std::map<ALuint, MA_Source> sourceMap;
-    std::map<ALuint, MA_Buffer> bufferMap;
+    std::map<ALuint, MA_SB_Source> sourceMap;
+    std::map<ALuint, MA_SB_Buffer> bufferMap;
     std::vector<float> floatBuff;
 
 };
