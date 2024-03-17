@@ -304,7 +304,11 @@ int my_main (int argc, char** argv)
     };
 
     Settings settings("settings.dat", /*&joystickDevices, &joystickNotConnectedDevices,*/ controls);
-    settings.load();
+    if (settings.load())
+    {
+        // make sure the settings.dat file exists after first run
+        settings.save();
+    }
 
     keyb_hook_int();
 
