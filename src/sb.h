@@ -111,9 +111,7 @@
  * effects should be "instantaneous".
  *
  */
-//#define DMA_CHUNK (1024)
-#define DMA_CHUNK (512)
-
+#define DMA_CHUNK (1024)
 
 /* Card parameters */
 extern unsigned int sb_ioaddr;
