@@ -19,16 +19,32 @@ public:
     virtual void Sourcefv(ALuint source, ALenum param, const ALfloat* values) = 0;
     virtual void Sourcei(ALuint source, ALenum param, ALint value) = 0;
     virtual void SourcePlay(ALuint source) = 0;
+    virtual void SourcePause(ALuint source) = 0;
     virtual void SourceStop(ALuint source) = 0;
     virtual void SourceRewind(ALuint source) = 0;
     virtual ALint GetInteger(ALenum param) = 0;
+    virtual void GetSourcef(ALuint source, ALenum param, ALfloat* value) = 0;
+    virtual void Listenerf(ALenum param, ALfloat value) = 0;
+    virtual void GetSourcei(ALuint source, ALenum param, ALint* value) = 0;
+    virtual void GetListenerf(ALenum param, ALfloat* value) = 0;
+
+    ALenum GetError(void)
+    {
+        ALenum ret = m_error;
+        m_error = AL_NO_ERROR;
+        return ret;
+    }
 
     virtual void MA_periodicStream(void) = 0;
 
-    bool valid() const { return m_valid; }
+    bool valid() const
+    {
+        return m_valid;
+    }
 
 protected:
     bool m_valid;
+    ALenum m_error = AL_NO_ERROR;
 };
 
 #endif // MINIAL_IF_H

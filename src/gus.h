@@ -45,6 +45,9 @@ uint32_t GUSVoicePos(uint8_t v);
 
 void GUSVoiceControl(uint8_t v, uint8_t b);
 
+/* get channel status/mode */
+uint8_t GUSGetVoiceStatus(uint8_t v);
+
 #define GUS_VOICE_STOPPED 1
 #define GUS_VOICE_STOP 2
 #define GUS_VOICE_16BIT 4

@@ -67,7 +67,10 @@ const ALCchar* alcGetString(ALCdevice* device, ALCenum param)
 ALCdevice* alcOpenDevice(const ALCchar* devicename)
 {
     ALCdevice* alcDevice = new ALCdevice;
-    strncpy(alcDevice->deviceName, devicename, 255);
+    if (devicename)
+    {
+        strncpy(alcDevice->deviceName, devicename, 255);
+    }
     return alcDevice;
 }
 
@@ -79,6 +82,7 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
     }
 
     ALCint freq = 22050;
+    ALCint monoSources = 32;
 
     if (attrlist)
     {
@@ -88,6 +92,9 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
             {
             case ALC_FREQUENCY:
                 freq = attrlist[i * 2 + 1];
+                break;
+            case ALC_MONO_SOURCES:
+                monoSources = attrlist[i * 2 + 1];
                 break;
             default:
                 break;
@@ -108,7 +115,7 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
     }
     else if (strcmp(device->deviceName, "gus") == 0)
     {
-        alcContext->minialInterface = new MinialGUS();
+        alcContext->minialInterface = new MinialGUS(monoSources);
     }
     else
     {
@@ -120,6 +127,7 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
     {
         if (!alcContext->minialInterface->valid())
         {
+            printf("a%d\n", __LINE__);
             delete alcContext->minialInterface;
             delete alcContext;
             return 0;
@@ -228,6 +236,12 @@ void alSourcePlay(ALuint source)
         minialInterface->SourcePlay(source);
 }
 
+void alSourcePause(ALuint source)
+{
+    if (minialInterface)
+        minialInterface->SourcePause(source);
+}
+
 void alSourceStop(ALuint source)
 {
     if (minialInterface)
@@ -247,4 +261,48 @@ ALint alGetInteger(ALenum param)
         return minialInterface->GetInteger(param);
     }
     return -1;
+}
+
+void alGetSourcef(ALuint source, ALenum param, ALfloat* value)
+{
+    if (minialInterface)
+    {
+        return minialInterface->GetSourcef(source, param, value);
+    }
+}
+
+ALenum alGetError(void)
+{
+    if (minialInterface)
+    {
+        return minialInterface->GetError();
+    }
+    else
+    {
+        return AL_NO_ERROR;
+    }
+}
+
+void alListenerf(ALenum param, ALfloat value)
+{
+    if (minialInterface)
+    {
+        return minialInterface->Listenerf(param, value);
+    }
+}
+
+void alGetSourcei(ALuint source,  ALenum param, ALint *value)
+{
+    if (minialInterface)
+    {
+        return minialInterface->GetSourcei(source, param, value);
+    }
+}
+
+void alGetListenerf(ALenum param, ALfloat *value)
+{
+    if (minialInterface)
+    {
+        return minialInterface->GetListenerf(param, value);
+    }
 }

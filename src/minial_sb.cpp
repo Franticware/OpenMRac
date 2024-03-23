@@ -8,7 +8,6 @@ MinialSB::MinialSB(ALCint freq)
     m_freq = freq;
     floatBuff.resize(DMA_CHUNK);
 
-
     if (sb_init())
     {
         m_valid = true;
@@ -87,6 +86,7 @@ void MinialSB::ma_callback(void* userdata, Uint8* stream, int len)
                             {
                                 src.pos = 0;
                                 src.playing = false;
+                                src.state = AL_STOPPED;
                             }
                         }
                         if (!src.playing)
@@ -124,7 +124,7 @@ void MinialSB::ma_callback(void* userdata, Uint8* stream, int len)
 
     for (int i = 0; i < len; ++i)
     {
-        int32_t temp = std::floor((floatBuff)[i] * 3.90625e-3 + 128.5f);
+        int32_t temp = std::floor((floatBuff)[i] * m_listenerGain * 3.90625e-3 + 128.5f);
         if (temp > 255)
             temp = 255;
         else if (temp < 0)
@@ -148,18 +148,22 @@ void MinialSB::GenSources(ALsizei n, ALuint* sources)
 {
     generateStuff(n, sources, sourceMap, sourceCounter);
 }
+
 void MinialSB::GenBuffers(ALsizei n, ALuint* buffers)
 {
     generateStuff(n, buffers, bufferMap, bufferCounter);
 }
+
 void MinialSB::DeleteSources(ALsizei n, const ALuint* sources)
 {
     deleteStuff(n, sources, sourceMap);
 }
+
 void MinialSB::DeleteBuffers(ALsizei n, const ALuint* buffers)
 {
     deleteStuff(n, buffers, bufferMap);
 }
+
 void MinialSB::Listenerfv(ALenum param, const ALfloat* values)
 {
     (void)param;
@@ -167,6 +171,7 @@ void MinialSB::Listenerfv(ALenum param, const ALfloat* values)
     // listener parameters have no effect
     return;
 }
+
 void MinialSB::BufferData(ALuint buffer, ALenum format, const ALvoid* data, ALsizei size, ALsizei freq)
 {
     if (buffer == 0 || format != AL_FORMAT_MONO16)
@@ -178,10 +183,14 @@ void MinialSB::BufferData(ALuint buffer, ALenum format, const ALvoid* data, ALsi
     std::copy((Sint16*)data, ((Sint16*)data) + buff.samples.size(), buff.samples.begin());
     SDL_UnlockAudio();
 }
+
 void MinialSB::Sourcef(ALuint source, ALenum param, ALfloat value)
 {
-    if (source == 0)
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
         return;
+    }
     SDL_LockAudio();
     MA_SB_Source& src = (sourceMap)[source];
     switch (param)
@@ -192,6 +201,7 @@ void MinialSB::Sourcef(ALuint source, ALenum param, ALfloat value)
         src.pitch = value;
         break;
     case AL_GAIN:
+        src.gainOrig = value;
         if (value < 0.f)
             value = 0.f;
         if (value > 1.f)
@@ -203,20 +213,32 @@ void MinialSB::Sourcef(ALuint source, ALenum param, ALfloat value)
             value = 0.f;
         src.pos = value;
         break;
+    default:
+        m_error = AL_INVALID_ENUM;
+        break;
     }
     SDL_UnlockAudio();
 }
+
 void MinialSB::Sourcefv(ALuint source, ALenum param, const ALfloat* values)
 {
-    (void)source;
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
+        return;
+    }
     (void)param;
     (void)values;
     return;
 }
+
 void MinialSB::Sourcei(ALuint source, ALenum param, ALint value)
 {
-    if (source == 0)
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
         return;
+    }
     SDL_LockAudio();
     MA_SB_Source& src = (sourceMap)[source];
     switch (param)
@@ -225,35 +247,74 @@ void MinialSB::Sourcei(ALuint source, ALenum param, ALint value)
         src.looping = !!value;
         break;
     case AL_BUFFER:
-        src.buffer = value;
+        if (src.state != AL_INITIAL && src.state != AL_STOPPED)
+        {
+            m_error = AL_INVALID_OPERATION;
+        }
+        else
+        {
+            src.buffer = value;
+        }
+        break;
+    default:
+        m_error = AL_INVALID_ENUM;
         break;
     }
     SDL_UnlockAudio();
 }
+
 void MinialSB::SourcePlay(ALuint source)
 {
-    if (source == 0)
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
         return;
+    }
     SDL_LockAudio();
     MA_SB_Source& src = (sourceMap)[source];
     src.playing = true;
+    src.state = AL_PLAYING;
     SDL_UnlockAudio();
 }
-void MinialSB::SourceStop(ALuint source)
+
+void MinialSB::SourcePause(ALuint source)
 {
-    if (source == 0)
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
         return;
+    }
     SDL_LockAudio();
     MA_SB_Source& src = (sourceMap)[source];
     src.playing = false;
+    src.state = AL_PAUSED;
+    SDL_UnlockAudio();
+}
+
+void MinialSB::SourceStop(ALuint source)
+{
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
+        return;
+    }
+    SDL_LockAudio();
+    MA_SB_Source& src = (sourceMap)[source];
+    src.playing = false;
+    src.state = AL_STOPPED;
+    src.pos = 0;
     SDL_UnlockAudio();
 }
 void MinialSB::SourceRewind(ALuint source)
 {
-    if (source == 0)
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
         return;
+    }
     SDL_LockAudio();
     MA_SB_Source& src = (sourceMap)[source];
+    src.state = AL_INITIAL;
     src.pos = 0;
     SDL_UnlockAudio();
 }
@@ -262,4 +323,88 @@ ALint MinialSB::GetInteger(ALenum param)
 {
     (void)param;
     return -1;
+}
+
+void MinialSB::GetSourcef(ALuint source, ALenum param, ALfloat* value)
+{
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
+        return;
+    }
+    SDL_LockAudio();
+    MA_SB_Source& src = (sourceMap)[source];
+    switch (param)
+    {
+    case AL_PITCH:
+        *value = src.pitch;
+        break;
+    case AL_GAIN:
+        *value = src.gainOrig;
+        break;
+    case AL_SAMPLE_OFFSET:
+        *value = src.pos;
+        break;
+    default:
+        m_error = AL_INVALID_ENUM;
+        break;
+    }
+    SDL_UnlockAudio();
+}
+
+void MinialSB::Listenerf(ALenum param, ALfloat value)
+{
+    SDL_LockAudio();
+    switch (param)
+    {
+    case AL_GAIN:
+        m_listenerGain = value;
+        break;
+    default:
+        m_error = AL_INVALID_ENUM;
+        break;
+    }
+    SDL_UnlockAudio();
+}
+
+void MinialSB::GetSourcei(ALuint source, ALenum param, ALint* value)
+{
+    if (source == 0 || sourceMap.find(source) == sourceMap.end())
+    {
+        m_error = AL_INVALID_NAME;
+        return;
+    }
+    SDL_LockAudio();
+    MA_SB_Source& src = (sourceMap)[source];
+    switch (param)
+    {
+    case AL_LOOPING:
+        *value = src.looping ? AL_TRUE : AL_FALSE;
+        break;
+    case AL_BUFFER:
+        *value = src.buffer;
+        break;
+    case AL_SOURCE_STATE:
+        *value = src.state;
+        break;
+    default:
+        m_error = AL_INVALID_ENUM;
+        break;
+    }
+    SDL_UnlockAudio();
+}
+
+void MinialSB::GetListenerf(ALenum param, ALfloat* value)
+{
+    SDL_LockAudio();
+    switch (param)
+    {
+    case AL_GAIN:
+        *value = m_listenerGain;
+        break;
+    default:
+        m_error = AL_INVALID_ENUM;
+        break;
+    }
+    SDL_UnlockAudio();
 }

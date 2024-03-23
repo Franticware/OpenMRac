@@ -270,3 +270,14 @@ void GUSVoiceControl(uint8_t v, uint8_t b)
     outportb(Base + 0x103, 0);
     outportb(Base + 0x105, b);
 }
+
+/* get channel status/mode */
+uint8_t GUSGetVoiceStatus(uint8_t v)
+{
+    outportb(Base + 0x102, v);
+    outportb(Base + 0x102, v);
+    outportb(Base + 0x102, v);
+    outportb(Base + 0x103, 0x80);
+    uint8_t ret = inportb(Base + 0x105);
+    return ret;
+}

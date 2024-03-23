@@ -17,6 +17,7 @@ typedef unsigned int ALuint;
 #define ALC_DEVICE_SPECIFIER                     0x1005
 #define ALC_ALL_DEVICES_SPECIFIER                0x1013
 #define ALC_FREQUENCY                            0x1007
+#define ALC_MONO_SOURCES                         0x1010
 
 ALCboolean alcCloseDevice(ALCdevice *device);
 ALCcontext* alcCreateContext(const ALCdevice *device, const ALCint *attrlist);
@@ -42,6 +43,24 @@ typedef void ALvoid;
 #define AL_ORIENTATION                           0x100F
 #define AL_SAMPLE_OFFSET                         0x1025
 #define AL_FORMAT_MONO16                         0x1101
+#define AL_EXT_GUS_RAM_KB                       0xE0001
+
+#define AL_NO_ERROR                              0
+#define AL_INVALID_NAME                          0xA001
+#define AL_INVALID_ENUM                          0xA002
+#define AL_INVALID_VALUE                         0xA003
+#define AL_INVALID_OPERATION                     0xA004
+#define AL_OUT_OF_MEMORY                         0xA005
+
+#define AL_SOURCE_STATE                          0x1010
+#define AL_INITIAL                               0x1011
+#define AL_PLAYING                               0x1012
+#define AL_PAUSED                                0x1013
+#define AL_STOPPED                               0x1014
+
+#define AL_NONE                                  0
+#define AL_FALSE                                 0
+#define AL_TRUE                                  1
 
 void alBufferData(ALuint buffer, ALenum format, const ALvoid *data, ALsizei size, ALsizei freq);
 void alDeleteBuffers(ALsizei n, const ALuint *buffers);
@@ -53,12 +72,15 @@ void alSourcef(ALuint source, ALenum param, ALfloat value);
 void alSourcefv(ALuint source, ALenum param, const ALfloat *values);
 void alSourcei(ALuint source, ALenum param, ALint value);
 void alSourcePlay(ALuint source);
+void alSourcePause(ALuint source);
 void alSourceRewind(ALuint source);
 void alSourceStop(ALuint source);
-
-#define AL_EXT_GUS_RAM_KB                       0xE0001
-
 ALint alGetInteger(ALenum param);
+void alGetSourcef(ALuint source, ALenum param, ALfloat* value);
+ALenum alGetError(void);
+void alListenerf(ALenum param, ALfloat value);
+void alGetSourcei(ALuint source,  ALenum param, ALint *value);
+void alGetListenerf(ALenum param, ALfloat *value);
 
 void MA_periodicStream(void);
 

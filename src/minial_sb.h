@@ -12,15 +12,19 @@ struct MA_SB_Source
     MA_SB_Source()
     {
         buffer = 0;
+        state = AL_INITIAL;
         pitch = 1;
         gain = 1;
+        gainOrig = 1;
         pos = 0;
         looping = false;
         playing = false;
     }
     ALuint buffer;
+    ALint state;
     ALfloat pitch;
     ALfloat gain;
+    ALfloat gainOrig;
     ALfloat pos;
     bool looping;
     bool playing;
@@ -47,9 +51,14 @@ public:
     virtual void Sourcefv(ALuint source, ALenum param, const ALfloat *values) override;
     virtual void Sourcei(ALuint source, ALenum param, ALint value) override;
     virtual void SourcePlay(ALuint source) override;
+    virtual void SourcePause(ALuint source) override;
     virtual void SourceStop(ALuint source) override;
     virtual void SourceRewind(ALuint source) override;
     virtual ALint GetInteger(ALenum param) override;
+    virtual void GetSourcef(ALuint source, ALenum param, ALfloat* value) override;
+    virtual void Listenerf(ALenum param, ALfloat value) override;
+    virtual void GetSourcei(ALuint source, ALenum param, ALint* value) override;
+    virtual void GetListenerf(ALenum param, ALfloat* value) override;
 
     virtual void MA_periodicStream(void) override;
 
@@ -58,13 +67,14 @@ private:
 
     int m_freq;
 
+    ALfloat m_listenerGain = 1.f;
+
     ALuint sourceCounter = 1;
     ALuint bufferCounter = 1;
 
     std::map<ALuint, MA_SB_Source> sourceMap;
     std::map<ALuint, MA_SB_Buffer> bufferMap;
     std::vector<float> floatBuff;
-
 };
 
 #endif // MINIAL_SB_H
