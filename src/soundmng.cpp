@@ -13,8 +13,13 @@ extern std::vector<ALuint> global_al_buffers;
 
 ALuint createSource(ALuint buffer)
 {
-    ALuint source;
-    alGenSources(1, &source); global_al_sources.push_back(source);
+    ALuint source = 0;
+    alGenSources(1, &source);
+    if (alGetError() == AL_OUT_OF_MEMORY)
+    {
+        fprintf(stderr, "AL source allocation error\n");
+    }
+    global_al_sources.push_back(source);
     const ALfloat sourcePos[] = { 0.0, 0.0, 0.0 };
     const ALfloat sourceVel[] = { 0.0, 0.0, 0.0 };
     alSourcef (source, AL_PITCH,    1.0      );
@@ -29,10 +34,12 @@ ALuint createSource(ALuint buffer)
 
 void Sound_game_static::playSoundTest(float gain)
 {
-    alSourceStop(p_test_stream);
-    alSourceRewind(p_test_stream);
-    alSourcef(p_test_stream, AL_GAIN, gain);
-    alSourcePlay(p_test_stream);
+    alSourceStop(p_hit_stream[0]);
+    alSourceRewind(p_hit_stream[0]);
+    alSourcef(p_hit_stream[0], AL_GAIN, 1.0);
+    alSourcef(p_hit_stream[0], AL_PITCH, 1.0);
+    alListenerf(AL_GAIN, gain);
+    alSourcePlay(p_hit_stream[0]);
 }
 
 void Sound_game_static::init()
@@ -60,38 +67,42 @@ void Sound_game_static::init()
         p_skid_stream[i] = createSource(p_skid_sample);
     }
     for (int j = 0; j != 2; ++j)
-        for (int i = 0; i != 5; ++i) {
-            p_hit_stream[i+j*5] = createSource(p_hit_sample[j]);
+        for (int i = 0; i != hitStreamCount/2; ++i) {
+            p_hit_stream[i+j*(hitStreamCount/2)] = createSource(p_hit_sample[j]);
         }
 
-    p_test_stream = createSource(p_hit_sample[0]);
+    //p_test_stream = createSource(p_hit_sample[0]);
 }
 
 void Sound_game_static::load(unsigned int i, ALbuffer engine0_sample, ALbuffer engine1_sample)
 {
     if (i >= 4)
         return;
-    if (p_engine0_stream[i] == 0)
-        p_engine0_stream[i] = createSource(engine0_sample);
-    else
-        alSourcei(p_engine0_stream[i], AL_BUFFER, engine0_sample);
-    if (p_engine1_stream[i] == 0)
-        p_engine1_stream[i] = createSource(engine1_sample);
-    else
-        alSourcei(p_engine1_stream[i], AL_BUFFER, engine1_sample);
+    if (p_engine_stream[i] == 0)
+        p_engine_stream[i] = createSource(0);
+
+    p_engine0_sample[i] = engine0_sample;
+    p_engine1_sample[i] = engine1_sample;
 }
 
 void Sound_car::stop()
 {
-    alSourceStop(p_engine0_stream);
+    if (p_engine0_state)
+    {
+        alGetSourcef(p_engine_stream, AL_SAMPLE_OFFSET, &p_engine0_offset);
+    }
+    else if (p_engine1_state)
+    {
+        alGetSourcef(p_engine_stream, AL_SAMPLE_OFFSET, &p_engine1_offset);
+    }
+    alSourceStop(p_engine_stream);
     p_engine0_state = 0;
-    alSourceStop(p_engine1_stream);
     p_engine1_state = 0;
-    alSourceStop(p_skid_stream);
+    alSourcePause(p_skid_stream);
     p_skid_state = 0;
 }
 
-const float engine1_volume0 = 0.75f;
+static constexpr float engine1_volume0 = 0.75f;
 
 void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2 - první potichu*/, float engine_pitch, const float velocity[2])
 {
@@ -103,32 +114,40 @@ void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2
     if (engine_state == 0)
     {
         p_engine_on = 0;
-        alSourcef(p_engine0_stream, AL_GAIN, 0.5f**p_global_volume);
-        if (!p_engine0_state) {
-            alSourcePlay(p_engine0_stream);
-            p_engine0_state = 1;
-        }
+        alSourcef(p_engine_stream, AL_GAIN, 0.5f);
         if (p_engine1_state) {
-            alSourceStop(p_engine1_stream);
+            alGetSourcef(p_engine_stream, AL_SAMPLE_OFFSET, &p_engine1_offset);
+            alSourceStop(p_engine_stream);
             p_engine1_state = 0;
+        }
+        if (!p_engine0_state) {
+            alSourcef(p_engine_stream, AL_GAIN, 0.5f);
+            alSourcef(p_engine_stream, AL_PITCH, 1.f);
+            alSourcei(p_engine_stream, AL_BUFFER, p_engine0_sample);
+            alSourcef(p_engine_stream, AL_SAMPLE_OFFSET, p_engine0_offset);
+            alSourcePlay(p_engine_stream);
+            p_engine0_state = 1;
         }
     } else {
         if (engine_state == 1) {
             p_engine_on = 1;
-            alSourcef(p_engine1_stream, AL_GAIN, engine1_volume0**p_global_volume);
+            alSourcef(p_engine_stream, AL_GAIN, engine1_volume0);
         } else {
-            alSourcef(p_engine1_stream, AL_GAIN, 0.5f**p_global_volume);
+            alSourcef(p_engine_stream, AL_GAIN, 0.5f);
         }
 
-        alSourcef(p_engine1_stream, AL_PITCH, engine_pitch*p_running_pitch);
+        alSourcef(p_engine_stream, AL_PITCH, engine_pitch*p_running_pitch);
 
-        if (!p_engine1_state) {
-            alSourcePlay(p_engine1_stream);
-            p_engine1_state = 1;
-        }
         if (p_engine0_state) {
-            alSourceStop(p_engine0_stream);
+            alGetSourcef(p_engine_stream, AL_SAMPLE_OFFSET, &p_engine0_offset);
+            alSourceStop(p_engine_stream);
             p_engine0_state = 0;
+        }
+        if (!p_engine1_state) {
+            alSourcei(p_engine_stream, AL_BUFFER, p_engine1_sample);
+            alSourcef(p_engine_stream, AL_SAMPLE_OFFSET, p_engine1_offset);
+            alSourcePlay(p_engine_stream);
+            p_engine1_state = 1;
         }
     }
 
@@ -139,7 +158,7 @@ void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2
             p_skid_state = 0;
         }
     } else {
-        alSourcef(p_skid_stream, AL_GAIN, p_brake_volume**p_global_volume);
+        alSourcef(p_skid_stream, AL_GAIN, p_brake_volume);
 
         float speed = std::sqrt(velocity[0]*velocity[0] + velocity[1]*velocity[1]);
         float skidPitch = 0.8f+(speed - 6.f)/24.f*0.4f;
@@ -155,7 +174,7 @@ void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2
     }
 }
 
-void Sound_car::init(ALsource stream_idle, ALsource stream_running, float running_pitch, ALsource stream_skid, int player, int players_n)
+void Sound_car::init(ALsource stream_engine, ALbuffer sample_idle, ALbuffer sample_running, float running_pitch, ALsource stream_skid, int player, int players_n)
 {
     p_brake_volume = 0.f;
     // toto zásadně změnit
@@ -173,25 +192,25 @@ void Sound_car::init(ALsource stream_idle, ALsource stream_running, float runnin
     default: // 3, 4
         if (player < 2) p_pan = -1; else p_pan = 1;
     }
-    p_engine0_stream = stream_idle;
-    p_engine1_stream = stream_running;
+    p_engine_stream = stream_engine;
+    p_engine0_sample = sample_idle;
+    p_engine1_sample = sample_running;
     p_skid_stream = stream_skid;
     p_time = 0.f;
     p_T = 0.01f;
 
-    alSourcei(p_engine0_stream, AL_LOOPING, 1);
-    alSourcei(p_engine1_stream, AL_LOOPING, 1);
+    alSourcei(p_engine_stream, AL_LOOPING, 1);
     alSourcei(p_skid_stream, AL_LOOPING, 1);
     // nejmenší délka v samplech je 32000
-    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n));
-    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n));
-    alSourcef(p_engine0_stream, AL_SAMPLE_OFFSET, (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n));
 
-    alSourcef(p_engine0_stream, AL_GAIN, 0.5**p_global_volume);
-    alSourcef(p_engine1_stream, AL_GAIN, engine1_volume0**p_global_volume);
+    p_engine0_offset = (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n);
+    p_engine1_offset = (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n);
+
+    alSourcef(p_skid_stream, AL_SAMPLE_OFFSET, (smallSampleRam() ? 16000.0 : 32000.0)*double(player)/double(players_n));
 
     p_engine0_state = 0; // 0 - nehraje, 1 - hraje
     p_engine1_state = 0; // 0 - nehraje, 1 - hraje
+
     p_skid_state = 0;
 
     p_engine_on = 0;
@@ -216,7 +235,7 @@ void Sound_crash::play(float c_j) // přehraje zvuk nárazu
 
     alSourceStop(p_hit_stream[sel]);
     alSourceRewind(p_hit_stream[sel]);
-    alSourcef(p_hit_stream[sel], AL_GAIN, volume**p_global_volume);
+    alSourcef(p_hit_stream[sel], AL_GAIN, volume);
 
     float pitch_min = 0.88;
     float pitch = pitch_min+randn1(int((1.f-pitch_min)*2.f*1000.f))*0.001;

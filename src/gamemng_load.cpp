@@ -213,8 +213,7 @@ bool Gamemng::load(int players_sel, const int* cars_sel, const int* cars_tex_sel
         p_sound_game_static.load(i, p_cars[cars_sel[i]].p_engine0_sample, p_cars[cars_sel[i]].p_engine1_sample);
 
         // zvuky
-        p_sound_car[i].p_global_volume = &p_global_volume; // je důležité, aby toto bylo první
-        p_sound_car[i].init(p_sound_game_static.p_engine0_stream[i], p_sound_game_static.p_engine1_stream[i], p_cars[cars_sel[i]].engine1_pitch, p_sound_game_static.p_skid_stream[i], i, p_players);
+        p_sound_car[i].init(p_sound_game_static.p_engine_stream[i], p_sound_game_static.p_engine0_sample[i], p_sound_game_static.p_engine1_sample[i], p_cars[cars_sel[i]].engine1_pitch, p_sound_game_static.p_skid_stream[i], i, p_players);
 
         // částice
         if (p_particles)

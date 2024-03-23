@@ -31,16 +31,17 @@ typedef ALuint ALsource;
 
 class Sound_game_static {
 public:
+    static constexpr int hitStreamCount = 6;
     Sound_game_static() {
         for (int i = 0; i != 4; ++i)
         {
             p_skid_stream[i] = 0;
-            p_engine0_stream[i] = 0;
-            p_engine1_stream[i] = 0;
+            p_engine0_sample[i] = 0;
+            p_engine1_sample[i] = 0;
+            p_engine_stream[i] = 0;
         }
-        for (int i = 0; i != 10; ++i)
+        for (int i = 0; i != hitStreamCount; ++i)
             p_hit_stream[i] = 0;
-        p_test_stream = 0;
         p_skid_sample = 0;
         p_hit_sample[0] = 0;
         p_hit_sample[1] = 0;
@@ -49,10 +50,11 @@ public:
         for (int i = 0; i != 4; ++i)
         {
             p_skid_stream[i] = 0;
-            p_engine0_stream[i] = 0;
-            p_engine1_stream[i] = 0;
+            p_engine0_sample[i] = 0;
+            p_engine1_sample[i] = 0;
+            p_engine_stream[i] = 0;
         }
-        for (int i = 0; i != 10; ++i)
+        for (int i = 0; i != hitStreamCount; ++i)
             p_hit_stream[i] = 0;
         p_skid_sample = 0;
         p_hit_sample[0] = 0;
@@ -63,11 +65,10 @@ public:
     void load(unsigned int i, ALbuffer p_engine0_sample, ALbuffer p_engine1_sample);
 
     ALsource p_skid_stream[4];
-    ALsource p_engine0_stream[4];
-    ALsource p_engine1_stream[4];
-    ALsource p_hit_stream[10];
-
-    ALsource p_test_stream;
+    ALsource p_engine_stream[4];
+    ALbuffer p_engine0_sample[4];
+    ALbuffer p_engine1_sample[4];
+    ALsource p_hit_stream[hitStreamCount];
 
     ALbuffer p_skid_sample;
     ALbuffer p_hit_sample[2];
@@ -82,16 +83,19 @@ public:
 
 class Sound_car {
 public:
-    Sound_car() : p_skid_stream(0), p_engine0_stream(0), p_engine1_stream(0), p_engine0_state(0), p_engine1_state(0), p_skid_state(0), p_time(0),
-        p_T(0), p_running_pitch(0), p_pan(0), p_player(0), p_brake_volume(0), p_engine_on(0), p_global_volume(0) { }
+    Sound_car() : p_skid_stream(0), p_engine_stream(0), p_engine0_sample(0), p_engine1_sample(0), p_engine0_state(0), p_engine1_state(0), p_skid_state(0), p_time(0),
+        p_T(0), p_running_pitch(0), p_pan(0), p_player(0), p_brake_volume(0), p_engine_on(0) { }
     ~Sound_car() {
     }
-    void init(ALsource stream_idle, ALsource stream_running, float running_pitch, ALsource stream_skid, int player, int players_n);
+    void init(ALsource stream_engine, ALbuffer sample_idle, ALbuffer sample_running, float running_pitch, ALsource stream_skid, int player, int players_n);
     void frame(float deltaT, int engine_state/*0 - nultý, 1 - první, 2 - první potichu*/, float engine_pitch, const float velocity[2]);
     void stop();
     ALsource p_skid_stream;
-    ALsource p_engine0_stream;
-    ALsource p_engine1_stream;
+    ALsource p_engine_stream;
+    ALbuffer p_engine0_sample;
+    ALbuffer p_engine1_sample;
+    ALfloat p_engine0_offset = 0;
+    ALfloat p_engine1_offset = 0;
     int p_engine0_state; // 0 - nehraje, 1 - hraje
     int p_engine1_state; // 0 - nehraje, 1 - hraje
     int p_skid_state; // 0 - nehraje, 1 - hraje
@@ -102,12 +106,11 @@ public:
     int p_player;
     float p_brake_volume;
     int p_engine_on;
-    const float* p_global_volume;
 };
 
 class Sound_crash {
 public:
-    Sound_crash() { p_sz_samples = 2; p_width = 5; p_global_volume = 0; p_hit_stream = 0; p_fronta_pos[0] = 0; p_fronta_pos[1] = 0; }
+    Sound_crash() { p_sz_samples = 2; p_width = 3; p_hit_stream = 0; p_fronta_pos[0] = 0; p_fronta_pos[1] = 0; }
     ~Sound_crash() {
     }
     void init(ALsource* stream_hit); // load zvuků
@@ -117,7 +120,6 @@ public:
     ALsource* p_hit_stream;
     int p_fronta_pos[10]; // stačí 2
 
-    const float* p_global_volume;
     // n = 3
     // f = 5
     // samply[n]

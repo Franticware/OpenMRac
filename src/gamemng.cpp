@@ -269,7 +269,6 @@ void Gamemng::init_sound()
 {
     p_sound_crash = new Sound_crash;
     p_sound_crash->init(p_sound_game_static.p_hit_stream); // nulové *p_audiodevice je ošéfované uvnitř
-    p_sound_crash->p_global_volume = &p_global_volume;
 }
 
 void Gamemng::unset_scissor()

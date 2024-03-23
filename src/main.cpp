@@ -373,7 +373,7 @@ int my_main (int argc, char** argv)
 
         static const ALCint attribs[] = {
             ALC_FREQUENCY, ma_freq,
-            ALC_MONO_SOURCES, 32,
+            ALC_MONO_SOURCES, 14,
             0, 0
         };
 

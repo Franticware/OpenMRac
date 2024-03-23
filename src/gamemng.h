@@ -382,13 +382,11 @@ public:
 
     Sound_car* p_sound_car;
 
-    float p_global_volume;
-
     int p_global_volume_i;
 
     int get_global_volume() { return p_global_volume_i; }
     void set_global_volume(int volume) { if (volume < 0) volume = 0; else if (volume > 100) volume = 100;
-        p_global_volume_i = volume; p_global_volume = p_global_volume_i*0.01f; }
+        p_global_volume_i = volume; alListenerf(AL_GAIN, p_global_volume_i*0.01f); }
 
 
     Gamemenu p_gamemenu;
