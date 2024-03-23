@@ -422,6 +422,10 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             alBufferData(p_cars[i].p_engine0_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
+            if (alGetError() == AL_OUT_OF_MEMORY)
+            {
+                fprintf(stderr, "AL buffer data allocation error\n");
+            }
             gbuff_in.fclose();
 
             gbuff_in.f_open(p_cars[i].fname_sample_engine1, "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
@@ -429,6 +433,10 @@ void Gamemng::init(const char* maps_def, const char* objs_def, const char* cars_
             swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
             alBufferData(p_cars[i].p_engine1_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
+            if (alGetError() == AL_OUT_OF_MEMORY)
+            {
+                fprintf(stderr, "AL buffer data allocation error\n");
+            }
             gbuff_in.fclose();
         }
     }

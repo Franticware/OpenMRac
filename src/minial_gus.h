@@ -25,7 +25,7 @@ struct MA_GUS_Buffer
     ALfloat pitch{1.0};
     uint32_t addr{GUS_INVALID_ALLOC};
     uint32_t len{0};
-    uint32_t refs{0}; // TODO count referring sources
+    uint32_t refcount{0}; // TODO count referring sources
 };
 
 class MinialGUS : public MinialInterface
@@ -56,9 +56,11 @@ public:
 
 private:
     std::map<uint32_t, uint32_t> freeMap;
+    std::map<uint32_t, uint32_t> allocMap;
 
     uint32_t gusAlloc(uint32_t len);
     void gusFree(uint32_t pos);
+    void gusDefrag(void);
     void gusSetVolume(uint8_t voice, ALfloat listenerGain, ALfloat sourceGain);
 
     ALfloat m_listenerGain = 1.f;

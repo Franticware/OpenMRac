@@ -6,9 +6,6 @@
 #include <cstdio>
 #include <vector>
 
-ALuint sampleA = 0;
-ALuint sampleB = 0;
-
 constexpr float fMargin = 0.001;
 
 inline int loadWav(const char* fileName, std::vector<uint8_t>& data)
@@ -95,7 +92,7 @@ inline void utAlErrCheck(int line = 0, ALenum expected = AL_NO_ERROR)
     }
 }
 
-inline int testBufferSwitch()
+inline int testBufferSwitch(ALuint sampleA, ALuint sampleB)
 {
     printf("%s\n", __FUNCTION__);
     fflush(stdout);
@@ -197,7 +194,7 @@ inline int testBufferSwitch()
     return errCount;
 }
 
-inline int testGain()
+inline int testGain(ALuint sampleA)
 {
     printf("%s\n", __FUNCTION__);
     fflush(stdout);
@@ -283,6 +280,53 @@ inline int testGain()
         }
         delay_s(1);
     }
+
+    alDeleteSources(1, &source);
+    utAlErrCheck(__LINE__);
+
+    return errCount;
+}
+
+int testBufferRefs()
+{
+    printf("%s\n", __FUNCTION__);
+    fflush(stdout);
+    int errCount = 0;
+    std::vector<uint8_t> wavData;
+    if (loadWav("monti.wav", wavData))
+    {
+        printf("error loading wav data\n");
+    }
+    ALuint sampleA = 0;
+    alGenBuffers(1, &sampleA);
+    utAlErrCheck(__LINE__);
+
+    alBufferData(sampleA, AL_FORMAT_MONO16, wavData.data(), wavData.size(), 22050);
+    utAlErrCheck(__LINE__);
+
+    ALuint sourceA;
+    alGenSources(1, &sourceA);
+    utAlErrCheck(__LINE__);
+
+    ALuint sourceB;
+    alGenSources(1, &sourceB);
+    utAlErrCheck(__LINE__);
+
+    alSourcei(sourceA, AL_BUFFER, sampleA);
+    utAlErrCheck(__LINE__);
+
+    alSourcei(sourceB, AL_BUFFER, sampleA);
+    utAlErrCheck(__LINE__);
+
+    alDeleteBuffers(1, &sampleA);
+    utAlErrCheck(__LINE__, AL_INVALID_OPERATION);
+
+    ALuint sources[2] = {sourceA, sourceB};
+    alDeleteSources(2, sources);
+    utAlErrCheck(__LINE__);
+
+    alDeleteBuffers(1, &sampleA);
+    utAlErrCheck(__LINE__);
 
     return errCount;
 }

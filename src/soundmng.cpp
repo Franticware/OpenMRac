@@ -49,12 +49,20 @@ void Sound_game_static::init()
     alGenBuffers(1, &(p_hit_sample[0])); global_al_buffers.push_back(p_hit_sample[0]);
     swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     alBufferData(p_hit_sample[0], AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
+    if (alGetError() == AL_OUT_OF_MEMORY)
+    {
+        fprintf(stderr, "AL buffer data allocation error\n");
+    }
     gbuff_in.fclose();
 
     gbuff_in.f_open("crash1.raw", "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
     alGenBuffers(1, &(p_hit_sample[1])); global_al_buffers.push_back(p_hit_sample[1]);
     swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     alBufferData(p_hit_sample[1], AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
+    if (alGetError() == AL_OUT_OF_MEMORY)
+    {
+        fprintf(stderr, "AL buffer data allocation error\n");
+    }
     gbuff_in.fclose();
 
     gbuff_in.f_open("skid.raw", "rb");if (smallSampleRam())gbuff_in.downsampleAudio16();
@@ -62,6 +70,10 @@ void Sound_game_static::init()
     swapArrayLE16(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     tweakLoop(gbuff_in.fbuffptr(), gbuff_in.fbuffsz());
     alBufferData(p_skid_sample, AL_FORMAT_MONO16, gbuff_in.fbuffptr(), gbuff_in.fbuffsz(), smallSampleRam() ? 11025 : 22050);
+    if (alGetError() == AL_OUT_OF_MEMORY)
+    {
+        fprintf(stderr, "AL buffer data allocation error\n");
+    }
     gbuff_in.fclose();
 
     for (unsigned int i = 0; i != 4; ++i) {

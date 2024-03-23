@@ -34,6 +34,7 @@ struct MA_SB_Buffer
 {
     std::vector<Uint16> samples;
     float pitch = 1.f;
+    uint32_t refcount{0}; // TODO count referring sources
 };
 
 class MinialSB : public MinialInterface

@@ -37,31 +37,42 @@ int main(int argc, char** argv)
     alListenerfv(AL_ORIENTATION, listenerOri);
     alListenerf(AL_GAIN, 1.0);
 
-    std::vector<uint8_t> wavData;
-    if (loadWav("monti.wav", wavData))
-    {
-        printf("error loading wav data\n");
-    }
-
-    ALuint buffers[2];
-    alGenBuffers(2, buffers);
-    sampleA = buffers[0];
-    sampleB = buffers[1];
-    alBufferData(sampleA, AL_FORMAT_MONO16, wavData.data(), wavData.size(), 22050);
-
-    if (loadWav("handel.wav", wavData))
-    {
-        printf("error loading wav data\n");
-    }
-
-    alBufferData(sampleB, AL_FORMAT_MONO16, wavData.data(), wavData.size(), 22050);
-
     // unit test suite start
-
     int errCount = 0;
+    if (true)
+    {
+        ALuint sampleA, sampleB;
+        std::vector<uint8_t> wavData;
+        if (loadWav("monti.wav", wavData))
+        {
+            printf("error loading wav data\n");
+        }
 
-    errCount += testBufferSwitch();
-    errCount += testGain();
+        ALuint buffers[2];
+        alGenBuffers(2, buffers);
+        utAlErrCheck(__LINE__);
+
+        sampleA = buffers[0];
+        sampleB = buffers[1];
+        alBufferData(sampleA, AL_FORMAT_MONO16, wavData.data(), wavData.size(), 22050);
+        utAlErrCheck(__LINE__);
+
+        if (loadWav("handel.wav", wavData))
+        {
+            printf("error loading wav data\n");
+        }
+
+        alBufferData(sampleB, AL_FORMAT_MONO16, wavData.data(), wavData.size(), 22050);
+        utAlErrCheck(__LINE__);
+
+        errCount += testBufferSwitch(sampleA, sampleB);
+        errCount += testGain(sampleA);
+
+        alDeleteBuffers(2, buffers);
+        utAlErrCheck(__LINE__);
+    }
+
+    errCount += testBufferRefs();
 
     // unit test suite end
 

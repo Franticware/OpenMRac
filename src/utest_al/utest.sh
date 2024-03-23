@@ -26,6 +26,6 @@ $EXE2COFF $INTERM.exe || exit
 cat ../CWSDSTUB.EXE $INTERM > $TARGET
 
 #dosbox-x -c "mount C ." -c "C:" -c "utest_al.exe sb"
-dosbox-x -c "mount C ." -c "C:" -c "utest_al.exe gus"
+#dosbox-x -c "mount C ." -c "C:" -c "utest_al.exe gus"
 
-#dosbox-x -c "mount C ." -c "C:" -c "echo SB:" -c "utest_al.exe sb" -c "echo GUS:" -c "utest_al.exe gus"
+dosbox-x -c "mount C ." -c "C:" -c "echo SB:" -c "utest_al.exe sb" -c "echo GUS:" -c "utest_al.exe gus"

@@ -5,6 +5,8 @@
 
 #include "gus.h"
 
+#define GUS_ALLOC_DEBUG_LOG 0
+
 MinialGUS::MinialGUS(ALint monoSources)
 {
     m_gusVoices = monoSources;
@@ -70,6 +72,7 @@ uint32_t MinialGUS::gusAlloc(uint32_t len)
             uint32_t oldStart = fm.first;
             freeMap.erase(oldStart);
             freeMap[oldStart + len] = oldLen - len;
+            allocMap[oldStart] = len;
             return oldStart;
         }
     }
@@ -82,7 +85,57 @@ void MinialGUS::gusFree(uint32_t pos)
     {
         return;
     }
-    /*TODO*/
+    auto it = allocMap.find(pos);
+    if (it == allocMap.end())
+    {
+        return;
+    }
+    freeMap[it->first] = it->second;
+    allocMap.erase(pos);
+    gusDefrag();
+}
+
+void MinialGUS::gusDefrag(void)
+{
+    for (;;)
+    {
+        uint32_t thisAddr = 0;
+        uint32_t nextAddr = 0;
+        uint32_t newLen = 0;
+        bool found = false;
+        for (auto it : freeMap)
+        {
+            nextAddr = it.first + it.second;
+            auto it2 = freeMap.find(nextAddr);
+            if (nextAddr % 262144 != 0 && it2 != freeMap.end())
+            {
+                found = true;
+                thisAddr = it.first;
+                newLen = it.second + it2->second;
+                break;
+            }
+        }
+        if (!found)
+        {
+            break;
+        }
+        freeMap[thisAddr] = newLen;
+        freeMap.erase(nextAddr);
+    }
+#if GUS_ALLOC_DEBUG_LOG
+    printf("defrag[");
+    bool first = true;
+    for (auto it : freeMap)
+    {
+        if (!first)
+        {
+            printf("|");
+        }
+        printf("%x %x", it.first, it.first + it.second);
+        first = false;
+    }
+    printf("]\n");
+#endif
 }
 
 void MinialGUS::gusSetVolume(uint8_t voice, ALfloat listenerGain, ALfloat sourceGain)
@@ -135,12 +188,29 @@ void MinialGUS::DeleteSources(ALsizei n, const ALuint* sources)
         if (sources[i] > 0 && sources[i] <= (ALuint)m_gusVoices)
         {
             sourceMap[sources[i] - 1].alloc = false;
+            if (sourceMap[sources[i] - 1].buffer)
+            {
+                auto it = bufferMap.find(sourceMap[sources[i] - 1].buffer);
+                if (it != bufferMap.end())
+                {
+                    MA_GUS_Buffer& buf = it->second;
+                    --buf.refcount;
+                }
+            }
         }
     }
 }
 void MinialGUS::DeleteBuffers(ALsizei n, const ALuint* buffers)
 {
-    for (int i = 0; i != n; ++i)
+    for (ALsizei i = 0; i != n; ++i)
+    {
+        if (bufferMap[buffers[i]].refcount != 0)
+        {
+            m_error = AL_INVALID_OPERATION;
+            return;
+        }
+    }
+    for (ALsizei i = 0; i != n; ++i)
     {
         gusFree(bufferMap[buffers[i]].addr);
     }
@@ -162,7 +232,22 @@ void MinialGUS::BufferData(ALuint buffer, ALenum format, const ALvoid* data, ALs
     MA_GUS_Buffer& buff = bufferMap[buffer];
     buff.pitch = float(freq) / float(m_freq);
 
+    gusFree(buff.addr);
     buff.addr = gusAlloc(size);
+#if GUS_ALLOC_DEBUG_LOG
+    printf("alloc[");
+    bool first = true;
+    for (auto it : freeMap)
+    {
+        if (!first)
+        {
+            printf("|");
+        }
+        printf("%x %x", it.first, it.first + it.second);
+        first = false;
+    }
+    printf("]\n");
+#endif
     if (buff.addr != GUS_INVALID_ALLOC)
     {
         buff.len = size;
@@ -170,6 +255,10 @@ void MinialGUS::BufferData(ALuint buffer, ALenum format, const ALvoid* data, ALs
         {
             GUSPoke(buff.addr + i, ((int16_t*)data)[i] / 256);
         }
+    }
+    else
+    {
+        m_error = AL_OUT_OF_MEMORY;
     }
 }
 void MinialGUS::Sourcef(ALuint source, ALenum param, ALfloat value)
@@ -260,6 +349,26 @@ void MinialGUS::Sourcei(ALuint source, ALenum param, ALint value)
         }
         else
         {
+            if (src.buffer)
+            {
+                auto it = bufferMap.find(src.buffer);
+                if (it != bufferMap.end())
+                {
+                    MA_GUS_Buffer& buf = it->second;
+                    --buf.refcount;
+                }
+            }
+            if (value)
+            {
+                auto it = bufferMap.find(value);
+                if (it == bufferMap.end())
+                {
+                    m_error = AL_INVALID_NAME;
+                    return;
+                }
+                MA_GUS_Buffer& buf = it->second;
+                ++buf.refcount;
+            }
             src.buffer = value;
         }
         break;

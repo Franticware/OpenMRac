@@ -160,11 +160,32 @@ void MinialSB::GenBuffers(ALsizei n, ALuint* buffers)
 
 void MinialSB::DeleteSources(ALsizei n, const ALuint* sources)
 {
+    for (ALsizei i = 0; i != n; ++i)
+    {
+        ALuint buf = sourceMap[sources[i]].buffer;
+        if (buf)
+        {
+            auto it = bufferMap.find(buf);
+            if (it != bufferMap.end())
+            {
+                MA_SB_Buffer& buf = it->second;
+                --buf.refcount;
+            }
+        }
+    }
     deleteStuff(n, sources, sourceMap);
 }
 
 void MinialSB::DeleteBuffers(ALsizei n, const ALuint* buffers)
 {
+    for (ALsizei i = 0; i != n; ++i)
+    {
+        if (bufferMap[buffers[i]].refcount != 0)
+        {
+            m_error = AL_INVALID_OPERATION;
+            return;
+        }
+    }
     deleteStuff(n, buffers, bufferMap);
 }
 
@@ -257,6 +278,26 @@ void MinialSB::Sourcei(ALuint source, ALenum param, ALint value)
         }
         else
         {
+            if (src.buffer)
+            {
+                auto it = bufferMap.find(src.buffer);
+                if (it != bufferMap.end())
+                {
+                    MA_SB_Buffer& buf = it->second;
+                    --buf.refcount;
+                }
+            }
+            if (value)
+            {
+                auto it = bufferMap.find(value);
+                if (it == bufferMap.end())
+                {
+                    m_error = AL_INVALID_NAME;
+                    return;
+                }
+                MA_SB_Buffer& buf = it->second;
+                ++buf.refcount;
+            }
             src.buffer = value;
         }
         break;
