@@ -123,30 +123,6 @@ void MinialGUS::GenSources(ALsizei n, ALuint* sources)
             }
         }
     }
-
-    /*
-    generateStuff(n, sources, sourceMap, sourceCounter);
-
-    for (int i = 0; i != n; ++i)
-    {
-        MA_GUS_Source& src = (sourceMap)[sources[i]];
-        bool mapped = false;
-        for (int j = 0; j != m_gusVoices; ++j)
-        {
-            if (gusVoiceMap[j] == 0)
-            {
-                src.gusVoice = j;
-                gusVoiceMap[j] = 1;
-                mapped = true;
-                break;
-            }
-        }
-        if (!mapped)
-        {
-            printf("unmapped voice!\n");
-        }
-    }
-    */
 }
 void MinialGUS::GenBuffers(ALsizei n, ALuint* buffers)
 {
@@ -154,13 +130,6 @@ void MinialGUS::GenBuffers(ALsizei n, ALuint* buffers)
 }
 void MinialGUS::DeleteSources(ALsizei n, const ALuint* sources)
 {
-    /*for (int i = 0; i != n; ++i)
-    {
-        MA_GUS_Source& src = (sourceMap)[sources[i]];
-        gusVoiceMap[src.gusVoice] = 0;
-    }
-    deleteStuff(n, sources, sourceMap);*/
-
     for (ALsizei i = 0; i != n; ++i)
     {
         if (sources[i] > 0 && sources[i] <= (ALuint)m_gusVoices)

@@ -268,7 +268,7 @@ void Gamemng::set_far(int far1)
 void Gamemng::init_sound()
 {
     p_sound_crash = new Sound_crash;
-    p_sound_crash->init(p_sound_game_static.p_hit_stream); // nulové *p_audiodevice je ošéfované uvnitř
+    p_sound_crash->init(p_sound_game_static.p_hit_stream, p_sound_game_static.p_hit_sample); // nulové *p_audiodevice je ošéfované uvnitř
 }
 
 void Gamemng::unset_scissor()

@@ -95,22 +95,26 @@ void MinialSB::ma_callback(void* userdata, Uint8* stream, int len)
                         (*floatBuff)[i] += buff.samples[src.pos] * src.gain;
 #endif
 #if MA_FILTER == MA_FILTER_LINEAR
-                        uint32_t ipos0 = src.pos;
-                        uint32_t ipos1 = ipos0 + 1;
-                        Sint16 smp0 = buff.samples[ipos0];
-                        Sint16 smp1 = 0;
-                        if (ipos1 >= buff.samples.size())
+                        if (src.gain > 0.f && m_listenerGain > 0.f)
                         {
-                            if (src.looping)
+                            uint32_t ipos0 = src.pos;
+                            uint32_t ipos1 = ipos0 + 1;
+                            Sint16 smp0 = buff.samples[ipos0];
+                            Sint16 smp1 = 0;
+                            if (ipos1 >= buff.samples.size())
                             {
-                                smp1 = buff.samples[0];
+                                if (src.looping)
+                                {
+                                    smp1 = buff.samples[0];
+                                }
                             }
+                            else
+                            {
+                                smp1 = buff.samples[ipos1];
+                            }
+                            (floatBuff)[i] +=
+                                (float(smp0) + (float(smp1) - float(smp0)) * (src.pos - ipos0)) * src.gain;
                         }
-                        else
-                        {
-                            smp1 = buff.samples[ipos1];
-                        }
-                        (floatBuff)[i] += (float(smp0) + (float(smp1) - float(smp0)) * (src.pos - ipos0)) * src.gain;
 #endif
 #if MA_FILTER == MA_FILTER_HIGH_QUALITY
 #error "Hight quality audio filter is currently not implemented"

@@ -31,7 +31,8 @@ typedef ALuint ALsource;
 
 class Sound_game_static {
 public:
-    static constexpr int hitStreamCount = 6;
+    static constexpr int hitStreamCount = 5;
+    static constexpr int hitSampleCount = 2;
     Sound_game_static() {
         for (int i = 0; i != 4; ++i)
         {
@@ -71,7 +72,7 @@ public:
     ALsource p_hit_stream[hitStreamCount];
 
     ALbuffer p_skid_sample;
-    ALbuffer p_hit_sample[2];
+    ALbuffer p_hit_sample[hitSampleCount];
 
     //ALsource p_laprecord_stream;
     //ALbuffer p_laprecord_sample;
@@ -110,21 +111,14 @@ public:
 
 class Sound_crash {
 public:
-    Sound_crash() { p_sz_samples = 2; p_width = 3; p_hit_stream = 0; p_fronta_pos[0] = 0; p_fronta_pos[1] = 0; }
+    Sound_crash() { p_hit_streams = 0; p_hit_samples = 0; p_currentStream = 0; }
     ~Sound_crash() {
     }
-    void init(ALsource* stream_hit); // load zvuků
+    void init(const ALsource* stream_hit, const ALbuffer* sample_hit); // load zvuků
     void play(float c_j); // přehraje zvuk nárazu
-    int p_sz_samples;
-    int p_width; // šířka fronty
-    ALsource* p_hit_stream;
-    int p_fronta_pos[10]; // stačí 2
-
-    // n = 3
-    // f = 5
-    // samply[n]
-    // fronty[f*n]
-    // fronty_i[n]
+    const ALsource* p_hit_streams;
+    const ALbuffer* p_hit_samples;
+    ALuint p_currentStream;
 };
 
 #endif

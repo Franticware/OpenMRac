@@ -36,6 +36,7 @@ void Sound_game_static::playSoundTest(float gain)
 {
     alSourceStop(p_hit_stream[0]);
     alSourceRewind(p_hit_stream[0]);
+    alSourcei(p_hit_stream[0], AL_BUFFER, p_hit_sample[0]);
     alSourcef(p_hit_stream[0], AL_GAIN, 1.0);
     alSourcef(p_hit_stream[0], AL_PITCH, 1.0);
     alListenerf(AL_GAIN, gain);
@@ -66,12 +67,10 @@ void Sound_game_static::init()
     for (unsigned int i = 0; i != 4; ++i) {
         p_skid_stream[i] = createSource(p_skid_sample);
     }
-    for (int j = 0; j != 2; ++j)
-        for (int i = 0; i != hitStreamCount/2; ++i) {
-            p_hit_stream[i+j*(hitStreamCount/2)] = createSource(p_hit_sample[j]);
-        }
-
-    //p_test_stream = createSource(p_hit_sample[0]);
+    for (int i = 0; i != hitStreamCount; ++i)
+    {
+        p_hit_stream[i] = createSource(0);
+    }
 }
 
 void Sound_game_static::load(unsigned int i, ALbuffer engine0_sample, ALbuffer engine1_sample)
@@ -106,7 +105,6 @@ static constexpr float engine1_volume0 = 0.75f;
 
 void Sound_car::frame(float deltaT, int engine_state /*0 - nultý, 1 - první, 2 - první potichu*/, float engine_pitch, const float velocity[2])
 {
-    //
     p_time += deltaT;
     if (p_time >= p_T) p_time = 0.f; else return;
     if (!p_engine_on && engine_state == 2)
@@ -216,9 +214,10 @@ void Sound_car::init(ALsource stream_engine, ALbuffer sample_idle, ALbuffer samp
     p_engine_on = 0;
 }
 
-void Sound_crash::init(ALsource* stream_hit) // load zvuků
+void Sound_crash::init(const ALsource* stream_hit, const ALbuffer* sample_hit) // load zvuků
 {
-    p_hit_stream = stream_hit;
+    p_hit_streams = stream_hit;
+    p_hit_samples = sample_hit;
 }
 
 void Sound_crash::play(float c_j) // přehraje zvuk nárazu
@@ -228,17 +227,19 @@ void Sound_crash::play(float c_j) // přehraje zvuk nárazu
     if (volume > 1.f) volume = 1.f;
     if (volume < 0.f) volume = 0.f;
     static const int sampleIndexer[6] = {0, 1, 0, 1, 0, 1};
-    int sample_sel =sampleIndexer[randn1(5)];
-    int stream_sel = p_fronta_pos[sample_sel]++;
-    p_fronta_pos[sample_sel] %= p_width;
-    int sel = stream_sel+sample_sel*p_width;
+    int sample_sel = sampleIndexer[randn1(5)];
 
-    alSourceStop(p_hit_stream[sel]);
-    alSourceRewind(p_hit_stream[sel]);
-    alSourcef(p_hit_stream[sel], AL_GAIN, volume);
+    ALuint stream = p_hit_streams[p_currentStream];
+
+    alSourceStop(stream);
+    alSourceRewind(stream);
+    alSourcei(stream, AL_BUFFER, p_hit_samples[sample_sel]);
+    alSourcef(stream, AL_GAIN, volume);
 
     float pitch_min = 0.88;
     float pitch = pitch_min+randn1(int((1.f-pitch_min)*2.f*1000.f))*0.001;
-    alSourcef(p_hit_stream[sel], AL_PITCH, pitch);
-    alSourcePlay(p_hit_stream[sel]);
+    alSourcef(stream, AL_PITCH, pitch);
+    alSourcePlay(stream);
+
+    p_currentStream = (p_currentStream + 1) % Sound_game_static::hitStreamCount;
 }

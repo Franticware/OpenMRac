@@ -1,7 +1,6 @@
 #ARCH        = -march=i386 -mtune=i486
 ARCH        =
 CFLAGS = \
--DM_PI=3.14159265358979323846 \
 -I./q2dos/dos/3rdparty/include \
 -I./djgpp/jpeg \
 -I./djgpp/libpng \
