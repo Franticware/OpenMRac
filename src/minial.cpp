@@ -127,7 +127,6 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
     {
         if (!alcContext->minialInterface->valid())
         {
-            printf("a%d\n", __LINE__);
             delete alcContext->minialInterface;
             delete alcContext;
             return 0;
