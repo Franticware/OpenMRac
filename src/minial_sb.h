@@ -40,7 +40,7 @@ struct MA_SB_Buffer
 class MinialSB : public MinialInterface
 {
 public:
-    MinialSB(ALCint freq);
+    MinialSB(ALCint freq, ALCint sbA, ALCint sbI, ALCint sbD);
     virtual ~MinialSB();
     virtual void GenSources(ALsizei n, ALuint *sources) override;
     virtual void GenBuffers(ALsizei n, ALuint *buffers) override;

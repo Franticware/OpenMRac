@@ -3,12 +3,12 @@
 #include "sb.h"
 #include <cmath>
 
-MinialSB::MinialSB(ALCint freq)
+MinialSB::MinialSB(ALCint freq, ALCint sbA, ALCint sbI, ALCint sbD)
 {
     m_freq = freq;
     floatBuff.resize(DMA_CHUNK);
 
-    if (sb_init())
+    if (sb_init(sbA, sbI, sbD))
     {
         m_valid = true;
         StreamStart(m_freq);

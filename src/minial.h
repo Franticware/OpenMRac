@@ -18,6 +18,9 @@ typedef unsigned int ALuint;
 #define ALC_ALL_DEVICES_SPECIFIER                0x1013
 #define ALC_FREQUENCY                            0x1007
 #define ALC_MONO_SOURCES                         0x1010
+#define ALC_EXT_SB_A                            0xE0002
+#define ALC_EXT_SB_I                            0xE0003
+#define ALC_EXT_SB_D                            0xE0004
 
 ALCboolean alcCloseDevice(ALCdevice *device);
 ALCcontext* alcCreateContext(const ALCdevice *device, const ALCint *attrlist);

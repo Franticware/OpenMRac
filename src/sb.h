@@ -142,7 +142,7 @@ void sb_voice(int state);
 void sb_getparams();
 int sb_initcard();
 int sb_init_buffers();
-int sb_init();
+int sb_init(int sbA, int sbI, int sbD);
 int sb_read_dac(int Base);
 
 void sb_install_interrupts(void (*sb_intr)(_go32_dpmi_registers*));

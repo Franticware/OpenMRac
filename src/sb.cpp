@@ -375,7 +375,7 @@ int sb_init_buffers()
  * for sample playing.
  *
  * Call this once per program, not once per sample. */
-int sb_init()
+int sb_init(int sbA, int sbI, int sbD)
 {
     memset(&rm_regs, 0, sizeof(_go32_dpmi_registers));
     /* undefined registers cause trouble */
@@ -383,7 +383,16 @@ int sb_init()
     pm_si.size = -1;
     dosmem.size = -1;
 
-    sb_getparams(); /* Card card params and initialize card. */
+    if (sbA)
+    {
+        sb_ioaddr = sbA;
+        sb_irq = sbI;
+        sb_dmachan = sbD;
+    }
+    else
+    {
+        sb_getparams(); /* Card card params and initialize card. */
+    }
     sb_ioaddr = sb_initcard();
 
     if (sb_ioaddr)

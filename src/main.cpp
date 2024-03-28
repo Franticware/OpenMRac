@@ -322,6 +322,17 @@ int my_main (int argc, char** argv)
         ma_freq = 22050;
     }
 
+    if (settings.get("vsync"))
+    {
+        setenv("FX_GLIDE_SWAPINTERVAL", "1", 1);
+        setenv("SST_SWAP_EN_WAIT_ON_VIDSYNC", "1", 1);
+    }
+    else
+    {
+        setenv("FX_GLIDE_SWAPINTERVAL", "0", 1);
+        setenv("SST_SWAP_EN_WAIT_ON_VIDSYNC", "0", 1);
+    }
+
     // initialize SDL video
     /*if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
     {
@@ -374,6 +385,9 @@ int my_main (int argc, char** argv)
         static const ALCint attribs[] = {
             ALC_FREQUENCY, ma_freq,
             ALC_MONO_SOURCES, 14,
+            ALC_EXT_SB_A, (ALCint)settings.get("blaster_a"),
+            ALC_EXT_SB_I, (ALCint)settings.get("blaster_i"),
+            ALC_EXT_SB_D, (ALCint)settings.get("blaster_d"),
             0, 0
         };
 

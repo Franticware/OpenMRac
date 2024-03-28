@@ -84,17 +84,30 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
     ALCint freq = 22050;
     ALCint monoSources = 32;
 
+    ALCint blasterA = 0, blasterI = 0, blasterD = 0;
+
     if (attrlist)
     {
         for (int i = 0; attrlist[i * 2] || attrlist[i * 2 + 1]; ++i)
         {
-            switch (attrlist[i * 2])
+            ALCint key = attrlist[i * 2];
+            ALCint val = attrlist[i * 2 + 1];
+            switch (key)
             {
             case ALC_FREQUENCY:
-                freq = attrlist[i * 2 + 1];
+                freq = val;
                 break;
             case ALC_MONO_SOURCES:
-                monoSources = attrlist[i * 2 + 1];
+                monoSources = val;
+                break;
+            case ALC_EXT_SB_A:
+                blasterA = val;
+                break;
+            case ALC_EXT_SB_I:
+                blasterI = val;
+                break;
+            case ALC_EXT_SB_D:
+                blasterD = val;
                 break;
             default:
                 break;
@@ -107,7 +120,7 @@ ALCcontext* alcCreateContext(const ALCdevice* device, const ALCint* attrlist)
 
     if (device == 0 || strcmp(device->deviceName, "default") == 0 || strcmp(device->deviceName, "sb") == 0)
     {
-        alcContext->minialInterface = new MinialSB(freq);
+        alcContext->minialInterface = new MinialSB(freq, blasterA, blasterI, blasterD);
     }
     else if (strcmp(device->deviceName, "none") == 0)
     {

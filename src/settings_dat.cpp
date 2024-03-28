@@ -22,6 +22,9 @@ const Sett_entry_base entry_base[] = {
     {"sound_device",    1,      0, 2,           "0 - none, 1 - SB, 2 - GUS"},
     {"sound_quality",   2,      1, 2,           "1 - low quality, 2 - normal quality"},
     {"sound_volume",    100,    0, 100,         "0 - 100"},
+    {"blaster_a",       0,      0, 0x280,       "SB address (0 - use A, I, D from BLASTER)"},
+    {"blaster_i",       0,      0, 15,          "SB IRQ"},
+    {"blaster_d",       0,      0, 7,           "SB DMA"},
     {"last_laps",       3,      1, 50,          "last session"},
     {"last_daytime",    0,      0, 1,           "0 - day, 1 - evening"},
     {"last_track",      0,      0, UINT_MAX,    ""},
@@ -89,7 +92,14 @@ int Settings::load()
         bool found = false;
         for (unsigned int i = 0; i != entry_size; ++i)
         {
-            snprintf(format, 1023, "%s %s", entry_base[i].key, "%u");
+            if (strcmp(entry_base[i].key, "blaster_a") == 0)
+            {
+                snprintf(format, 1023, "%s %s", entry_base[i].key, "%x");
+            }
+            else
+            {
+                snprintf(format, 1023, "%s %s", entry_base[i].key, "%u");
+            }
             unsigned int val;
             if (sscanf(buff, format, &val) == 1)
             {
@@ -258,9 +268,18 @@ int Settings::save()
     if (!fout) return 1;
     for (unsigned int i = 0; i != entry_size; ++i)
     {
-        fprintf(fout, "%s %d%s%s \n", entry_base[i].key,
-            std::max(std::min(entry[i].val, entry_base[i].maxval), entry_base[i].minval),
-            strlen(entry_base[i].comment) ? "        // " : "" , entry_base[i].comment);
+        if (strcmp(entry_base[i].key, "blaster_a") == 0)
+        {
+            fprintf(fout, "%s %d%s%s \n", entry_base[i].key,
+                    std::max(std::min(entry[i].val, entry_base[i].maxval), entry_base[i].minval),
+                    strlen(entry_base[i].comment) ? "        // " : "" , entry_base[i].comment);
+        }
+        else
+        {
+            fprintf(fout, "%s %d%s%s \n", entry_base[i].key,
+                    std::max(std::min(entry[i].val, entry_base[i].maxval), entry_base[i].minval),
+                    strlen(entry_base[i].comment) ? "        // " : "" , entry_base[i].comment);
+        }
     }
 
     for (unsigned i = 0; i != 16; ++i)
