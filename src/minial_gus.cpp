@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <unistd.h>
 
 #include "gus.h"
 
@@ -20,13 +21,32 @@ MinialGUS::MinialGUS(ALint monoSources)
         m_valid = true;
         uint32_t gusMemSize = GUSFindMem();
         memKb = gusMemSize >> 10;
-
         for (int i = 0; i != memKb / 256; ++i)
         {
             freeMap[262144 * i] = 262144;
         }
-
         GUSReset(m_gusVoices);
+        // PicoGUS compatibility fix: "Prime" all the voices by playing a short silent sound sample
+        constexpr uint32_t silenceLength = 256;
+        uint32_t silenceAddr = gusAlloc(silenceLength);
+        for (uint32_t i = 0; i != silenceLength; ++i)
+        {
+            GUSPoke(silenceAddr + i, 0);
+        }
+        for (int i = 0; i != m_gusVoices; ++i)
+        {
+            GUSSetVolume(i, 511);
+            GUSSetBalance(i, 7);
+
+            GUSPlayVoice(i, GUS_LOOP_ENABLE, silenceAddr, silenceAddr, silenceAddr + silenceLength);
+        }
+        usleep(100000);
+        for (int i = 0; i != m_gusVoices; ++i)
+        {
+            GUSVoiceControl(i, GUS_VOICE_STOP);
+        }
+        usleep(100000);
+        gusFree(silenceAddr);
     }
 }
 
