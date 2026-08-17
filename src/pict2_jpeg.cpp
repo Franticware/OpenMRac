@@ -167,14 +167,19 @@ int Pict2::loadjpeg_pom(bool bfile, const void* fname_data, unsigned int data_si
      */
 
     {
-        cinfo.out_color_space = JCS_EXT_RGBA;
+        cinfo.out_color_space = JCS_RGB;
         create(cinfo.output_width, cinfo.output_height, 0);
         row_stride = cinfo.output_width * 4;
         buffer = (*cinfo.mem->alloc_sarray)
             ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
         while (cinfo.output_scanline < cinfo.output_height) {
             jpeg_read_scanlines(&cinfo, buffer, 1);
-            memcpy(p_px.data()+(cinfo.output_height-cinfo.output_scanline)*row_stride, *buffer, row_stride);
+            int rs = (cinfo.output_height - cinfo.output_scanline) * row_stride;
+            for (JDIMENSION i = 0; i != cinfo.output_width; ++i)
+            {
+                memcpy(p_px.data() + (rs + i * 4), (*buffer) + i * 3, 3);
+                p_px[rs + i * 4 + 3] = 0xff;
+            }
         }
     }
 

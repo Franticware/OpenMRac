@@ -1,4 +1,4 @@
-prefix ?= /usr
+prefix ?= /usr/local
 CXXFLAGS += -O2 -Wall -Wextra -DDIR_OPENMRAC_DAT=$(prefix)/share/openmrac/ -fno-exceptions -fPIC -std=c++20 -DNDEBUG
 LDFLAGS += -lSDL2 -lGL -lopenal -ljpeg -lpng -lm -s -lstdc++
 

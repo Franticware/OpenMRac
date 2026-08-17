@@ -200,11 +200,26 @@ void initScreenModesVector(std::vector<ScreenMode>& screenModesVector, ScreenMod
 
 #define CAMERA_KEY_COUNT 10
 
+bool startsWith(const char* str, const char* start)
+{
+    const size_t startLen = strlen(start);
+    for (size_t i = 0; i != startLen; ++i)
+    {
+        if (str[i] != start[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 int my_main (int argc, char** argv)
 {
     bool skipSettings = false;
+    const char* gameDataArgValue = nullptr;
     for (int i = 1; i < argc; ++i)
     {
+        const char* gameDataArgKey = "--game-data=";
         if (strcmp(argv[i], "--skip-settings") == 0)
         {
             skipSettings = true;
@@ -213,6 +228,10 @@ int my_main (int argc, char** argv)
         {
             fprintf(stderr, "stderr test output\n");
             fflush(stderr);
+        }
+        else if (startsWith(argv[i], gameDataArgKey))
+        {
+            gameDataArgValue = argv[i] + strlen(gameDataArgKey);
         }
     }
 
@@ -441,8 +460,6 @@ int my_main (int argc, char** argv)
         CFStringGetCString(gameDatPath, gameDatPathCstr, 1023, encodingMethod);
     }
 #else
-
-//#define DIR_OPENMRAC_DAT "/home/vojta/"
     strncpy(gameDatPathCstr,
     #ifdef DIR_OPENMRAC_DAT
 
@@ -454,6 +471,11 @@ int my_main (int argc, char** argv)
             "openmrac.dat"
             , 1023);
 #endif
+
+    if (gameDataArgValue)
+    {
+        strncpy(gameDatPathCstr, gameDataArgValue, 1023);
+    }
 
     // inicializace načítání z datového souboru
     if (!gbuff_in.init_dat(gameDatPathCstr)) { fprintf(stderr, "Error loading %s\n", gameDatPathCstr); return 1; }
